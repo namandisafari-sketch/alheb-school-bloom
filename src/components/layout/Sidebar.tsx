@@ -8,14 +8,16 @@ import {
   ClipboardCheck,
   Settings,
   Bell,
-  LogOut
+  LogOut,
+  HardHat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Users, label: "Students", path: "/students" },
+  { icon: Users, label: "Learners", path: "/students" },
   { icon: GraduationCap, label: "Teachers", path: "/teachers" },
+  { icon: HardHat, label: "Staff & Workers", path: "/staff" },
   { icon: BookOpen, label: "Classes", path: "/classes" },
   { icon: Calendar, label: "Schedule", path: "/schedule" },
   { icon: ClipboardCheck, label: "Attendance", path: "/attendance" },
