@@ -149,6 +149,59 @@ export type Database = {
         }
         Relationships: []
       }
+      learner_documents: {
+        Row: {
+          created_at: string | null
+          document_type: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          learner_id: string
+          mime_type: string | null
+          ocr_extracted_data: Json | null
+          ocr_status: string | null
+          updated_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_type: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          learner_id: string
+          mime_type?: string | null
+          ocr_extracted_data?: Json | null
+          ocr_status?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_type?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          learner_id?: string
+          mime_type?: string | null
+          ocr_extracted_data?: Json | null
+          ocr_status?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learner_documents_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learners: {
         Row: {
           admission_number: string | null
