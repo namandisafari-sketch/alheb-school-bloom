@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Search, UserPlus, Filter, MoreHorizontal, Mail, Phone, Loader2 } from "lucide-react";
 import { useLearners } from "@/hooks/useLearners";
+import { RegisterLearnerDialog } from "@/components/students/RegisterLearnerDialog";
 
 const Students = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -50,10 +51,12 @@ const Students = () => {
             <Filter className="mr-2 h-4 w-4" />
             Filter
           </Button>
-          <Button size="sm">
-            <UserPlus className="mr-2 h-4 w-4" />
-            Register Learner
-          </Button>
+          <RegisterLearnerDialog>
+            <Button size="sm">
+              <UserPlus className="mr-2 h-4 w-4" />
+              Register Learner
+            </Button>
+          </RegisterLearnerDialog>
         </div>
       </div>
 
