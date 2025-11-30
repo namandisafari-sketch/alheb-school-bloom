@@ -215,6 +215,38 @@ export type Database = {
           },
         ]
       }
+      parent_learner_links: {
+        Row: {
+          created_at: string | null
+          id: string
+          learner_id: string
+          parent_user_id: string
+          relationship: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          learner_id: string
+          parent_user_id: string
+          relationship?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          learner_id?: string
+          parent_user_id?: string
+          relationship?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_learner_links_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ple_mock_tests: {
         Row: {
           created_at: string | null
@@ -309,6 +341,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string | null
           email: string | null
           full_name: string
@@ -319,6 +352,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string | null
           email?: string | null
           full_name: string
@@ -329,6 +363,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string
@@ -511,14 +546,46 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "admin" | "teacher" | "parent" | "staff"
       attendance_status: "present" | "absent" | "late" | "excused"
       competency_level: "exceeding" | "meeting" | "approaching" | "beginning"
       gender_type: "male" | "female"
@@ -650,6 +717,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "teacher", "parent", "staff"],
       attendance_status: ["present", "absent", "late", "excused"],
       competency_level: ["exceeding", "meeting", "approaching", "beginning"],
       gender_type: ["male", "female"],
