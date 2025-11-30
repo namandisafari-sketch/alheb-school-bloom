@@ -2,20 +2,25 @@ import { Users } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 const classes = [
-  { name: "Grade 1", students: 28, capacity: 30, teacher: "Ustaz Ibrahim" },
-  { name: "Grade 2", students: 25, capacity: 30, teacher: "Ustazah Amina" },
-  { name: "Grade 3", students: 30, capacity: 30, teacher: "Ustaz Ahmed" },
-  { name: "Grade 4", students: 22, capacity: 30, teacher: "Ustazah Fatima" },
-  { name: "Grade 5", students: 27, capacity: 30, teacher: "Ustaz Mohamed" },
+  { name: "Primary 1 (P1)", students: 32, capacity: 40, teacher: "Ustaz Ibrahim" },
+  { name: "Primary 2 (P2)", students: 35, capacity: 40, teacher: "Ustazah Amina" },
+  { name: "Primary 3 (P3)", students: 38, capacity: 40, teacher: "Ustaz Ahmed" },
+  { name: "Primary 4 (P4)", students: 30, capacity: 40, teacher: "Ustazah Fatima" },
+  { name: "Primary 5 (P5)", students: 28, capacity: 40, teacher: "Ustaz Mohamed" },
+  { name: "Primary 6 (P6)", students: 25, capacity: 40, teacher: "Ustazah Khadija" },
+  { name: "Primary 7 (P7)", students: 22, capacity: 40, teacher: "Ustaz Yusuf" },
 ];
 
 export const ClassOverview = () => {
   return (
     <div className="rounded-xl border border-border bg-card p-6 animate-slide-up" style={{ animationDelay: "400ms" }}>
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-lg font-semibold text-card-foreground">
-          Class Overview
-        </h3>
+        <div>
+          <h3 className="font-display text-lg font-semibold text-card-foreground">
+            Class Overview
+          </h3>
+          <p className="text-xs text-muted-foreground">Uganda New Curriculum Structure</p>
+        </div>
         <span className="text-sm text-muted-foreground">
           {classes.length} Classes
         </span>

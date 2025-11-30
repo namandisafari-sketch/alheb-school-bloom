@@ -10,10 +10,10 @@ const events = [
   },
   {
     id: 2,
-    title: "Parent-Teacher Meeting",
+    title: "P7 PLE Mock Examinations",
     date: "Dec 5, 2024",
-    time: "3:00 PM",
-    type: "meeting",
+    time: "8:00 AM",
+    type: "exam",
   },
   {
     id: 3,
@@ -24,7 +24,14 @@ const events = [
   },
   {
     id: 4,
-    title: "Winter Break Begins",
+    title: "End of Term 3 Exams",
+    date: "Dec 15, 2024",
+    time: "8:00 AM",
+    type: "exam",
+  },
+  {
+    id: 5,
+    title: "Term 3 Closes",
     date: "Dec 20, 2024",
     time: "All Day",
     type: "holiday",

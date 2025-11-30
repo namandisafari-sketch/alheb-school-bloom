@@ -29,7 +29,7 @@ const statusConfig = {
 };
 
 const Attendance = () => {
-  const [selectedClass, setSelectedClass] = useState("grade-3");
+  const [selectedClass, setSelectedClass] = useState("p3");
   const [selectedDate] = useState(new Date().toISOString().split("T")[0]);
 
   const presentCount = attendanceData.filter((s) => s.status === "present").length;
@@ -37,7 +37,7 @@ const Attendance = () => {
   const lateCount = attendanceData.filter((s) => s.status === "late").length;
 
   return (
-    <DashboardLayout title="Attendance" subtitle="Track daily student attendance">
+    <DashboardLayout title="Attendance" subtitle="Track daily learner attendance - Term 3, 2024">
       {/* Controls */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
@@ -46,11 +46,13 @@ const Attendance = () => {
               <SelectValue placeholder="Select class" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="grade-1">Grade 1</SelectItem>
-              <SelectItem value="grade-2">Grade 2</SelectItem>
-              <SelectItem value="grade-3">Grade 3</SelectItem>
-              <SelectItem value="grade-4">Grade 4</SelectItem>
-              <SelectItem value="grade-5">Grade 5</SelectItem>
+              <SelectItem value="p1">Primary 1 (P1)</SelectItem>
+              <SelectItem value="p2">Primary 2 (P2)</SelectItem>
+              <SelectItem value="p3">Primary 3 (P3)</SelectItem>
+              <SelectItem value="p4">Primary 4 (P4)</SelectItem>
+              <SelectItem value="p5">Primary 5 (P5)</SelectItem>
+              <SelectItem value="p6">Primary 6 (P6)</SelectItem>
+              <SelectItem value="p7">Primary 7 (P7)</SelectItem>
             </SelectContent>
           </Select>
           <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
@@ -101,8 +103,8 @@ const Attendance = () => {
       {/* Attendance List */}
       <div className="mt-6 rounded-xl border border-border bg-card animate-slide-up" style={{ animationDelay: "300ms" }}>
         <div className="border-b border-border p-4">
-          <h3 className="font-display font-semibold text-card-foreground">Grade 3 - Attendance</h3>
-          <p className="text-sm text-muted-foreground">Ustaz Ahmed • {attendanceData.length} students</p>
+          <h3 className="font-display font-semibold text-card-foreground">Primary 3 (P3) - Attendance</h3>
+          <p className="text-sm text-muted-foreground">Ustaz Ahmed • {attendanceData.length} learners</p>
         </div>
         <div className="divide-y divide-border">
           {attendanceData.map((student) => {

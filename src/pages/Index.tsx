@@ -10,14 +10,28 @@ const Index = () => {
   return (
     <DashboardLayout 
       title="Dashboard" 
-      subtitle="Welcome back! Here's what's happening at Alheb Islamic Primary School"
+      subtitle="Welcome back! Term 3, 2024 - Alheb Islamic Primary School"
     >
+      {/* Term Banner */}
+      <div className="mb-6 rounded-xl border border-primary/20 bg-primary/5 p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-display font-semibold text-primary">Uganda New Curriculum</p>
+            <p className="text-sm text-muted-foreground">P1-P7 Competency-Based Education System</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-medium text-foreground">Term 3, 2024</p>
+            <p className="text-xs text-muted-foreground">Week 8 of 14</p>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Grid */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Total Students"
-          value={132}
-          change="+12 this month"
+          title="Total Learners"
+          value={210}
+          change="+15 this term"
           changeType="positive"
           icon={Users}
           iconColor="primary"
@@ -25,17 +39,17 @@ const Index = () => {
         />
         <StatCard
           title="Teachers"
-          value={15}
-          change="2 new hires"
-          changeType="positive"
+          value={8}
+          change="NCDC Certified"
+          changeType="neutral"
           icon={GraduationCap}
           iconColor="secondary"
           delay={100}
         />
         <StatCard
-          title="Active Classes"
-          value={5}
-          change="All running"
+          title="Classes (P1-P7)"
+          value={7}
+          change="All active"
           changeType="neutral"
           icon={BookOpen}
           iconColor="success"
@@ -43,8 +57,8 @@ const Index = () => {
         />
         <StatCard
           title="Attendance Rate"
-          value="94%"
-          change="+2% from last week"
+          value="92%"
+          change="+3% from last week"
           changeType="positive"
           icon={ClipboardCheck}
           iconColor="info"

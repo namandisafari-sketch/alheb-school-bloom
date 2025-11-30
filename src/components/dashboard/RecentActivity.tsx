@@ -5,7 +5,7 @@ const activities = [
   {
     id: 1,
     type: "enrollment",
-    message: "New student Ahmed Hassan enrolled in Grade 3",
+    message: "New learner Ahmed Hassan enrolled in P3",
     time: "5 minutes ago",
     icon: UserPlus,
     color: "text-success bg-success/10",
@@ -13,7 +13,7 @@ const activities = [
   {
     id: 2,
     type: "class",
-    message: "Quran class schedule updated for Grade 5",
+    message: "P7 PLE preparation classes started",
     time: "1 hour ago",
     icon: BookOpen,
     color: "text-info bg-info/10",
@@ -29,7 +29,7 @@ const activities = [
   {
     id: 4,
     type: "announcement",
-    message: "Parent-Teacher meeting scheduled for next Friday",
+    message: "Term 3 examinations scheduled for December",
     time: "3 hours ago",
     icon: Bell,
     color: "text-primary bg-primary/10",

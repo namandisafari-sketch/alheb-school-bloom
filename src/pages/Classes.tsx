@@ -6,62 +6,85 @@ import { Users, BookOpen, Plus, Clock, MapPin } from "lucide-react";
 const classes = [
   {
     id: 1,
-    name: "Grade 1",
+    name: "Primary 1 (P1)",
     teacher: "Ustaz Ibrahim",
-    students: 28,
-    capacity: 30,
-    subjects: ["Quran", "Arabic", "Islamic Studies", "Math", "English"],
+    students: 32,
+    capacity: 40,
+    subjects: ["Literacy", "Numeracy", "IRE", "Arabic", "Quran", "Local Language"],
     room: "Room 101",
-    schedule: "Mon-Fri 8:00 AM - 2:00 PM",
+    schedule: "Mon-Fri 8:00 AM - 1:00 PM",
   },
   {
     id: 2,
-    name: "Grade 2",
+    name: "Primary 2 (P2)",
     teacher: "Ustazah Amina",
-    students: 25,
-    capacity: 30,
-    subjects: ["Quran", "Arabic", "Islamic Studies", "Math", "English", "Science"],
+    students: 35,
+    capacity: 40,
+    subjects: ["Literacy", "Numeracy", "IRE", "Arabic", "Quran", "Local Language"],
     room: "Room 102",
-    schedule: "Mon-Fri 8:00 AM - 2:00 PM",
+    schedule: "Mon-Fri 8:00 AM - 1:00 PM",
   },
   {
     id: 3,
-    name: "Grade 3",
+    name: "Primary 3 (P3)",
     teacher: "Ustaz Ahmed",
-    students: 30,
-    capacity: 30,
-    subjects: ["Quran", "Arabic", "Islamic Studies", "Math", "English", "Science", "Social Studies"],
+    students: 38,
+    capacity: 40,
+    subjects: ["English", "Mathematics", "Science", "Social Studies", "IRE", "Arabic", "Quran"],
     room: "Room 103",
-    schedule: "Mon-Fri 8:00 AM - 2:30 PM",
+    schedule: "Mon-Fri 8:00 AM - 1:30 PM",
   },
   {
     id: 4,
-    name: "Grade 4",
+    name: "Primary 4 (P4)",
     teacher: "Ustazah Fatima",
-    students: 22,
-    capacity: 30,
-    subjects: ["Quran", "Arabic", "Islamic Studies", "Math", "English", "Science", "Social Studies"],
+    students: 30,
+    capacity: 40,
+    subjects: ["English", "Mathematics", "Science", "Social Studies", "IRE", "Arabic", "Quran", "Kiswahili"],
     room: "Room 104",
-    schedule: "Mon-Fri 8:00 AM - 2:30 PM",
+    schedule: "Mon-Fri 8:00 AM - 2:00 PM",
   },
   {
     id: 5,
-    name: "Grade 5",
+    name: "Primary 5 (P5)",
     teacher: "Ustaz Mohamed",
-    students: 27,
-    capacity: 30,
-    subjects: ["Quran", "Arabic", "Islamic Studies", "Math", "English", "Science", "Social Studies", "Computer"],
+    students: 28,
+    capacity: 40,
+    subjects: ["English", "Mathematics", "Science", "Social Studies", "IRE", "Arabic", "Quran", "Kiswahili"],
     room: "Room 105",
+    schedule: "Mon-Fri 8:00 AM - 2:30 PM",
+  },
+  {
+    id: 6,
+    name: "Primary 6 (P6)",
+    teacher: "Ustazah Khadija",
+    students: 25,
+    capacity: 40,
+    subjects: ["English", "Mathematics", "Science", "Social Studies", "IRE", "Arabic", "Quran", "Kiswahili"],
+    room: "Room 106",
     schedule: "Mon-Fri 8:00 AM - 3:00 PM",
+  },
+  {
+    id: 7,
+    name: "Primary 7 (P7)",
+    teacher: "Ustaz Yusuf",
+    students: 22,
+    capacity: 40,
+    subjects: ["English", "Mathematics", "Science", "Social Studies", "IRE", "Arabic", "Quran", "Kiswahili"],
+    room: "Room 107",
+    schedule: "Mon-Fri 8:00 AM - 4:00 PM",
   },
 ];
 
 const Classes = () => {
   return (
-    <DashboardLayout title="Classes" subtitle="View and manage class information">
+    <DashboardLayout title="Classes" subtitle="Uganda New Curriculum - P1 to P7 Structure">
       {/* Actions */}
       <div className="flex items-center justify-between">
-        <p className="text-muted-foreground">{classes.length} active classes</p>
+        <div>
+          <p className="text-muted-foreground">{classes.length} active classes</p>
+          <p className="text-xs text-muted-foreground">Term 3, 2024 Academic Year</p>
+        </div>
         <Button size="sm">
           <Plus className="mr-2 h-4 w-4" />
           Add Class
@@ -94,7 +117,7 @@ const Classes = () => {
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-muted-foreground" />
-                  <span>Students</span>
+                  <span>Learners</span>
                 </div>
                 <span className="font-medium">
                   {cls.students}/{cls.capacity}
@@ -118,7 +141,7 @@ const Classes = () => {
             {/* Subjects */}
             <div className="mt-4">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Subjects
+                Learning Areas
               </p>
               <div className="mt-2 flex flex-wrap gap-1">
                 {cls.subjects.slice(0, 4).map((subject) => (
