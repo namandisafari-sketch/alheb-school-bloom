@@ -12,23 +12,49 @@ import {
   HardHat,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth, AppRole } from "@/hooks/useAuth";
+import { Badge } from "@/components/ui/badge";
 
-const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Users, label: "Learners", path: "/students" },
-  { icon: GraduationCap, label: "Teachers", path: "/teachers" },
-  { icon: HardHat, label: "Staff & Workers", path: "/staff" },
-  { icon: BookOpen, label: "Classes", path: "/classes" },
-  { icon: Calendar, label: "Schedule", path: "/schedule" },
-  { icon: ClipboardCheck, label: "Attendance", path: "/attendance" },
+interface NavItem {
+  icon: typeof LayoutDashboard;
+  label: string;
+  path: string;
+  roles?: AppRole[];
+}
+
+const navItems: NavItem[] = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/", roles: ["admin", "teacher", "staff"] },
+  { icon: Users, label: "Learners", path: "/students", roles: ["admin", "teacher"] },
+  { icon: GraduationCap, label: "Teachers", path: "/teachers", roles: ["admin"] },
+  { icon: HardHat, label: "Staff & Workers", path: "/staff", roles: ["admin"] },
+  { icon: BookOpen, label: "Classes", path: "/classes", roles: ["admin", "teacher"] },
+  { icon: Calendar, label: "Schedule", path: "/schedule", roles: ["admin", "teacher", "staff"] },
+  { icon: ClipboardCheck, label: "Attendance", path: "/attendance", roles: ["admin", "teacher"] },
 ];
 
-const bottomNavItems = [
+const bottomNavItems: NavItem[] = [
   { icon: Bell, label: "Notifications", path: "/notifications" },
-  { icon: Settings, label: "Settings", path: "/settings" },
+  { icon: Settings, label: "Settings", path: "/settings", roles: ["admin"] },
 ];
+
+const roleLabels: Record<AppRole, string> = {
+  admin: "Administrator",
+  teacher: "Teacher",
+  parent: "Parent",
+  staff: "Staff",
+};
 
 export const Sidebar = () => {
+  const { user, role, signOut } = useAuth();
+
+  const filteredNavItems = navItems.filter(
+    (item) => !item.roles || (role && item.roles.includes(role))
+  );
+
+  const filteredBottomItems = bottomNavItems.filter(
+    (item) => !item.roles || (role && item.roles.includes(role))
+  );
+
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar">
       <div className="flex h-full flex-col">
@@ -45,9 +71,28 @@ export const Sidebar = () => {
           </div>
         </div>
 
+        {/* User Info */}
+        <div className="border-b border-sidebar-border px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sidebar-accent font-medium text-sidebar-accent-foreground">
+              {user?.user_metadata?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || "U"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-sidebar-foreground truncate">
+                {user?.user_metadata?.full_name || user?.email}
+              </p>
+              {role && (
+                <Badge variant="secondary" className="text-xs mt-0.5">
+                  {roleLabels[role]}
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-4">
-          {navItems.map((item) => (
+        <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
+          {filteredNavItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -68,7 +113,7 @@ export const Sidebar = () => {
 
         {/* Bottom Navigation */}
         <div className="border-t border-sidebar-border p-4">
-          {bottomNavItems.map((item) => (
+          {filteredBottomItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -85,7 +130,10 @@ export const Sidebar = () => {
               {item.label}
             </NavLink>
           ))}
-          <button className="mt-2 flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-destructive/20 hover:text-destructive">
+          <button
+            onClick={signOut}
+            className="mt-2 flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-destructive/20 hover:text-destructive"
+          >
             <LogOut className="h-5 w-5" />
             Logout
           </button>
