@@ -6,13 +6,13 @@ import {
   BookOpen, 
   Calendar, 
   ClipboardCheck,
-  Settings,
   Bell,
   LogOut,
   HardHat,
   UserCog,
   PenLine,
   FileText,
+  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, AppRole } from "@/hooks/useAuth";
@@ -40,7 +40,7 @@ const navItems: NavItem[] = [
 
 const bottomNavItems: NavItem[] = [
   { icon: Bell, label: "Notifications", path: "/notifications", roles: ["admin"] },
-  { icon: Settings, label: "Settings", path: "/settings", roles: ["admin"] },
+  { icon: Globe, label: "Site Settings", path: "/settings", roles: ["admin"] },
 ];
 
 const roleLabels: Record<AppRole, string> = {
