@@ -604,6 +604,123 @@ export type Database = {
           },
         ]
       }
+      salary_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          notes: string | null
+          paid_by: string | null
+          payment_date: string
+          payment_method: string | null
+          reference_number: string | null
+          salary_record_id: string
+          staff_id: string
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          paid_by?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          reference_number?: string | null
+          salary_record_id: string
+          staff_id: string
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          paid_by?: string | null
+          payment_date?: string
+          payment_method?: string | null
+          reference_number?: string | null
+          salary_record_id?: string
+          staff_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salary_payments_paid_by_fkey"
+            columns: ["paid_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salary_payments_salary_record_id_fkey"
+            columns: ["salary_record_id"]
+            isOneToOne: false
+            referencedRelation: "salary_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salary_payments_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      salary_records: {
+        Row: {
+          allowances: number | null
+          basic_salary: number
+          created_at: string | null
+          currency: string | null
+          deductions: number | null
+          effective_from: string
+          effective_to: string | null
+          id: string
+          net_salary: number | null
+          notes: string | null
+          staff_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          allowances?: number | null
+          basic_salary?: number
+          created_at?: string | null
+          currency?: string | null
+          deductions?: number | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          net_salary?: number | null
+          notes?: string | null
+          staff_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          allowances?: number | null
+          basic_salary?: number
+          created_at?: string | null
+          currency?: string | null
+          deductions?: number | null
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          net_salary?: number | null
+          notes?: string | null
+          staff_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salary_records_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scheduled_notifications: {
         Row: {
           created_at: string | null

@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthProvider";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Students from "./pages/Students";
@@ -19,18 +20,21 @@ import Reports from "./pages/Reports";
 import Notifications from "./pages/Notifications";
 import Landing from "./pages/Landing";
 import SiteSettings from "./pages/SiteSettings";
+import Salary from "./pages/Salary";
+import IDCards from "./pages/IDCards";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
+    <LanguageProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
             {/* Public Routes */}
             <Route path="/welcome" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
@@ -134,6 +138,22 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/salary"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <Salary />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/id-cards"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <IDCards />
+                </ProtectedRoute>
+              }
+            />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
@@ -141,6 +161,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
+    </LanguageProvider>
   </QueryClientProvider>
 );
 
