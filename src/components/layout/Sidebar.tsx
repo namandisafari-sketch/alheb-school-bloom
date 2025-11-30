@@ -13,6 +13,8 @@ import {
   PenLine,
   FileText,
   Globe,
+  Wallet,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, AppRole } from "@/hooks/useAuth";
@@ -35,6 +37,8 @@ const navItems: NavItem[] = [
   { icon: FileText, label: "Reports", path: "/reports", roles: ["admin", "teacher"] },
   { icon: Calendar, label: "Schedule", path: "/schedule", roles: ["admin", "teacher", "staff"] },
   { icon: ClipboardCheck, label: "Attendance", path: "/attendance", roles: ["admin", "teacher"] },
+  { icon: Wallet, label: "Salary", path: "/salary", roles: ["admin"] },
+  { icon: CreditCard, label: "ID Cards", path: "/id-cards", roles: ["admin"] },
   { icon: UserCog, label: "User Management", path: "/users", roles: ["admin"] },
 ];
 

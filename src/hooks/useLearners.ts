@@ -12,9 +12,13 @@ export interface Learner {
   enrollment_date: string | null;
   class_id: string | null;
   guardian_id: string | null;
+  photo_url: string | null;
+  religion: string | null;
   class_name?: string | null;
   guardian_name?: string | null;
   guardian_phone?: string | null;
+  classes?: { name: string } | null;
+  guardian?: { full_name: string; phone: string } | null;
 }
 
 export const useLearners = () => {
