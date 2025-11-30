@@ -17,6 +17,8 @@ import UserManagement from "./pages/UserManagement";
 import MarksEntry from "./pages/MarksEntry";
 import Reports from "./pages/Reports";
 import Notifications from "./pages/Notifications";
+import Landing from "./pages/Landing";
+import SiteSettings from "./pages/SiteSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,7 +31,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Public Route */}
+            {/* Public Routes */}
+            <Route path="/welcome" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             
             {/* Parent Portal */}
@@ -120,6 +123,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["admin"]}>
                   <Notifications />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <SiteSettings />
                 </ProtectedRoute>
               }
             />
