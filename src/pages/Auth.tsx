@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BookOpen, Loader2, Mail, Lock, User } from "lucide-react";
+import { BookOpen, Loader2, Mail, Lock, User, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,6 +24,7 @@ const loginSchema = z.object({
 
 const signupSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters").max(100),
+  phone: z.string().min(10, "Phone must be at least 10 digits").max(20),
   email: z.string().email("Please enter a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string(),
@@ -46,7 +47,6 @@ const Auth = () => {
 
   useEffect(() => {
     if (user && role) {
-      // Redirect based on role
       if (role === "parent") {
         navigate("/parent", { replace: true });
       } else {
@@ -62,7 +62,7 @@ const Auth = () => {
 
   const signupForm = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
-    defaultValues: { fullName: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: { fullName: "", phone: "", email: "", password: "", confirmPassword: "" },
   });
 
   const handleLogin = async (values: LoginFormValues) => {
@@ -83,7 +83,7 @@ const Auth = () => {
 
   const handleSignup = async (values: SignupFormValues) => {
     setIsLoading(true);
-    const { error } = await signUp(values.email, values.password, values.fullName);
+    const { error } = await signUp(values.email, values.password, values.fullName, values.phone);
     setIsLoading(false);
 
     if (error) {
@@ -103,7 +103,7 @@ const Auth = () => {
     } else {
       toast({
         title: "Account Created",
-        description: "Your account has been created. You can now log in.",
+        description: "Your parent account has been created. You can now log in.",
       });
       setIsLogin(true);
       signupForm.reset();
@@ -126,29 +126,17 @@ const Auth = () => {
           <p className="text-muted-foreground text-lg">
             School Management System - Uganda New Curriculum
           </p>
-          <div className="mt-12 grid grid-cols-2 gap-6 text-left">
-            <div className="rounded-lg bg-background/50 p-4">
-              <h3 className="font-semibold">For Parents</h3>
+          <div className="mt-12 space-y-4 text-left">
+            <div className="rounded-lg bg-background/50 p-4 border-l-4 border-primary">
+              <h3 className="font-semibold">Parent Portal</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Track your child's attendance, grades, and school activities
+                Parents can register to track their children's attendance, grades, and communicate with teachers
               </p>
             </div>
-            <div className="rounded-lg bg-background/50 p-4">
-              <h3 className="font-semibold">For Teachers</h3>
+            <div className="rounded-lg bg-background/50 p-4 border-l-4 border-muted">
+              <h3 className="font-semibold text-muted-foreground">Staff & Admin Access</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Manage classes, take attendance, and record grades
-              </p>
-            </div>
-            <div className="rounded-lg bg-background/50 p-4">
-              <h3 className="font-semibold">For Admin</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Full access to manage all school operations
-              </p>
-            </div>
-            <div className="rounded-lg bg-background/50 p-4">
-              <h3 className="font-semibold">For Staff</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Access relevant tools for your role
+                Teacher, Staff, and Admin accounts are created by school administration only
               </p>
             </div>
           </div>
@@ -167,12 +155,12 @@ const Auth = () => {
 
           <div className="text-center mb-8">
             <h2 className="font-display text-2xl font-bold text-foreground">
-              {isLogin ? "Welcome Back" : "Create Account"}
+              {isLogin ? "Welcome Back" : "Parent Registration"}
             </h2>
             <p className="text-muted-foreground mt-2">
               {isLogin
-                ? "Sign in to access the school management system"
-                : "Register to get started with the school system"}
+                ? "Sign in to access the school system"
+                : "Create a parent account to track your children's progress"}
             </p>
           </div>
 
@@ -255,6 +243,27 @@ const Auth = () => {
 
                 <FormField
                   control={signupForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            placeholder="+256 700 123 456"
+                            className="pl-10"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={signupForm.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
@@ -321,7 +330,7 @@ const Auth = () => {
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Create Account
+                  Create Parent Account
                 </Button>
               </form>
             </Form>
@@ -334,10 +343,16 @@ const Auth = () => {
               className="text-sm text-primary hover:underline"
             >
               {isLogin
-                ? "Don't have an account? Sign up"
+                ? "Parent? Create an account"
                 : "Already have an account? Sign in"}
             </button>
           </div>
+
+          {!isLogin && (
+            <p className="mt-4 text-xs text-center text-muted-foreground">
+              Staff and Admin accounts are created by school administration. Contact the school office if you need staff access.
+            </p>
+          )}
         </div>
       </div>
     </div>

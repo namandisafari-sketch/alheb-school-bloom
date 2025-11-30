@@ -13,6 +13,7 @@ import Attendance from "./pages/Attendance";
 import Staff from "./pages/Staff";
 import Auth from "./pages/Auth";
 import ParentDashboard from "./pages/ParentDashboard";
+import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -84,6 +85,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["admin", "teacher"]}>
                   <Attendance />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <UserManagement />
                 </ProtectedRoute>
               }
             />
