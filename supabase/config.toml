@@ -2,3 +2,6 @@ project_id = "gnzfznxmtvedxchckssu"
 
 [functions.create-admin]
 verify_jwt = false
+
+[functions.ocr-extract]
+verify_jwt = true

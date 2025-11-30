@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useDocumentUpload } from "./DocumentUpload";
+import { DocumentUpload } from "./DocumentUpload";
 
 const formSchema = z.object({
   // Learner fields
@@ -70,6 +72,7 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const { data: classes = [] } = useClasses();
+  const { documents, setDocuments, uploadAll, isUploading: isUploadingDocs } = useDocumentUpload();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -166,20 +169,26 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
         }
       }
 
-      return { parentUserId, guardianEmail: values.guardian_email };
+      // Upload documents if any
+      if (documents.length > 0 && learner) {
+        await uploadAll(learner.id);
+      }
+
+      return { parentUserId, guardianEmail: values.guardian_email, learnerId: learner.id };
     },
     onSuccess: (data) => {
       if (data.parentUserId) {
         toast({ 
           title: "Learner Registered", 
-          description: `Learner registered and parent account created for ${data.guardianEmail}` 
+          description: `Learner registered and parent account created for ${data.guardianEmail}. Documents are being processed.` 
         });
       } else {
-        toast({ title: "Success", description: "Learner registered successfully" });
+        toast({ title: "Success", description: "Learner registered successfully. Documents are being processed." });
       }
       queryClient.invalidateQueries({ queryKey: ["learners"] });
       queryClient.invalidateQueries({ queryKey: ["parent-links"] });
       form.reset();
+      setDocuments([]);
       setOpen(false);
     },
     onError: (error) => {
@@ -196,13 +205,19 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      setOpen(isOpen);
+      if (!isOpen) {
+        form.reset();
+        setDocuments([]);
+      }
+    }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Register New Learner</DialogTitle>
           <DialogDescription>
-            Enter the learner's details and guardian information. A parent account will be created automatically.
+            Enter the learner's details, guardian information, and upload required documents.
           </DialogDescription>
         </DialogHeader>
 
@@ -447,12 +462,18 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
               )}
             </div>
 
+            {/* Document Upload Section */}
+            <DocumentUpload
+              documents={documents}
+              onDocumentsChange={setDocuments}
+            />
+
             <div className="flex justify-end gap-3 pt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={mutation.isPending}>
-                {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" disabled={mutation.isPending || isUploadingDocs}>
+                {(mutation.isPending || isUploadingDocs) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Register Learner
               </Button>
             </div>
