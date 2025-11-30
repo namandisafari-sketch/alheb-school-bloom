@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,63 +9,136 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Check, X, Clock, Calendar } from "lucide-react";
+import { Check, X, Clock, Calendar, Loader2, Users } from "lucide-react";
+import { useClasses } from "@/hooks/useClasses";
+import { useAttendance, useMarkAttendance, useBulkMarkAttendance, LearnerWithAttendance } from "@/hooks/useAttendance";
+import { Database } from "@/integrations/supabase/types";
 
-const attendanceData = [
-  { id: 1, name: "Ahmed Hassan", status: "present", time: "7:45 AM" },
-  { id: 2, name: "Fatima Ali", status: "present", time: "7:50 AM" },
-  { id: 3, name: "Omar Mohamed", status: "late", time: "8:15 AM" },
-  { id: 4, name: "Aisha Abdi", status: "present", time: "7:55 AM" },
-  { id: 5, name: "Yusuf Ibrahim", status: "absent", time: "-" },
-  { id: 6, name: "Khadija Omar", status: "present", time: "7:48 AM" },
-  { id: 7, name: "Hassan Ahmed", status: "present", time: "7:52 AM" },
-  { id: 8, name: "Maryam Yusuf", status: "present", time: "7:58 AM" },
-];
+type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
 
-const statusConfig = {
+const statusConfig: Record<AttendanceStatus, { icon: typeof Check; color: string; label: string }> = {
   present: { icon: Check, color: "bg-success text-success-foreground", label: "Present" },
   absent: { icon: X, color: "bg-destructive text-destructive-foreground", label: "Absent" },
   late: { icon: Clock, color: "bg-warning text-warning-foreground", label: "Late" },
+  excused: { icon: Calendar, color: "bg-muted text-muted-foreground", label: "Excused" },
 };
 
 const Attendance = () => {
-  const [selectedClass, setSelectedClass] = useState("p3");
-  const [selectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedClassId, setSelectedClassId] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [localAttendance, setLocalAttendance] = useState<Record<string, AttendanceStatus>>({});
 
-  const presentCount = attendanceData.filter((s) => s.status === "present").length;
-  const absentCount = attendanceData.filter((s) => s.status === "absent").length;
-  const lateCount = attendanceData.filter((s) => s.status === "late").length;
+  const { data: classes = [], isLoading: classesLoading } = useClasses();
+  const { data: learners = [], isLoading: learnersLoading } = useAttendance(selectedClassId, selectedDate);
+  const markAttendance = useMarkAttendance();
+  const bulkMarkAttendance = useBulkMarkAttendance();
+
+  const selectedClass = classes.find((c) => c.id === selectedClassId);
+
+  // Merge server data with local changes
+  const learnersWithStatus = useMemo(() => {
+    return learners.map((learner) => ({
+      ...learner,
+      currentStatus: localAttendance[learner.id] || learner.attendance?.status || null,
+    }));
+  }, [learners, localAttendance]);
+
+  // Calculate stats
+  const presentCount = learnersWithStatus.filter((s) => s.currentStatus === "present").length;
+  const absentCount = learnersWithStatus.filter((s) => s.currentStatus === "absent").length;
+  const lateCount = learnersWithStatus.filter((s) => s.currentStatus === "late").length;
+
+  const handleStatusChange = (learnerId: string, status: AttendanceStatus) => {
+    setLocalAttendance((prev) => ({ ...prev, [learnerId]: status }));
+  };
+
+  const handleSaveAttendance = async () => {
+    if (!selectedClassId) return;
+
+    const records = Object.entries(localAttendance).map(([learnerId, status]) => {
+      const learner = learners.find((l) => l.id === learnerId);
+      return {
+        learnerId,
+        status,
+        existingId: learner?.attendance?.id,
+      };
+    });
+
+    if (records.length === 0) return;
+
+    await bulkMarkAttendance.mutateAsync({
+      classId: selectedClassId,
+      date: selectedDate,
+      records,
+    });
+
+    setLocalAttendance({});
+  };
+
+  const hasChanges = Object.keys(localAttendance).length > 0;
 
   return (
     <DashboardLayout title="Attendance" subtitle="Track daily learner attendance - Term 3, 2024">
       {/* Controls */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <Select value={selectedClass} onValueChange={setSelectedClass}>
-            <SelectTrigger className="w-40">
+          <Select value={selectedClassId} onValueChange={(value) => {
+            setSelectedClassId(value);
+            setLocalAttendance({});
+          }}>
+            <SelectTrigger className="w-48">
               <SelectValue placeholder="Select class" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="p1">Primary 1 (P1)</SelectItem>
-              <SelectItem value="p2">Primary 2 (P2)</SelectItem>
-              <SelectItem value="p3">Primary 3 (P3)</SelectItem>
-              <SelectItem value="p4">Primary 4 (P4)</SelectItem>
-              <SelectItem value="p5">Primary 5 (P5)</SelectItem>
-              <SelectItem value="p6">Primary 6 (P6)</SelectItem>
-              <SelectItem value="p7">Primary 7 (P7)</SelectItem>
+              {classesLoading ? (
+                <SelectItem value="loading" disabled>Loading...</SelectItem>
+              ) : classes.length === 0 ? (
+                <SelectItem value="none" disabled>No classes available</SelectItem>
+              ) : (
+                classes.map((cls) => (
+                  <SelectItem key={cls.id} value={cls.id}>
+                    {cls.name}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
           <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">{selectedDate}</span>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => {
+                setSelectedDate(e.target.value);
+                setLocalAttendance({});
+              }}
+              className="bg-transparent text-sm outline-none"
+            />
           </div>
         </div>
-        <Button>Save Attendance</Button>
+        <Button 
+          onClick={handleSaveAttendance} 
+          disabled={!hasChanges || bulkMarkAttendance.isPending}
+        >
+          {bulkMarkAttendance.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Save Attendance
+        </Button>
       </div>
 
       {/* Summary Cards */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-4">
         <div className="rounded-xl border border-border bg-card p-4 animate-slide-up">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <Users className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-card-foreground">{learners.length}</p>
+              <p className="text-sm text-muted-foreground">Total</p>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 animate-slide-up" style={{ animationDelay: "100ms" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
               <Check className="h-5 w-5 text-success" />
@@ -76,7 +149,7 @@ const Attendance = () => {
             </div>
           </div>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4 animate-slide-up" style={{ animationDelay: "100ms" }}>
+        <div className="rounded-xl border border-border bg-card p-4 animate-slide-up" style={{ animationDelay: "200ms" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
               <X className="h-5 w-5 text-destructive" />
@@ -87,7 +160,7 @@ const Attendance = () => {
             </div>
           </div>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4 animate-slide-up" style={{ animationDelay: "200ms" }}>
+        <div className="rounded-xl border border-border bg-card p-4 animate-slide-up" style={{ animationDelay: "300ms" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10">
               <Clock className="h-5 w-5 text-warning" />
@@ -101,63 +174,102 @@ const Attendance = () => {
       </div>
 
       {/* Attendance List */}
-      <div className="mt-6 rounded-xl border border-border bg-card animate-slide-up" style={{ animationDelay: "300ms" }}>
+      <div className="mt-6 rounded-xl border border-border bg-card animate-slide-up" style={{ animationDelay: "400ms" }}>
         <div className="border-b border-border p-4">
-          <h3 className="font-display font-semibold text-card-foreground">Primary 3 (P3) - Attendance</h3>
-          <p className="text-sm text-muted-foreground">Ustaz Ahmed • {attendanceData.length} learners</p>
+          <h3 className="font-display font-semibold text-card-foreground">
+            {selectedClass?.name || "Select a class"} - Attendance
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {selectedClass?.teacher_name || "No teacher assigned"} • {learners.length} learners
+          </p>
         </div>
-        <div className="divide-y divide-border">
-          {attendanceData.map((student) => {
-            const config = statusConfig[student.status as keyof typeof statusConfig];
-            const StatusIcon = config.icon;
-            return (
-              <div
-                key={student.id}
-                className="flex items-center justify-between p-4 transition-colors hover:bg-muted/30"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-medium text-primary">
-                    {student.name.split(" ").map((n) => n[0]).join("")}
+
+        {!selectedClassId ? (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <Users className="h-12 w-12 mb-4 opacity-50" />
+            <p>Select a class to take attendance</p>
+          </div>
+        ) : learnersLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : learners.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <Users className="h-12 w-12 mb-4 opacity-50" />
+            <p>No learners in this class</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {learnersWithStatus.map((learner) => {
+              const status = learner.currentStatus;
+              const config = status ? statusConfig[status] : null;
+              const StatusIcon = config?.icon;
+
+              return (
+                <div
+                  key={learner.id}
+                  className="flex items-center justify-between p-4 transition-colors hover:bg-muted/30"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-medium text-primary">
+                      {learner.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                    </div>
+                    <div>
+                      <p className="font-medium text-card-foreground">{learner.full_name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {learner.attendance?.check_in_time
+                          ? `Checked in: ${learner.attendance.check_in_time.slice(0, 5)}`
+                          : "Not recorded"}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-card-foreground">{student.name}</p>
-                    <p className="text-sm text-muted-foreground">Checked in: {student.time}</p>
+                  <div className="flex items-center gap-3">
+                    {config && StatusIcon && (
+                      <Badge className={config.color}>
+                        <StatusIcon className="mr-1 h-3 w-3" />
+                        {config.label}
+                      </Badge>
+                    )}
+                    <div className="flex gap-1">
+                      <Button
+                        variant={status === "present" ? "default" : "outline"}
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleStatusChange(learner.id, "present")}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant={status === "absent" ? "destructive" : "outline"}
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleStatusChange(learner.id, "absent")}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant={status === "late" ? "secondary" : "outline"}
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleStatusChange(learner.id, "late")}
+                      >
+                        <Clock className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Badge className={config.color}>
-                    <StatusIcon className="mr-1 h-3 w-3" />
-                    {config.label}
-                  </Badge>
-                  <div className="flex gap-1">
-                    <Button
-                      variant={student.status === "present" ? "default" : "outline"}
-                      size="icon"
-                      className="h-8 w-8"
-                    >
-                      <Check className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant={student.status === "absent" ? "destructive" : "outline"}
-                      size="icon"
-                      className="h-8 w-8"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant={student.status === "late" ? "secondary" : "outline"}
-                      size="icon"
-                      className="h-8 w-8"
-                    >
-                      <Clock className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
+
+      {/* Unsaved Changes Notice */}
+      {hasChanges && (
+        <div className="mt-4 rounded-lg border border-warning/50 bg-warning/10 p-3 text-sm text-warning-foreground">
+          You have unsaved changes. Click "Save Attendance" to save.
+        </div>
+      )}
     </DashboardLayout>
   );
 };
