@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Users, BookOpen, Plus, MapPin, Loader2 } from "lucide-react";
 import { useClasses } from "@/hooks/useClasses";
+import { AddClassDialog } from "@/components/classes/AddClassDialog";
 
 const Classes = () => {
   const { data: classes = [], isLoading, error } = useClasses();
@@ -15,10 +16,12 @@ const Classes = () => {
           <p className="text-muted-foreground">{classes.length} active classes</p>
           <p className="text-xs text-muted-foreground">Term 3, 2024 Academic Year</p>
         </div>
-        <Button size="sm">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Class
-        </Button>
+        <AddClassDialog>
+          <Button size="sm">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Class
+          </Button>
+        </AddClassDialog>
       </div>
 
       {/* Classes Grid */}
