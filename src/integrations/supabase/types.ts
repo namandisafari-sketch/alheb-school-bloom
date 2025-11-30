@@ -268,6 +268,115 @@ export type Database = {
           },
         ]
       }
+      notification_logs: {
+        Row: {
+          channel: string
+          created_at: string | null
+          delivered_at: string | null
+          error_message: string | null
+          guardian_id: string | null
+          id: string
+          learner_id: string | null
+          message_content: string
+          recipient_name: string | null
+          recipient_phone: string
+          sent_at: string | null
+          status: string | null
+          template_id: string | null
+        }
+        Insert: {
+          channel: string
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          guardian_id?: string | null
+          id?: string
+          learner_id?: string | null
+          message_content: string
+          recipient_name?: string | null
+          recipient_phone: string
+          sent_at?: string | null
+          status?: string | null
+          template_id?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          guardian_id?: string | null
+          id?: string
+          learner_id?: string | null
+          message_content?: string
+          recipient_name?: string | null
+          recipient_phone?: string
+          sent_at?: string | null
+          status?: string | null
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_logs_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_logs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "notification_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_templates: {
+        Row: {
+          channel: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          message_body: string
+          name: string
+          subject: string | null
+          updated_at: string | null
+          variables: string[] | null
+        }
+        Insert: {
+          channel?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          message_body: string
+          name: string
+          subject?: string | null
+          updated_at?: string | null
+          variables?: string[] | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          message_body?: string
+          name?: string
+          subject?: string | null
+          updated_at?: string | null
+          variables?: string[] | null
+        }
+        Relationships: []
+      }
       parent_learner_links: {
         Row: {
           created_at: string | null
@@ -491,6 +600,57 @@ export type Database = {
             columns: ["learner_id"]
             isOneToOne: false
             referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_notifications: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          scheduled_for: string
+          status: string | null
+          target_audience: string
+          target_class_id: string | null
+          target_learner_ids: string[] | null
+          template_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          scheduled_for: string
+          status?: string | null
+          target_audience: string
+          target_class_id?: string | null
+          target_learner_ids?: string[] | null
+          template_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          scheduled_for?: string
+          status?: string | null
+          target_audience?: string
+          target_class_id?: string | null
+          target_learner_ids?: string[] | null
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_notifications_target_class_id_fkey"
+            columns: ["target_class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_notifications_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "notification_templates"
             referencedColumns: ["id"]
           },
         ]

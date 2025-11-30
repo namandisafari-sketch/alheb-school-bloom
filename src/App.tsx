@@ -16,6 +16,7 @@ import ParentDashboard from "./pages/ParentDashboard";
 import UserManagement from "./pages/UserManagement";
 import MarksEntry from "./pages/MarksEntry";
 import Reports from "./pages/Reports";
+import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -111,6 +112,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["admin", "teacher"]}>
                   <Reports />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <Notifications />
                 </ProtectedRoute>
               }
             />

@@ -39,7 +39,7 @@ const navItems: NavItem[] = [
 ];
 
 const bottomNavItems: NavItem[] = [
-  { icon: Bell, label: "Notifications", path: "/notifications" },
+  { icon: Bell, label: "Notifications", path: "/notifications", roles: ["admin"] },
   { icon: Settings, label: "Settings", path: "/settings", roles: ["admin"] },
 ];
 
