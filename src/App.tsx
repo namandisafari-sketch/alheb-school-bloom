@@ -14,6 +14,8 @@ import Staff from "./pages/Staff";
 import Auth from "./pages/Auth";
 import ParentDashboard from "./pages/ParentDashboard";
 import UserManagement from "./pages/UserManagement";
+import MarksEntry from "./pages/MarksEntry";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -93,6 +95,22 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["admin"]}>
                   <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/marks"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "teacher"]}>
+                  <MarksEntry />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "teacher"]}>
+                  <Reports />
                 </ProtectedRoute>
               }
             />
