@@ -140,57 +140,57 @@ const Salary = () => {
 
   return (
     <DashboardLayout title={t("salary")} subtitle={isRTL ? "إدارة رواتب الموظفين" : "Manage staff salaries"}>
-      <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
+      <div className="space-y-4 sm:space-y-6" dir={isRTL ? "rtl" : "ltr"}>
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <Users className="h-6 w-6 text-primary" />
+            <CardContent className="pt-4 sm:pt-6 p-3 sm:p-6">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="p-2 sm:p-3 bg-primary/10 rounded-lg shrink-0">
+                  <Users className="h-4 w-4 sm:h-6 sm:w-6 text-primary" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t("staff")}</p>
-                  <p className="text-2xl font-bold">{salaryRecords.length}</p>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">{t("staff")}</p>
+                  <p className="text-lg sm:text-2xl font-bold">{salaryRecords.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-green-500/10 rounded-lg">
-                  <DollarSign className="h-6 w-6 text-green-500" />
+            <CardContent className="pt-4 sm:pt-6 p-3 sm:p-6">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="p-2 sm:p-3 bg-green-500/10 rounded-lg shrink-0">
+                  <DollarSign className="h-4 w-4 sm:h-6 sm:w-6 text-green-500" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{isRTL ? "إجمالي الرواتب" : "Total Payroll"}</p>
-                  <p className="text-2xl font-bold">{formatCurrency(totalPayroll)}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-500/10 rounded-lg">
-                  <Wallet className="h-6 w-6 text-blue-500" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{isRTL ? "المدفوع" : "Total Paid"}</p>
-                  <p className="text-2xl font-bold">{formatCurrency(totalPaid)}</p>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">{isRTL ? "الرواتب" : "Payroll"}</p>
+                  <p className="text-sm sm:text-2xl font-bold truncate">{formatCurrency(totalPayroll)}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-amber-500/10 rounded-lg">
-                  <TrendingUp className="h-6 w-6 text-amber-500" />
+            <CardContent className="pt-4 sm:pt-6 p-3 sm:p-6">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="p-2 sm:p-3 bg-blue-500/10 rounded-lg shrink-0">
+                  <Wallet className="h-4 w-4 sm:h-6 sm:w-6 text-blue-500" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{isRTL ? "المدفوعات" : "Payments"}</p>
-                  <p className="text-2xl font-bold">{payments.length}</p>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">{isRTL ? "المدفوع" : "Paid"}</p>
+                  <p className="text-sm sm:text-2xl font-bold truncate">{formatCurrency(totalPaid)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4 sm:pt-6 p-3 sm:p-6">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="p-2 sm:p-3 bg-amber-500/10 rounded-lg shrink-0">
+                  <TrendingUp className="h-4 w-4 sm:h-6 sm:w-6 text-amber-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">{isRTL ? "المدفوعات" : "Payments"}</p>
+                  <p className="text-lg sm:text-2xl font-bold">{payments.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -198,27 +198,27 @@ const Salary = () => {
         </div>
 
         <Tabs defaultValue="records">
-          <TabsList>
-            <TabsTrigger value="records">{isRTL ? "سجلات الرواتب" : "Salary Records"}</TabsTrigger>
-            <TabsTrigger value="payments">{t("paymentHistory")}</TabsTrigger>
+          <TabsList className="w-full sm:w-auto">
+            <TabsTrigger value="records" className="flex-1 sm:flex-none text-xs sm:text-sm">{isRTL ? "الرواتب" : "Records"}</TabsTrigger>
+            <TabsTrigger value="payments" className="flex-1 sm:flex-none text-xs sm:text-sm">{isRTL ? "المدفوعات" : "Payments"}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="records" className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4 justify-between">
-              <div className="relative flex-1 max-w-sm">
+          <TabsContent value="records" className="space-y-4 mt-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between">
+              <div className="relative flex-1 max-w-full sm:max-w-sm">
                 <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
                 <Input
                   placeholder={t("search")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={isRTL ? "pr-10" : "pl-10"}
+                  className={`${isRTL ? "pr-10" : "pl-10"} h-9`}
                 />
               </div>
               <Dialog open={salaryDialogOpen} onOpenChange={setSalaryDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {isRTL ? "إضافة راتب" : "Add Salary"}
+                  <Button className="w-full sm:w-auto h-9 text-sm">
+                    <Plus className="h-4 w-4 mr-1.5" />
+                    {isRTL ? "إضافة" : "Add Salary"}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md">
@@ -298,46 +298,51 @@ const Salary = () => {
             </div>
 
             <Card>
-              <CardContent className="p-0">
+              <CardContent className="p-0 overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{t("name")}</TableHead>
-                      <TableHead>{t("role")}</TableHead>
-                      <TableHead>{t("basicSalary")}</TableHead>
-                      <TableHead>{t("allowances")}</TableHead>
-                      <TableHead>{t("deductions")}</TableHead>
-                      <TableHead>{t("netSalary")}</TableHead>
+                      <TableHead className="text-xs sm:text-sm">{t("name")}</TableHead>
+                      <TableHead className="hidden sm:table-cell text-xs sm:text-sm">{t("role")}</TableHead>
+                      <TableHead className="hidden md:table-cell text-xs sm:text-sm">{t("basicSalary")}</TableHead>
+                      <TableHead className="hidden lg:table-cell text-xs sm:text-sm">{t("allowances")}</TableHead>
+                      <TableHead className="hidden lg:table-cell text-xs sm:text-sm">{t("deductions")}</TableHead>
+                      <TableHead className="text-xs sm:text-sm">{t("netSalary")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loadingRecords ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
+                        <TableCell colSpan={6} className="text-center py-8 text-sm">
                           {t("loading")}
                         </TableCell>
                       </TableRow>
                     ) : filteredRecords.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
+                        <TableCell colSpan={6} className="text-center py-8 text-sm">
                           {t("noData")}
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredRecords.map((record) => (
                         <TableRow key={record.id}>
-                          <TableCell className="font-medium">{record.staff?.full_name}</TableCell>
                           <TableCell>
-                            <Badge variant="outline">{record.staff?.role}</Badge>
+                            <div className="min-w-0">
+                              <span className="font-medium text-sm block truncate">{record.staff?.full_name}</span>
+                              <Badge variant="outline" className="text-xs sm:hidden mt-1">{record.staff?.role}</Badge>
+                            </div>
                           </TableCell>
-                          <TableCell>{formatCurrency(record.basic_salary)}</TableCell>
-                          <TableCell className="text-green-600">
+                          <TableCell className="hidden sm:table-cell">
+                            <Badge variant="outline" className="text-xs">{record.staff?.role}</Badge>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-sm">{formatCurrency(record.basic_salary)}</TableCell>
+                          <TableCell className="hidden lg:table-cell text-green-600 text-sm">
                             +{formatCurrency(record.allowances || 0)}
                           </TableCell>
-                          <TableCell className="text-red-600">
+                          <TableCell className="hidden lg:table-cell text-red-600 text-sm">
                             -{formatCurrency(record.deductions || 0)}
                           </TableCell>
-                          <TableCell className="font-bold">{formatCurrency(record.net_salary)}</TableCell>
+                          <TableCell className="font-bold text-sm">{formatCurrency(record.net_salary)}</TableCell>
                         </TableRow>
                       ))
                     )}
@@ -347,13 +352,13 @@ const Salary = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="payments" className="space-y-4">
+          <TabsContent value="payments" className="space-y-4 mt-4">
             <div className="flex justify-end">
               <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button>
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    {isRTL ? "تسجيل دفعة" : "Record Payment"}
+                  <Button className="w-full sm:w-auto h-9 text-sm">
+                    <CreditCard className="h-4 w-4 mr-1.5" />
+                    {isRTL ? "دفعة" : "Record Payment"}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md">
@@ -443,38 +448,45 @@ const Salary = () => {
             </div>
 
             <Card>
-              <CardContent className="p-0">
+              <CardContent className="p-0 overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{t("name")}</TableHead>
-                      <TableHead>{isRTL ? "المبلغ" : "Amount"}</TableHead>
-                      <TableHead>{t("paymentDate")}</TableHead>
-                      <TableHead>{t("paymentMethod")}</TableHead>
-                      <TableHead>{isRTL ? "الحالة" : "Status"}</TableHead>
+                      <TableHead className="text-xs sm:text-sm">{t("name")}</TableHead>
+                      <TableHead className="text-xs sm:text-sm">{isRTL ? "المبلغ" : "Amount"}</TableHead>
+                      <TableHead className="hidden sm:table-cell text-xs sm:text-sm">{t("paymentDate")}</TableHead>
+                      <TableHead className="hidden md:table-cell text-xs sm:text-sm">{t("paymentMethod")}</TableHead>
+                      <TableHead className="text-xs sm:text-sm">{isRTL ? "الحالة" : "Status"}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loadingPayments ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8">
+                        <TableCell colSpan={5} className="text-center py-8 text-sm">
                           {t("loading")}
                         </TableCell>
                       </TableRow>
                     ) : payments.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8">
+                        <TableCell colSpan={5} className="text-center py-8 text-sm">
                           {t("noData")}
                         </TableCell>
                       </TableRow>
                     ) : (
                       payments.map((payment) => (
                         <TableRow key={payment.id}>
-                          <TableCell className="font-medium">{payment.staff?.full_name}</TableCell>
-                          <TableCell className="font-bold">{formatCurrency(payment.amount)}</TableCell>
-                          <TableCell>{format(new Date(payment.payment_date), "PPP")}</TableCell>
                           <TableCell>
-                            <Badge variant="outline">
+                            <div className="min-w-0">
+                              <span className="font-medium text-sm block truncate">{payment.staff?.full_name}</span>
+                              <span className="text-xs text-muted-foreground sm:hidden">
+                                {format(new Date(payment.payment_date), "MMM d")}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-bold text-sm">{formatCurrency(payment.amount)}</TableCell>
+                          <TableCell className="hidden sm:table-cell text-sm">{format(new Date(payment.payment_date), "PPP")}</TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <Badge variant="outline" className="text-xs">
                               {payment.payment_method === "bank_transfer"
                                 ? t("bankTransfer")
                                 : payment.payment_method === "cash"
@@ -485,8 +497,8 @@ const Salary = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={payment.status === "completed" ? "default" : "secondary"}>
-                              {payment.status === "completed" ? t("completed") : t("pending")}
+                            <Badge variant={payment.status === "completed" ? "default" : "secondary"} className="text-xs">
+                              {payment.status === "completed" ? (isRTL ? "✓" : "✓") : (isRTL ? "..." : "...")}
                             </Badge>
                           </TableCell>
                         </TableRow>

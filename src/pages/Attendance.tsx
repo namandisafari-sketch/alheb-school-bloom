@@ -80,13 +80,13 @@ const Attendance = () => {
   return (
     <DashboardLayout title="Attendance" subtitle="Track daily learner attendance - Term 3, 2024">
       {/* Controls */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
           <Select value={selectedClassId} onValueChange={(value) => {
             setSelectedClassId(value);
             setLocalAttendance({});
           }}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full sm:w-48">
               <SelectValue placeholder="Select class" />
             </SelectTrigger>
             <SelectContent>
@@ -104,7 +104,7 @@ const Attendance = () => {
             </SelectContent>
           </Select>
           <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
             <input
               type="date"
               value={selectedDate}
@@ -112,13 +112,14 @@ const Attendance = () => {
                 setSelectedDate(e.target.value);
                 setLocalAttendance({});
               }}
-              className="bg-transparent text-sm outline-none"
+              className="bg-transparent text-sm outline-none w-full"
             />
           </div>
         </div>
         <Button 
           onClick={handleSaveAttendance} 
           disabled={!hasChanges || bulkMarkAttendance.isPending}
+          className="w-full sm:w-auto"
         >
           {bulkMarkAttendance.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Save Attendance
@@ -126,60 +127,60 @@ const Attendance = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="mt-6 grid gap-4 sm:grid-cols-4">
-        <div className="rounded-xl border border-border bg-card p-4 animate-slide-up">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <Users className="h-5 w-5 text-primary" />
+      <div className="mt-4 sm:mt-6 grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-4">
+        <div className="rounded-xl border border-border bg-card p-3 sm:p-4 animate-slide-up">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-semibold text-card-foreground">{learners.length}</p>
-              <p className="text-sm text-muted-foreground">Total</p>
+              <p className="text-lg sm:text-2xl font-semibold text-card-foreground">{learners.length}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Total</p>
             </div>
           </div>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4 animate-slide-up" style={{ animationDelay: "100ms" }}>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
-              <Check className="h-5 w-5 text-success" />
+        <div className="rounded-xl border border-border bg-card p-3 sm:p-4 animate-slide-up" style={{ animationDelay: "100ms" }}>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-success/10">
+              <Check className="h-4 w-4 sm:h-5 sm:w-5 text-success" />
             </div>
             <div>
-              <p className="text-2xl font-semibold text-card-foreground">{presentCount}</p>
-              <p className="text-sm text-muted-foreground">Present</p>
+              <p className="text-lg sm:text-2xl font-semibold text-card-foreground">{presentCount}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Present</p>
             </div>
           </div>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4 animate-slide-up" style={{ animationDelay: "200ms" }}>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
-              <X className="h-5 w-5 text-destructive" />
+        <div className="rounded-xl border border-border bg-card p-3 sm:p-4 animate-slide-up" style={{ animationDelay: "200ms" }}>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+              <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />
             </div>
             <div>
-              <p className="text-2xl font-semibold text-card-foreground">{absentCount}</p>
-              <p className="text-sm text-muted-foreground">Absent</p>
+              <p className="text-lg sm:text-2xl font-semibold text-card-foreground">{absentCount}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Absent</p>
             </div>
           </div>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4 animate-slide-up" style={{ animationDelay: "300ms" }}>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10">
-              <Clock className="h-5 w-5 text-warning" />
+        <div className="rounded-xl border border-border bg-card p-3 sm:p-4 animate-slide-up" style={{ animationDelay: "300ms" }}>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-warning/10">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-warning" />
             </div>
             <div>
-              <p className="text-2xl font-semibold text-card-foreground">{lateCount}</p>
-              <p className="text-sm text-muted-foreground">Late</p>
+              <p className="text-lg sm:text-2xl font-semibold text-card-foreground">{lateCount}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Late</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Attendance List */}
-      <div className="mt-6 rounded-xl border border-border bg-card animate-slide-up" style={{ animationDelay: "400ms" }}>
-        <div className="border-b border-border p-4">
-          <h3 className="font-display font-semibold text-card-foreground">
+      <div className="mt-4 sm:mt-6 rounded-xl border border-border bg-card animate-slide-up" style={{ animationDelay: "400ms" }}>
+        <div className="border-b border-border p-3 sm:p-4">
+          <h3 className="font-display text-sm sm:text-base font-semibold text-card-foreground">
             {selectedClass?.name || "Select a class"} - Attendance
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {selectedClass?.teacher_name || "No teacher assigned"} • {learners.length} learners
           </p>
         </div>
@@ -208,26 +209,26 @@ const Attendance = () => {
               return (
                 <div
                   key={learner.id}
-                  className="flex items-center justify-between p-4 transition-colors hover:bg-muted/30"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 transition-colors hover:bg-muted/30"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-medium text-primary">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs sm:text-sm font-medium text-primary">
                       {learner.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                     </div>
-                    <div>
-                      <p className="font-medium text-card-foreground">{learner.full_name}</p>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm sm:text-base text-card-foreground truncate">{learner.full_name}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         {learner.attendance?.check_in_time
                           ? `Checked in: ${learner.attendance.check_in_time.slice(0, 5)}`
                           : "Not recorded"}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
                     {config && StatusIcon && (
-                      <Badge className={config.color}>
+                      <Badge className={`${config.color} text-xs`}>
                         <StatusIcon className="mr-1 h-3 w-3" />
-                        {config.label}
+                        <span className="hidden sm:inline">{config.label}</span>
                       </Badge>
                     )}
                     <div className="flex gap-1">

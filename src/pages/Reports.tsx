@@ -107,15 +107,15 @@ const Reports = () => {
     <DashboardLayout title="Report Cards" subtitle="Generate and print learner reports">
       {/* Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Generate Reports</CardTitle>
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="text-base sm:text-lg">Generate Reports</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-4">
-            <div className="space-y-2">
-              <Label>Class</Label>
+          <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="text-xs sm:text-sm">Class</Label>
               <Select value={selectedClass} onValueChange={setSelectedClass}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 sm:h-10 text-sm">
                   <SelectValue placeholder="Select class" />
                 </SelectTrigger>
                 <SelectContent>
@@ -127,10 +127,10 @@ const Reports = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Term</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="text-xs sm:text-sm">Term</Label>
               <Select value={selectedTerm} onValueChange={(v) => setSelectedTerm(v as TermType)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 sm:h-10 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -142,10 +142,10 @@ const Reports = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Academic Year</Label>
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label className="text-xs sm:text-sm">Year</Label>
               <Select value={String(academicYear)} onValueChange={(v) => setAcademicYear(parseInt(v))}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9 sm:h-10 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -157,14 +157,16 @@ const Reports = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-end">
+            <div className="flex items-end col-span-2 md:col-span-1">
               <Button
                 onClick={handleBatchPrint}
                 disabled={selectedLearners.length === 0}
-                className="w-full"
+                className="w-full h-9 sm:h-10 text-sm"
               >
-                <Printer className="mr-2 h-4 w-4" />
-                Print Selected ({selectedLearners.length})
+                <Printer className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Print Selected</span>
+                <span className="sm:hidden">Print</span>
+                <span className="ml-1">({selectedLearners.length})</span>
               </Button>
             </div>
           </div>
@@ -173,16 +175,16 @@ const Reports = () => {
 
       {/* Learner Selection */}
       {selectedClass && (
-        <Card className="mt-6">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">
+        <Card className="mt-4 sm:mt-6">
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-6">
+            <CardTitle className="text-base sm:text-lg">
               Select Learners - {selectedClassData?.name}
             </CardTitle>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={selectAll}>
+              <Button variant="outline" size="sm" onClick={selectAll} className="text-xs sm:text-sm h-8">
                 Select All
               </Button>
-              <Button variant="outline" size="sm" onClick={deselectAll}>
+              <Button variant="outline" size="sm" onClick={deselectAll} className="text-xs sm:text-sm h-8">
                 Deselect All
               </Button>
             </div>
@@ -195,7 +197,7 @@ const Reports = () => {
             ) : classLearners.length === 0 ? (
               <p className="text-center py-8 text-muted-foreground">No learners in this class</p>
             ) : (
-              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {classLearners.map((learner) => {
                   const results = getLearnerResults(learner.id);
                   const hasResults = results.length > 0;
@@ -203,7 +205,7 @@ const Reports = () => {
                   return (
                     <div
                       key={learner.id}
-                      className={`flex items-center gap-3 rounded-lg border p-3 transition-colors ${
+                      className={`flex items-center gap-2 sm:gap-3 rounded-lg border p-2.5 sm:p-3 transition-colors ${
                         selectedLearners.includes(learner.id) ? "border-primary bg-primary/5" : "border-border"
                       }`}
                     >
@@ -211,15 +213,16 @@ const Reports = () => {
                         checked={selectedLearners.includes(learner.id)}
                         onCheckedChange={() => toggleLearner(learner.id)}
                         disabled={!hasResults}
+                        className="shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{learner.full_name}</p>
+                        <p className="font-medium text-sm truncate">{learner.full_name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {hasResults ? `${results.length} subjects recorded` : "No marks yet"}
+                          {hasResults ? `${results.length} subjects` : "No marks yet"}
                         </p>
                       </div>
                       {hasResults && (
-                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                       )}
                     </div>
                   );
