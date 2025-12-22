@@ -86,36 +86,36 @@ const Staff = () => {
   return (
     <DashboardLayout title="Staff & Workers" subtitle="Manage non-teaching staff and workers">
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-4 mb-4 sm:mb-6">
         {stats.map((stat) => (
           <div
             key={stat.value}
-            className="rounded-lg border border-border bg-card p-4 text-center"
+            className="rounded-lg border border-border bg-card p-2 sm:p-4 text-center"
           >
-            <div className={`mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full ${roleColors[stat.value] || "bg-muted"}`}>
-              {roleIcons[stat.value] || <Users className="h-5 w-5" />}
+            <div className={`mx-auto mb-1 sm:mb-2 flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full ${roleColors[stat.value] || "bg-muted"}`}>
+              {roleIcons[stat.value] || <Users className="h-4 w-4 sm:h-5 sm:w-5" />}
             </div>
-            <p className="text-2xl font-bold">{stat.count}</p>
-            <p className="text-xs text-muted-foreground">{stat.label}</p>
+            <p className="text-lg sm:text-2xl font-bold">{stat.count}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{stat.label}</p>
           </div>
         ))}
       </div>
 
       {/* Actions Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 gap-4 max-w-xl">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 flex-col sm:flex-row gap-2 sm:gap-4 max-w-xl">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search by name, email, or phone..."
+              placeholder="Search..."
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-full sm:w-[160px]">
               <SelectValue placeholder="Filter by role" />
             </SelectTrigger>
             <SelectContent>
@@ -129,7 +129,7 @@ const Staff = () => {
           </Select>
         </div>
         <AddStaffDialog>
-          <Button size="sm">
+          <Button size="sm" className="w-full sm:w-auto">
             <UserPlus className="mr-2 h-4 w-4" />
             Add Staff
           </Button>
@@ -137,7 +137,7 @@ const Staff = () => {
       </div>
 
       {/* Staff Table */}
-      <div className="mt-6 rounded-xl border border-border bg-card animate-slide-up">
+      <div className="mt-4 sm:mt-6 rounded-xl border border-border bg-card animate-slide-up overflow-x-auto">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -157,10 +157,10 @@ const Staff = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Qualification</TableHead>
-                <TableHead>Joined</TableHead>
+                <TableHead className="hidden sm:table-cell">Role</TableHead>
+                <TableHead className="hidden md:table-cell">Contact</TableHead>
+                <TableHead className="hidden lg:table-cell">Qualification</TableHead>
+                <TableHead className="hidden sm:table-cell">Joined</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -168,33 +168,36 @@ const Staff = () => {
               {filteredStaff.map((member) => (
                 <TableRow key={member.id}>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-full font-medium ${roleColors[member.role || ""] || "bg-primary/10 text-primary"}`}>
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className={`flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-medium ${roleColors[member.role || ""] || "bg-primary/10 text-primary"}`}>
                         {member.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                       </div>
-                      <div>
-                        <span className="font-medium">{member.full_name}</span>
+                      <div className="min-w-0">
+                        <span className="font-medium text-sm block truncate">{member.full_name}</span>
                         {member.email && (
-                          <p className="text-xs text-muted-foreground">{member.email}</p>
+                          <p className="text-xs text-muted-foreground truncate">{member.email}</p>
                         )}
+                        <Badge variant="outline" className={`${roleColors[member.role || ""]} text-xs sm:hidden mt-1`}>
+                          {getRoleLabel(member.role)}
+                        </Badge>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <Badge variant="outline" className={roleColors[member.role || ""]}>
                       {getRoleLabel(member.role)}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
+                  <TableCell className="hidden md:table-cell">
+                    <div className="flex items-center gap-1">
                       {member.phone && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Phone className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <Phone className="h-3.5 w-3.5" />
                         </Button>
                       )}
                       {member.email && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Mail className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <Mail className="h-3.5 w-3.5" />
                         </Button>
                       )}
                       {!member.phone && !member.email && (
@@ -202,12 +205,12 @@ const Staff = () => {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <span className="text-sm text-muted-foreground">
                       {member.qualification || "—"}
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <span className="text-sm text-muted-foreground">
                       {member.created_at
                         ? format(new Date(member.created_at), "MMM yyyy")
@@ -215,7 +218,7 @@ const Staff = () => {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button variant="ghost" size="icon" className="h-7 w-7">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </TableCell>
@@ -227,9 +230,9 @@ const Staff = () => {
       </div>
 
       {/* Summary */}
-      <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+      <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-sm text-muted-foreground">
         <span>
-          Showing {filteredStaff.length} of {nonTeacherStaff.length} staff members
+          Showing {filteredStaff.length} of {nonTeacherStaff.length} staff
         </span>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" disabled>
