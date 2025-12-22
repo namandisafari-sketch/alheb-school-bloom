@@ -11,13 +11,13 @@ const Classes = () => {
   return (
     <DashboardLayout title="Classes" subtitle="Uganda New Curriculum - P1 to P7 Structure">
       {/* Actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <p className="text-muted-foreground">{classes.length} active classes</p>
+          <p className="text-sm text-muted-foreground">{classes.length} active classes</p>
           <p className="text-xs text-muted-foreground">Term 3, 2024 Academic Year</p>
         </div>
         <AddClassDialog>
-          <Button size="sm">
+          <Button size="sm" className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Add Class
           </Button>
@@ -25,7 +25,7 @@ const Classes = () => {
       </div>
 
       {/* Classes Grid */}
-      <div className="mt-6">
+      <div className="mt-4 sm:mt-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -40,7 +40,7 @@ const Classes = () => {
             <p className="text-sm">Create your first class to get started</p>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
             {classes.map((cls, index) => {
               const capacity = cls.capacity || 40;
               const occupancy = (cls.student_count / capacity) * 100;
@@ -48,7 +48,7 @@ const Classes = () => {
               return (
                 <div
                   key={cls.id}
-                  className="card-hover rounded-xl border border-border bg-card p-6 animate-slide-up"
+                  className="card-hover rounded-xl border border-border bg-card p-4 sm:p-6 animate-slide-up"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   {/* Header */}
@@ -97,7 +97,7 @@ const Classes = () => {
                   </div>
 
                   {/* Actions */}
-                  <div className="mt-4 flex gap-2">
+                  <div className="mt-4 flex flex-col sm:flex-row gap-2">
                     <Button variant="outline" size="sm" className="flex-1">
                       View Details
                     </Button>

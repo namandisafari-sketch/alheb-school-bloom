@@ -12,13 +12,13 @@ const Teachers = () => {
   return (
     <DashboardLayout title="Teachers" subtitle="Manage teaching staff - Uganda New Curriculum">
       {/* Actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <p className="text-muted-foreground">{teachers.length} teachers</p>
+          <p className="text-sm text-muted-foreground">{teachers.length} teachers</p>
           <p className="text-xs text-muted-foreground">NCDC Certified Educators</p>
         </div>
         <AddTeacherDialog>
-          <Button size="sm">
+          <Button size="sm" className="w-full sm:w-auto">
             <UserPlus className="mr-2 h-4 w-4" />
             Add Teacher
           </Button>
@@ -26,7 +26,7 @@ const Teachers = () => {
       </div>
 
       {/* Teachers Grid */}
-      <div className="mt-6">
+      <div className="mt-4 sm:mt-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -41,11 +41,11 @@ const Teachers = () => {
             <p className="text-sm">Add your first teacher to get started</p>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
             {teachers.map((teacher, index) => (
               <div
                 key={teacher.id}
-                className="card-hover rounded-xl border border-border bg-card p-6 animate-slide-up"
+                className="card-hover rounded-xl border border-border bg-card p-4 sm:p-6 animate-slide-up"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 {/* Profile Header */}
