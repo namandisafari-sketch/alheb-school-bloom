@@ -1,17 +1,62 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useClasses } from "@/hooks/useClasses";
 import { useLearners } from "@/hooks/useLearners";
-import { useTermResults, useSubjects } from "@/hooks/useTermResults";
-import { Loader2, Printer, FileText } from "lucide-react";
+import {
+  useTermResults,
+  useSubjects,
+  useReportCards,
+  useUpsertReportCards,
+  useSetReportStatus,
+  ReportCardUpsert,
+} from "@/hooks/useTermResults";
+import {
+  Loader2,
+  Printer,
+  FileText,
+  Eye,
+  Send,
+  Lock,
+  Unlock,
+  Download,
+} from "lucide-react";
 import { ReportCard } from "@/components/reports/ReportCard";
 import { Database } from "@/integrations/supabase/types";
+import { computeAggregate } from "@/lib/grading";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import jsPDF from "jspdf";
+import { toPng } from "html-to-image";
+import JSZip from "jszip";
 
 type TermType = Database["public"]["Enums"]["term_type"];
 
@@ -24,169 +69,284 @@ const terms: { value: TermType; label: string }[] = [
 const Reports = () => {
   const [searchParams] = useSearchParams();
   const printRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
   const currentYear = new Date().getFullYear();
+  const { toast } = useToast();
+  const { isAdmin } = useAuth();
 
   const [selectedClass, setSelectedClass] = useState<string>(searchParams.get("class") || "");
-  const [selectedTerm, setSelectedTerm] = useState<TermType>((searchParams.get("term") as TermType) || "term_1");
-  const [academicYear, setAcademicYear] = useState<number>(parseInt(searchParams.get("year") || String(currentYear)));
+  const [selectedTerm, setSelectedTerm] = useState<TermType>(
+    (searchParams.get("term") as TermType) || "term_1",
+  );
+  const [academicYear, setAcademicYear] = useState<number>(
+    parseInt(searchParams.get("year") || String(currentYear)),
+  );
   const [selectedLearners, setSelectedLearners] = useState<string[]>([]);
+  const [previewLearnerId, setPreviewLearnerId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<null | "publish" | "unlock">(null);
 
   const { data: classes = [] } = useClasses();
   const { data: allLearners = [] } = useLearners();
   const selectedClassData = classes.find((c) => c.id === selectedClass);
   const { data: subjects = [] } = useSubjects(selectedClassData?.level);
-  const { data: termResults = [], isLoading } = useTermResults(selectedClass, selectedTerm, academicYear);
+  const { data: termResults = [], isLoading } = useTermResults(
+    selectedClass,
+    selectedTerm,
+    academicYear,
+  );
+  const { data: reportCards = [] } = useReportCards(
+    selectedClass,
+    selectedTerm,
+    academicYear,
+  );
+  const upsertReports = useUpsertReportCards();
+  const setStatus = useSetReportStatus();
 
-  const classLearners = allLearners.filter((l) => l.class_id === selectedClass);
+  const classLearners = useMemo(
+    () => allLearners.filter((l) => l.class_id === selectedClass),
+    [allLearners, selectedClass],
+  );
 
-  const toggleLearner = (learnerId: string) => {
-    setSelectedLearners((prev) =>
-      prev.includes(learnerId) ? prev.filter((id) => id !== learnerId) : [...prev, learnerId]
-    );
+  // Auto-compute & upsert positions/totals when results change (silent)
+  useEffect(() => {
+    if (!selectedClass || classLearners.length === 0 || termResults.length === 0) return;
+    const academicSubjects = subjects.filter((s) => s.category === "academic");
+    const islamicSubjects = subjects.filter((s) => s.category === "islamic");
+
+    const academicByLearner = classLearners.map((l) => {
+      const scores = academicSubjects
+        .map(
+          (s) => termResults.find((r) => r.learner_id === l.id && r.subject_id === s.id)?.score,
+        )
+        .filter((v): v is number => v != null);
+      const { total, average } = computeAggregate(scores);
+      return { id: l.id, total, average };
+    });
+    const islamicByLearner = classLearners.map((l) => {
+      const scores = islamicSubjects
+        .map(
+          (s) => termResults.find((r) => r.learner_id === l.id && r.subject_id === s.id)?.score,
+        )
+        .filter((v): v is number => v != null);
+      const { total } = computeAggregate(scores);
+      return { id: l.id, total };
+    });
+
+    const acRanked = [...academicByLearner].sort((a, b) => b.total - a.total);
+    const isRanked = [...islamicByLearner].sort((a, b) => b.total - a.total);
+
+    const rows: ReportCardUpsert[] = classLearners.map((l) => {
+      const ac = academicByLearner.find((x) => x.id === l.id)!;
+      const acPos = acRanked.findIndex((x) => x.id === l.id) + 1;
+      const isPos = isRanked.findIndex((x) => x.id === l.id) + 1;
+      const existing = reportCards.find((r) => r.learner_id === l.id);
+      // Don't overwrite if already locked/published
+      if (existing && existing.status !== "draft") return null as any;
+      return {
+        learner_id: l.id,
+        class_id: selectedClass,
+        term: selectedTerm,
+        academic_year: academicYear,
+        academic_total: ac.total || null,
+        academic_average: ac.average || null,
+        academic_position: ac.total ? acPos : null,
+        islamic_position: isRanked.find((x) => x.id === l.id)?.total ? isPos : null,
+        class_size: classLearners.length,
+        status: "draft",
+      };
+    }).filter(Boolean) as ReportCardUpsert[];
+
+    if (rows.length > 0) {
+      upsertReports.mutate(rows);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClass, selectedTerm, academicYear, termResults.length, subjects.length]);
+
+  const toggleLearner = (id: string) =>
+    setSelectedLearners((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  const selectAll = () => setSelectedLearners(classLearners.map((l) => l.id));
+  const deselectAll = () => setSelectedLearners([]);
+
+  const getLearnerResults = (id: string) => termResults.filter((r) => r.learner_id === id);
+  const getMeta = (id: string) => reportCards.find((r) => r.learner_id === id) ?? null;
+
+  // ─── Publish / lock ───────────────────────────────────────────────────────
+  const handlePublish = async (scope: "selected" | "class") => {
+    const ids =
+      scope === "selected"
+        ? reportCards.filter((r) => selectedLearners.includes(r.learner_id)).map((r) => r.id)
+        : reportCards.map((r) => r.id);
+    if (ids.length === 0) {
+      toast({ title: "Nothing to publish", description: "No reports found for selection." });
+      return;
+    }
+    await setStatus.mutateAsync({ ids, status: "locked" });
+    toast({
+      title: "Published & locked",
+      description: `${ids.length} report${ids.length === 1 ? "" : "s"} are now read-only.`,
+    });
   };
 
-  const selectAll = () => {
-    setSelectedLearners(classLearners.map((l) => l.id));
+  const handleUnlock = async () => {
+    const ids = reportCards
+      .filter((r) => selectedLearners.includes(r.learner_id))
+      .map((r) => r.id);
+    if (ids.length === 0) return;
+    await setStatus.mutateAsync({ ids, status: "draft" });
+    toast({ title: "Unlocked", description: `${ids.length} reports back to draft.` });
   };
 
-  const deselectAll = () => {
-    setSelectedLearners([]);
+  // ─── PDF export ───────────────────────────────────────────────────────────
+  const handleExportPDF = async () => {
+    const cards = printRef.current?.querySelectorAll<HTMLElement>(".report-card");
+    if (!cards || cards.length === 0) {
+      toast({ title: "Select learners first", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Generating PDF…", description: `${cards.length} report(s)` });
+    try {
+      const pdf = new jsPDF("p", "mm", "a4");
+      const w = 210;
+      for (let i = 0; i < cards.length; i++) {
+        const dataUrl = await toPng(cards[i], { quality: 0.95, pixelRatio: 2, backgroundColor: "#ffffff" });
+        const img = new Image();
+        await new Promise<void>((resolve) => {
+          img.onload = () => resolve();
+          img.src = dataUrl;
+        });
+        const h = (img.height * w) / img.width;
+        if (i > 0) pdf.addPage();
+        pdf.addImage(dataUrl, "PNG", 0, 0, w, h);
+      }
+      pdf.save(`reports-${selectedClassData?.name}-${selectedTerm}-${academicYear}.pdf`);
+      toast({ title: "PDF ready", description: "Download started." });
+    } catch (e: any) {
+      toast({ title: "Export failed", description: e.message, variant: "destructive" });
+    }
   };
 
-  const handleBatchPrint = () => {
-    const printContent = printRef.current;
-    if (!printContent) return;
+  const handleExportZIP = async () => {
+    const cards = printRef.current?.querySelectorAll<HTMLElement>(".report-card");
+    if (!cards || cards.length === 0) return;
+    const zip = new JSZip();
+    toast({ title: "Generating images…" });
+    for (let i = 0; i < cards.length; i++) {
+      const dataUrl = await toPng(cards[i], { quality: 0.95, pixelRatio: 2, backgroundColor: "#ffffff" });
+      const base64 = dataUrl.split(",")[1];
+      const learnerName =
+        cards[i].getAttribute("data-learner") || `learner-${i + 1}`;
+      zip.file(`${learnerName}.png`, base64, { base64: true });
+    }
+    const blob = await zip.generateAsync({ type: "blob" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `reports-${selectedClassData?.name}-${selectedTerm}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Report Cards - ${selectedClassData?.name} - ${selectedTerm.replace("_", " ").toUpperCase()}</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Times New Roman', serif; font-size: 12pt; }
-            .report-card { page-break-after: always; padding: 20px; max-width: 210mm; margin: 0 auto; }
-            .report-card:last-child { page-break-after: auto; }
-            .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
-            .school-name { font-size: 18pt; font-weight: bold; text-transform: uppercase; }
-            .school-motto { font-style: italic; font-size: 10pt; }
-            .report-title { font-size: 14pt; font-weight: bold; margin-top: 10px; text-transform: uppercase; }
-            .student-info { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 15px; font-size: 11pt; }
-            .info-row { display: flex; gap: 5px; }
-            .info-label { font-weight: bold; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-            th, td { border: 1px solid #000; padding: 6px 8px; text-align: left; font-size: 10pt; }
-            th { background-color: #f0f0f0; font-weight: bold; }
-            .competency-key { font-size: 9pt; margin-bottom: 10px; }
-            .remarks-section { margin-top: 15px; }
-            .remarks-box { border: 1px solid #000; padding: 10px; min-height: 50px; margin-bottom: 10px; }
-            .signature-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 30px; }
-            .signature-line { border-top: 1px solid #000; padding-top: 5px; text-align: center; font-size: 10pt; }
-            @media print {
-              body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-            }
-          </style>
-        </head>
-        <body>
-          ${printContent.innerHTML}
-        </body>
-      </html>
+  const handlePrint = () => {
+    if (!printRef.current) return;
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(`
+      <!DOCTYPE html><html><head><title>Reports</title>
+      <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif}
+        .report-card{page-break-after:always}
+        .report-card:last-child{page-break-after:auto}
+        @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+      </style></head><body>${printRef.current.innerHTML}</body></html>
     `);
-    printWindow.document.close();
-    printWindow.print();
+    win.document.close();
+    setTimeout(() => win.print(), 500);
   };
 
-  const getLearnerResults = (learnerId: string) => {
-    return termResults.filter((r) => r.learner_id === learnerId);
-  };
+  const previewLearner = previewLearnerId
+    ? classLearners.find((l) => l.id === previewLearnerId)
+    : null;
 
   return (
-    <DashboardLayout title="Report Cards" subtitle="Generate and print learner reports">
+    <DashboardLayout title="Report Cards" subtitle="Generate, preview, publish & lock learner reports">
       {/* Filters */}
       <Card>
-        <CardHeader className="pb-3 sm:pb-6">
-          <CardTitle className="text-base sm:text-lg">Generate Reports</CardTitle>
-        </CardHeader>
+        <CardHeader className="pb-3"><CardTitle className="text-base sm:text-lg">Generate</CardTitle></CardHeader>
         <CardContent>
-          <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-4">
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label className="text-xs sm:text-sm">Class</Label>
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Class</Label>
               <Select value={selectedClass} onValueChange={setSelectedClass}>
-                <SelectTrigger className="h-9 sm:h-10 text-sm">
-                  <SelectValue placeholder="Select class" />
-                </SelectTrigger>
+                <SelectTrigger className="h-9"><SelectValue placeholder="Select class" /></SelectTrigger>
                 <SelectContent>
-                  {classes.map((cls) => (
-                    <SelectItem key={cls.id} value={cls.id}>
-                      {cls.name}
-                    </SelectItem>
-                  ))}
+                  {classes.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label className="text-xs sm:text-sm">Term</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Term</Label>
               <Select value={selectedTerm} onValueChange={(v) => setSelectedTerm(v as TermType)}>
-                <SelectTrigger className="h-9 sm:h-10 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {terms.map((term) => (
-                    <SelectItem key={term.value} value={term.value}>
-                      {term.label}
-                    </SelectItem>
-                  ))}
+                  {terms.map((t) => (<SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5 sm:space-y-2">
-              <Label className="text-xs sm:text-sm">Year</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Year</Label>
               <Select value={String(academicYear)} onValueChange={(v) => setAcademicYear(parseInt(v))}>
-                <SelectTrigger className="h-9 sm:h-10 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {[currentYear, currentYear - 1, currentYear - 2].map((year) => (
-                    <SelectItem key={year} value={String(year)}>
-                      {year}
-                    </SelectItem>
+                  {[currentYear, currentYear - 1, currentYear - 2].map((y) => (
+                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-end col-span-2 md:col-span-1">
-              <Button
-                onClick={handleBatchPrint}
-                disabled={selectedLearners.length === 0}
-                className="w-full h-9 sm:h-10 text-sm"
-              >
-                <Printer className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Print Selected</span>
-                <span className="sm:hidden">Print</span>
-                <span className="ml-1">({selectedLearners.length})</span>
-              </Button>
+            <div className="flex items-end">
+              <Badge variant="secondary" className="h-9 w-full justify-center">
+                {selectedLearners.length} selected
+              </Badge>
             </div>
           </div>
+
+          {/* Action bar */}
+          {selectedClass && (
+            <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
+              <Button size="sm" variant="outline" onClick={handlePrint} disabled={selectedLearners.length === 0}>
+                <Printer className="mr-1.5 h-3.5 w-3.5" />Print
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleExportPDF} disabled={selectedLearners.length === 0}>
+                <Download className="mr-1.5 h-3.5 w-3.5" />PDF
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleExportZIP} disabled={selectedLearners.length === 0}>
+                <Download className="mr-1.5 h-3.5 w-3.5" />PNG ZIP
+              </Button>
+              <Button size="sm" onClick={() => setConfirmAction("publish")} disabled={selectedLearners.length === 0}>
+                <Send className="mr-1.5 h-3.5 w-3.5" />Publish & Lock
+              </Button>
+              <Button size="sm" variant="default" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handlePublish("class")}>
+                <Send className="mr-1.5 h-3.5 w-3.5" />Publish whole class
+              </Button>
+              {isAdmin && (
+                <Button size="sm" variant="ghost" onClick={() => setConfirmAction("unlock")} disabled={selectedLearners.length === 0}>
+                  <Unlock className="mr-1.5 h-3.5 w-3.5" />Unlock
+                </Button>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Learner Selection */}
+      {/* Learner list */}
       {selectedClass && (
         <Card className="mt-4 sm:mt-6">
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-6">
-            <CardTitle className="text-base sm:text-lg">
-              Select Learners - {selectedClassData?.name}
-            </CardTitle>
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
+            <CardTitle className="text-base sm:text-lg">{selectedClassData?.name} — Learners</CardTitle>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={selectAll} className="text-xs sm:text-sm h-8">
-                Select All
-              </Button>
-              <Button variant="outline" size="sm" onClick={deselectAll} className="text-xs sm:text-sm h-8">
-                Deselect All
-              </Button>
+              <Button variant="outline" size="sm" onClick={selectAll} className="h-8">Select all</Button>
+              <Button variant="outline" size="sm" onClick={deselectAll} className="h-8">Clear</Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -195,35 +355,54 @@ const Reports = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : classLearners.length === 0 ? (
-              <p className="text-center py-8 text-muted-foreground">No learners in this class</p>
+              <p className="text-center py-8 text-muted-foreground text-sm">No learners in this class.</p>
             ) : (
-              <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {classLearners.map((learner) => {
-                  const results = getLearnerResults(learner.id);
-                  const hasResults = results.length > 0;
-                  
+              <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {classLearners.map((l) => {
+                  const results = getLearnerResults(l.id);
+                  const meta = getMeta(l.id);
+                  const has = results.length > 0;
+                  const isSel = selectedLearners.includes(l.id);
                   return (
                     <div
-                      key={learner.id}
-                      className={`flex items-center gap-2 sm:gap-3 rounded-lg border p-2.5 sm:p-3 transition-colors ${
-                        selectedLearners.includes(learner.id) ? "border-primary bg-primary/5" : "border-border"
+                      key={l.id}
+                      className={`flex items-center gap-2 rounded-lg border p-2.5 transition-colors ${
+                        isSel ? "border-primary bg-primary/5" : "border-border"
                       }`}
                     >
                       <Checkbox
-                        checked={selectedLearners.includes(learner.id)}
-                        onCheckedChange={() => toggleLearner(learner.id)}
-                        disabled={!hasResults}
+                        checked={isSel}
+                        onCheckedChange={() => toggleLearner(l.id)}
+                        disabled={!has}
                         className="shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{learner.full_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {hasResults ? `${results.length} subjects` : "No marks yet"}
-                        </p>
+                        <p className="font-medium text-sm truncate">{l.full_name}</p>
+                        <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                          <span className="text-xs text-muted-foreground">
+                            {has ? `${results.length} subjects` : "No marks"}
+                          </span>
+                          {meta?.academic_position && (
+                            <Badge variant="outline" className="text-[10px] h-4 px-1">
+                              #{meta.academic_position}
+                            </Badge>
+                          )}
+                          {meta?.status === "locked" && (
+                            <Badge className="text-[10px] h-4 px-1 bg-emerald-600">
+                              <Lock className="h-2.5 w-2.5 mr-0.5" />locked
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      {hasResults && (
-                        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0"
+                        onClick={() => setPreviewLearnerId(l.id)}
+                        disabled={!has}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   );
                 })}
@@ -233,28 +412,80 @@ const Reports = () => {
         </Card>
       )}
 
-      {/* Hidden Print Content */}
-      <div ref={printRef} className="hidden">
-        {selectedLearners.map((learnerId) => {
-          const learner = classLearners.find((l) => l.id === learnerId);
-          const results = getLearnerResults(learnerId);
-          
+      {/* Hidden print container */}
+      <div ref={printRef} className="absolute -left-[9999px] top-0">
+        {selectedLearners.map((id) => {
+          const learner = classLearners.find((l) => l.id === id);
           if (!learner) return null;
-          
           return (
-            <ReportCard
-              key={learnerId}
-              learner={learner}
-              results={results}
-              subjects={subjects}
-              className={selectedClassData?.name || ""}
-              term={selectedTerm}
-              academicYear={academicYear}
-              teacherName={selectedClassData?.teacher_name || ""}
-            />
+            <div key={id} data-learner={learner.full_name.replace(/\s+/g, "_")}>
+              <ReportCard
+                learner={learner}
+                results={getLearnerResults(id)}
+                subjects={subjects}
+                className={selectedClassData?.name || ""}
+                classLevel={selectedClassData?.level}
+                term={selectedTerm}
+                academicYear={academicYear}
+                teacherName={selectedClassData?.teacher_name || ""}
+                meta={getMeta(id)}
+              />
+            </div>
           );
         })}
       </div>
+
+      {/* Preview dialog */}
+      <Dialog open={!!previewLearner} onOpenChange={(o) => !o && setPreviewLearnerId(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto no-scrollbar">
+          <DialogHeader>
+            <DialogTitle>Preview — {previewLearner?.full_name}</DialogTitle>
+          </DialogHeader>
+          {previewLearner && (
+            <div ref={previewRef}>
+              <ReportCard
+                learner={previewLearner}
+                results={getLearnerResults(previewLearner.id)}
+                subjects={subjects}
+                className={selectedClassData?.name || ""}
+                classLevel={selectedClassData?.level}
+                term={selectedTerm}
+                academicYear={academicYear}
+                teacherName={selectedClassData?.teacher_name || ""}
+                meta={getMeta(previewLearner.id)}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm dialogs */}
+      <AlertDialog open={confirmAction !== null} onOpenChange={(o) => !o && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction === "publish" ? "Publish & lock reports?" : "Unlock reports?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === "publish"
+                ? `This will lock ${selectedLearners.length} report(s). Teachers will no longer be able to edit them. Only admins can unlock.`
+                : `This will revert ${selectedLearners.length} report(s) to draft so teachers can edit them again.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmAction === "publish") handlePublish("selected");
+                if (confirmAction === "unlock") handleUnlock();
+                setConfirmAction(null);
+              }}
+            >
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
