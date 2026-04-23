@@ -1,17 +1,11 @@
 import { Users } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-
-const classes = [
-  { name: "Primary 1 (P1)", students: 32, capacity: 40, teacher: "Ustaz Ibrahim" },
-  { name: "Primary 2 (P2)", students: 35, capacity: 40, teacher: "Ustazah Amina" },
-  { name: "Primary 3 (P3)", students: 38, capacity: 40, teacher: "Ustaz Ahmed" },
-  { name: "Primary 4 (P4)", students: 30, capacity: 40, teacher: "Ustazah Fatima" },
-  { name: "Primary 5 (P5)", students: 28, capacity: 40, teacher: "Ustaz Mohamed" },
-  { name: "Primary 6 (P6)", students: 25, capacity: 40, teacher: "Ustazah Khadija" },
-  { name: "Primary 7 (P7)", students: 22, capacity: 40, teacher: "Ustaz Yusuf" },
-];
+import { useClasses } from "@/hooks/useClasses";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const ClassOverview = () => {
+  const { data: classes, isLoading } = useClasses();
+
   return (
     <div className="rounded-xl border border-border bg-card p-6 animate-slide-up" style={{ animationDelay: "400ms" }}>
       <div className="flex items-center justify-between">
@@ -22,25 +16,36 @@ export const ClassOverview = () => {
           <p className="text-xs text-muted-foreground">Uganda New Curriculum Structure</p>
         </div>
         <span className="text-sm text-muted-foreground">
-          {classes.length} Classes
+          {classes?.length ?? 0} Classes
         </span>
       </div>
       <div className="mt-4 space-y-4">
-        {classes.map((cls) => (
-          <div key={cls.name} className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-card-foreground">{cls.name}</span>
-                <span className="text-xs text-muted-foreground">({cls.teacher})</span>
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)
+        ) : !classes?.length ? (
+          <p className="text-sm text-muted-foreground text-center py-4">No classes yet</p>
+        ) : (
+          classes.map((cls) => {
+            const capacity = cls.capacity || 40;
+            return (
+              <div key={cls.id} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-card-foreground">{cls.name}</span>
+                    {cls.teacher_name && (
+                      <span className="text-xs text-muted-foreground">({cls.teacher_name})</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    {cls.student_count}/{capacity}
+                  </div>
+                </div>
+                <Progress value={(cls.student_count / capacity) * 100} className="h-2" />
               </div>
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Users className="h-4 w-4" />
-                {cls.students}/{cls.capacity}
-              </div>
-            </div>
-            <Progress value={(cls.students / cls.capacity) * 100} className="h-2" />
-          </div>
-        ))}
+            );
+          })
+        )}
       </div>
     </div>
   );
