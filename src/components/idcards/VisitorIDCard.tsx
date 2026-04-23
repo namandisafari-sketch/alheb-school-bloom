@@ -59,6 +59,7 @@ export const VisitorIDCard = ({
   schoolLogoUrl,
   isRTL = false,
   variant,
+  side = "front",
 }: VisitorIDCardProps) => {
   const v = VARIANTS[variant];
 
