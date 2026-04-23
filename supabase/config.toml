@@ -1,13 +1,1 @@
-project_id = "gnzfznxmtvedxchckssu"
-
-[functions.create-admin]
-verify_jwt = false
-
-[functions.add-admin-user]
-verify_jwt = false
-
-[functions.ocr-extract]
-verify_jwt = true
-
-[functions.send-notification]
-verify_jwt = true
+project_id = "oxkmmnxraazmnzhpyydc"
