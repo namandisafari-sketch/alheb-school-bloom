@@ -24,9 +24,11 @@ import { useLearners } from "@/hooks/useLearners";
 import { useClasses } from "@/hooks/useClasses";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useIdCardSettings } from "@/hooks/useIdCardSettings";
-import { Search, Download, CreditCard, User, ChevronDown, Loader2, Package } from "lucide-react";
+import { Search, Download, CreditCard, User, ChevronDown, Loader2, Package, UserCheck } from "lucide-react";
 import { StaffIDCard } from "@/components/idcards/StaffIDCard";
 import { StudentIDCard } from "@/components/idcards/StudentIDCard";
+import { VisitorIDCard } from "@/components/idcards/VisitorIDCard";
+import { useVisitors, useVisitorVisits } from "@/hooks/useVisitors";
 import { toPng } from "html-to-image";
 import { toast } from "@/hooks/use-toast";
 import JSZip from "jszip";
@@ -248,6 +250,10 @@ const IDCards = () => {
             <TabsTrigger value="students" className="gap-2">
               <User className="h-4 w-4" />
               {t("studentIdCards")}
+            </TabsTrigger>
+            <TabsTrigger value="visitors" className="gap-2">
+              <UserCheck className="h-4 w-4" />
+              Visitor IDs
             </TabsTrigger>
           </TabsList>
 
