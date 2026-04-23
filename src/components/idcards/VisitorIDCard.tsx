@@ -88,6 +88,8 @@ export const VisitorIDCard = ({
       ? new Date(new Date().setFullYear(new Date().getFullYear() + 1))
       : new Date(new Date().setFullYear(new Date().getFullYear() + 10)); // guardian-pickup ≈ permanent
 
+  const isPermanentPickup = variant === "guardian-pickup";
+
   const labels = isRTL
     ? {
         title: v.titleAr,
@@ -100,13 +102,17 @@ export const VisitorIDCard = ({
         host: "المضيف",
         phone: "الهاتف",
         issued: "صدرت",
-        validUntil: variant === "day-pass" ? "صالحة حتى" : "صالحة حتى",
+        validUntil: isPermanentPickup ? "صالحة (دائمة)" : "صالحة حتى",
         serial: "رقم تسلسلي",
         learner: "الطالب",
         admission: "رقم القبول",
         class: "الصف",
         signature: "توقيع المسؤول",
-        warning: "ممتلكات المدرسة. يجب إرجاعها عند المغادرة. أي إساءة استخدام تعرض حاملها للمساءلة.",
+        warning: isPermanentPickup
+          ? "ملك ولي الأمر – يحملها في كل زيارة. لا تُسلَّم لأي شخص آخر. أبلغ الإدارة فوراً عند الفقد."
+          : variant === "day-pass"
+          ? "تصريح يوم واحد – يُلغى تلقائياً عند تسجيل الخروج. يجب الإعادة عند المغادرة."
+          : "ممتلكات المدرسة. يجب إرجاعها عند انتهاء الصلاحية. أي إساءة استخدام تعرض حاملها للمساءلة.",
         verify: "تحقق برمز QR",
       }
     : {
@@ -120,13 +126,17 @@ export const VisitorIDCard = ({
         host: "Host",
         phone: "Phone",
         issued: "Issued",
-        validUntil: variant === "day-pass" ? "Valid Until" : "Valid Until",
+        validUntil: isPermanentPickup ? "Validity (Permanent)" : "Valid Until",
         serial: "Serial",
         learner: "Learner",
         admission: "Adm. No.",
         class: "Class",
         signature: "Authorised Signature",
-        warning: "Property of the school. Must be worn visibly and returned on exit. Misuse will be prosecuted.",
+        warning: isPermanentPickup
+          ? "Property of the guardian — carry on EVERY visit. Do NOT surrender at the gate. Report loss immediately."
+          : variant === "day-pass"
+          ? "Single-day pass — auto-revoked at check-out. Must be returned on exit."
+          : "Property of the school. Must be returned on expiry. Misuse will be prosecuted.",
         verify: "Scan QR to verify",
       };
 
