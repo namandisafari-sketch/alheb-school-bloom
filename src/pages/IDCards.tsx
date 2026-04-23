@@ -559,10 +559,10 @@ const VisitorIdSection = ({
             </Select>
             <Button
               disabled={!pickupLearner}
-              onClick={() => pickupLearner && exportCard(pickupRef, `${pickupLearner.full_name}_PICKUP`)}
+              onClick={() => pickupLearner && exportCard(pickupRef, pickupBackRef, `${pickupLearner.full_name}_PICKUP`)}
             >
               <Download className="h-4 w-4 mr-2" />
-              Print Pick-Up Pass
+              Print Pick-Up Pass (Front + Back)
             </Button>
           </div>
           {pickupLearner && !pickupLearner.guardian_id && (
@@ -570,7 +570,7 @@ const VisitorIdSection = ({
               ⚠ This learner has no guardian on file. Edit the learner to add guardian details for a complete pass.
             </p>
           )}
-          <div className="flex justify-center pt-2">
+          <div className="flex flex-wrap justify-center gap-6 pt-2">
             <div ref={pickupRef} className="inline-block">
               {pickupLearner ? (
                 <VisitorIDCard
@@ -580,9 +580,25 @@ const VisitorIdSection = ({
                   schoolLogoUrl={schoolLogoUrl}
                   isRTL={isRTL}
                   variant="guardian-pickup"
+                  side="front"
                 />
               ) : (
                 <Placeholder label="Select a learner to issue a pick-up pass" />
+              )}
+            </div>
+            <div ref={pickupBackRef} className="inline-block">
+              {pickupLearner ? (
+                <VisitorIDCard
+                  visitor={guardianVisitor}
+                  learner={pickupLearner}
+                  schoolName={schoolName}
+                  schoolLogoUrl={schoolLogoUrl}
+                  isRTL={isRTL}
+                  variant="guardian-pickup"
+                  side="back"
+                />
+              ) : (
+                <Placeholder label="Back side preview" />
               )}
             </div>
           </div>
@@ -610,16 +626,23 @@ const VisitorIdSection = ({
                 ))}
               </SelectContent>
             </Select>
-            <Button disabled={!visit} onClick={() => visit && exportCard(dayRef, visit.visitor_name)}>
-              <Download className="h-4 w-4 mr-2" />Print Day Pass
+            <Button disabled={!visit} onClick={() => visit && exportCard(dayRef, dayBackRef, visit.visitor_name)}>
+              <Download className="h-4 w-4 mr-2" />Print Day Pass (Front + Back)
             </Button>
           </div>
-          <div className="flex justify-center pt-2">
+          <div className="flex flex-wrap justify-center gap-6 pt-2">
             <div ref={dayRef} className="inline-block">
               {visit ? (
-                <VisitorIDCard visit={visit} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="day-pass" />
+                <VisitorIDCard visit={visit} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="day-pass" side="front" />
               ) : (
                 <Placeholder label="Check in a visitor to print a day pass" />
+              )}
+            </div>
+            <div ref={dayBackRef} className="inline-block">
+              {visit ? (
+                <VisitorIDCard visit={visit} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="day-pass" side="back" />
+              ) : (
+                <Placeholder label="Back side preview" />
               )}
             </div>
           </div>
@@ -645,16 +668,23 @@ const VisitorIdSection = ({
                 ))}
               </SelectContent>
             </Select>
-            <Button disabled={!visitor} onClick={() => visitor && exportCard(reusableRef, visitor.full_name)}>
-              <Download className="h-4 w-4 mr-2" />Print Card
+            <Button disabled={!visitor} onClick={() => visitor && exportCard(reusableRef, reusableBackRef, visitor.full_name)}>
+              <Download className="h-4 w-4 mr-2" />Print Card (Front + Back)
             </Button>
           </div>
-          <div className="flex justify-center pt-2">
+          <div className="flex flex-wrap justify-center gap-6 pt-2">
             <div ref={reusableRef} className="inline-block">
               {visitor ? (
-                <VisitorIDCard visitor={visitor} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="reusable" />
+                <VisitorIDCard visitor={visitor} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="reusable" side="front" />
               ) : (
                 <Placeholder label="Add recurring visitors in the Visitors page" />
+              )}
+            </div>
+            <div ref={reusableBackRef} className="inline-block">
+              {visitor ? (
+                <VisitorIDCard visitor={visitor} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="reusable" side="back" />
+              ) : (
+                <Placeholder label="Back side preview" />
               )}
             </div>
           </div>
