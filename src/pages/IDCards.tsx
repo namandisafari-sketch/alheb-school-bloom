@@ -500,16 +500,28 @@ const VisitorIdSection = ({
   learners: any[];
 }) => {
   const { data: visits = [] } = useVisitorVisits("active");
+  const { data: allVisits = [] } = useVisitorVisits("all");
   const { data: visitors = [] } = useVisitors();
   const [visitId, setVisitId] = useState<string>("");
   const [visitorId, setVisitorId] = useState<string>("");
   const [pickupLearnerId, setPickupLearnerId] = useState<string>("");
+  const [reentryVisitId, setReentryVisitId] = useState<string>("");
+  const [reentryDuration, setReentryDuration] = useState<number>(60);
+  const [reentryWidth, setReentryWidth] = useState<54 | 80>(80);
   const dayRef = useRef<HTMLDivElement>(null);
   const dayBackRef = useRef<HTMLDivElement>(null);
   const reusableRef = useRef<HTMLDivElement>(null);
   const reusableBackRef = useRef<HTMLDivElement>(null);
   const pickupRef = useRef<HTMLDivElement>(null);
   const pickupBackRef = useRef<HTMLDivElement>(null);
+  const reentryRef = useRef<HTMLDivElement>(null);
+
+  // Visitors who have checked out — eligible for emergency re-entry slip
+  const checkedOutVisits = useMemo(
+    () => allVisits.filter((v) => v.status === "checked_out").slice(0, 50),
+    [allVisits],
+  );
+  const reentryVisit = checkedOutVisits.find((v) => v.id === reentryVisitId);
 
   const visit = visits.find((v) => v.id === visitId);
   const visitor = visitors.find((v) => v.id === visitorId);
