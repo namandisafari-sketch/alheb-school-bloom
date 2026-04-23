@@ -551,12 +551,27 @@ const VisitorIdSection = ({
   const pickupIssues = useMemo(() => {
     if (!pickupLearner) return [];
     const issues: { level: "error" | "warn"; msg: string }[] = [];
+
+    // Learner must be active
+    if (pickupLearner.status && pickupLearner.status !== "active") {
+      issues.push({
+        level: "error",
+        msg: `Learner record is "${pickupLearner.status}" — pick-up pass cannot be issued for an inactive learner.`,
+      });
+    }
+
     if (!pickupLearner.guardian_id) {
-      issues.push({ level: "error", msg: "No guardian on file for this learner. Add a guardian on the learner record before printing." });
+      issues.push({
+        level: "error",
+        msg: "No guardian on file for this learner. Add a guardian on the learner record before printing.",
+      });
+    } else if (pickupLearner.guardian_id && guardianRecord === null) {
+      // Query resolved but the guardian row could not be found → linked record is missing/inactive
+      issues.push({
+        level: "error",
+        msg: "Linked guardian record is missing or has been removed — the pick-up pass is invalid until a guardian is re-linked.",
+      });
     } else {
-      if (!guardianRecord && pickupLearner.guardian_id) {
-        // still loading or missing
-      }
       if (!guardianVisitor?.phone) {
         issues.push({ level: "warn", msg: "Guardian phone is missing — verification calls will not be possible." });
       }
@@ -586,6 +601,12 @@ const VisitorIdSection = ({
       issues.push({ level: "error", msg: "This visit has already been checked out — the day pass is no longer valid." });
     } else if (!sameDay) {
       issues.push({ level: "error", msg: `Day pass is from ${checkedIn.toLocaleDateString()} and has expired. Re-check the visitor in for today.` });
+    }
+    if (!visit.appointment_id) {
+      issues.push({
+        level: "error",
+        msg: "No appointment linked to this visit. Non-parent visitors must have a valid appointment verified at the gate before a day pass can be printed.",
+      });
     }
     if (!visit.visitor_phone) issues.push({ level: "warn", msg: "Visitor phone is missing." });
     if (!visit.visitor_photo_url) issues.push({ level: "warn", msg: "No visitor photo captured at check-in." });
