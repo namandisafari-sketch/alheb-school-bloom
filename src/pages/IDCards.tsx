@@ -564,3 +564,5 @@ const VisitorIdSection = ({
     </div>
   );
 };
+
+export default IDCards;
