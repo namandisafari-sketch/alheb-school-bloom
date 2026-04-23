@@ -726,10 +726,17 @@ const VisitorIdSection = ({
                 ))}
               </SelectContent>
             </Select>
-            <Button disabled={!visit} onClick={() => visit && exportCard(dayRef, dayBackRef, visit.visitor_name)}>
+            <Button disabled={!visit || hasBlockingIssue(dayIssues)} onClick={() => visit && exportCard(dayRef, dayBackRef, visit.visitor_name)}>
               <Download className="h-4 w-4 mr-2" />Print Day Pass (Front + Back)
             </Button>
           </div>
+          {visit && (
+            <ValidationBanner
+              issues={dayIssues}
+              okLabel="Day pass is valid for today. Visitor is currently on-site."
+              context="Day pass validation"
+            />
+          )}
           <div className="flex flex-wrap justify-center gap-6 pt-2">
             <div ref={dayRef} className="inline-block">
               {visit ? (
@@ -768,10 +775,17 @@ const VisitorIdSection = ({
                 ))}
               </SelectContent>
             </Select>
-            <Button disabled={!visitor} onClick={() => visitor && exportCard(reusableRef, reusableBackRef, visitor.full_name)}>
+            <Button disabled={!visitor || hasBlockingIssue(reusableIssues)} onClick={() => visitor && exportCard(reusableRef, reusableBackRef, visitor.full_name)}>
               <Download className="h-4 w-4 mr-2" />Print Card (Front + Back)
             </Button>
           </div>
+          {visitor && (
+            <ValidationBanner
+              issues={reusableIssues}
+              okLabel="Visitor record is complete and authorised."
+              context="Recurring visitor validation"
+            />
+          )}
           <div className="flex flex-wrap justify-center gap-6 pt-2">
             <div ref={reusableRef} className="inline-block">
               {visitor ? (
@@ -795,3 +809,52 @@ const VisitorIdSection = ({
 };
 
 export default IDCards;
+
+// ===================== Validation banner =====================
+type Issue = { level: "error" | "warn"; msg: string };
+
+const ValidationBanner = ({
+  issues,
+  okLabel,
+  context,
+}: {
+  issues: Issue[];
+  okLabel: string;
+  context: string;
+}) => {
+  if (issues.length === 0) {
+    return (
+      <Alert className="border-emerald-500/40 bg-emerald-500/5">
+        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+        <AlertTitle className="text-emerald-700 text-sm">{context}</AlertTitle>
+        <AlertDescription className="text-xs text-emerald-700/80">{okLabel}</AlertDescription>
+      </Alert>
+    );
+  }
+  const hasError = issues.some((i) => i.level === "error");
+  return (
+    <Alert variant={hasError ? "destructive" : "default"} className={!hasError ? "border-amber-500/50 bg-amber-500/5" : undefined}>
+      {hasError ? (
+        <ShieldAlert className="h-4 w-4" />
+      ) : (
+        <AlertTriangle className="h-4 w-4 text-amber-600" />
+      )}
+      <AlertTitle className={!hasError ? "text-amber-700 text-sm" : "text-sm"}>
+        {hasError ? "Cannot print this card yet" : "Card can be printed — review warnings"}
+        <span className="ml-2 text-xs font-normal opacity-70">({context})</span>
+      </AlertTitle>
+      <AlertDescription>
+        <ul className={`mt-1 space-y-1 text-xs ${!hasError ? "text-amber-700/90" : ""}`}>
+          {issues.map((issue, i) => (
+            <li key={i} className="flex gap-2">
+              <span className="font-bold">
+                {issue.level === "error" ? "✕" : "⚠"}
+              </span>
+              <span>{issue.msg}</span>
+            </li>
+          ))}
+        </ul>
+      </AlertDescription>
+    </Alert>
+  );
+};
