@@ -22,6 +22,8 @@ import SiteSettings from "./pages/SiteSettings";
 import Salary from "./pages/Salary";
 import IDCards from "./pages/IDCards";
 import FeeManagement from "./pages/FeeManagement";
+import Schedule from "./pages/Schedule";
+import Visitors from "./pages/Visitors";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -158,6 +160,22 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["admin", "staff"]}>
                   <FeeManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/schedule"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "teacher", "staff"]}>
+                  <Schedule />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/visitors"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "staff"]}>
+                  <Visitors />
                 </ProtectedRoute>
               }
             />
