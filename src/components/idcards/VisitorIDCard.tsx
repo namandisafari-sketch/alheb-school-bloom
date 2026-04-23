@@ -77,10 +77,18 @@ export const VisitorIDCard = ({
   // Serial number — short, deterministic-ish
   const serial = (visit?.id || visitor?.id || `${Date.now()}`).replace(/-/g, "").slice(0, 12).toUpperCase();
   const issuedAt = visit?.check_in_at ? new Date(visit.check_in_at) : new Date();
+  // Validity policy:
+  //  - day-pass:        valid only while checked-in (auto-expires on check-out, same calendar day)
+  //  - reusable:        1 year (recurring contractor / staff-equivalent visitor)
+  //  - guardian-pickup: PERMANENT — property of the guardian, carried on every visit
   const validUntil =
     variant === "day-pass"
       ? new Date(new Date().setHours(23, 59, 0, 0))
-      : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
+      : variant === "reusable"
+      ? new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+      : new Date(new Date().setFullYear(new Date().getFullYear() + 10)); // guardian-pickup ≈ permanent
+
+  const isPermanentPickup = variant === "guardian-pickup";
 
   const labels = isRTL
     ? {
@@ -94,13 +102,17 @@ export const VisitorIDCard = ({
         host: "المضيف",
         phone: "الهاتف",
         issued: "صدرت",
-        validUntil: variant === "day-pass" ? "صالحة حتى" : "صالحة حتى",
+        validUntil: isPermanentPickup ? "صالحة (دائمة)" : "صالحة حتى",
         serial: "رقم تسلسلي",
         learner: "الطالب",
         admission: "رقم القبول",
         class: "الصف",
         signature: "توقيع المسؤول",
-        warning: "ممتلكات المدرسة. يجب إرجاعها عند المغادرة. أي إساءة استخدام تعرض حاملها للمساءلة.",
+        warning: isPermanentPickup
+          ? "ملك ولي الأمر – يحملها في كل زيارة. لا تُسلَّم لأي شخص آخر. أبلغ الإدارة فوراً عند الفقد."
+          : variant === "day-pass"
+          ? "تصريح يوم واحد – يُلغى تلقائياً عند تسجيل الخروج. يجب الإعادة عند المغادرة."
+          : "ممتلكات المدرسة. يجب إرجاعها عند انتهاء الصلاحية. أي إساءة استخدام تعرض حاملها للمساءلة.",
         verify: "تحقق برمز QR",
       }
     : {
@@ -114,13 +126,17 @@ export const VisitorIDCard = ({
         host: "Host",
         phone: "Phone",
         issued: "Issued",
-        validUntil: variant === "day-pass" ? "Valid Until" : "Valid Until",
+        validUntil: isPermanentPickup ? "Validity (Permanent)" : "Valid Until",
         serial: "Serial",
         learner: "Learner",
         admission: "Adm. No.",
         class: "Class",
         signature: "Authorised Signature",
-        warning: "Property of the school. Must be worn visibly and returned on exit. Misuse will be prosecuted.",
+        warning: isPermanentPickup
+          ? "Property of the guardian — carry on EVERY visit. Do NOT surrender at the gate. Report loss immediately."
+          : variant === "day-pass"
+          ? "Single-day pass — auto-revoked at check-out. Must be returned on exit."
+          : "Property of the school. Must be returned on expiry. Misuse will be prosecuted.",
         verify: "Scan QR to verify",
       };
 
@@ -140,25 +156,57 @@ export const VisitorIDCard = ({
   // ============================== BACK SIDE ==============================
   if (side === "back") {
     const rules = isRTL
+      ? isPermanentPickup
+        ? [
+            "هذه البطاقة ملك ولي الأمر ويجب إحضارها في كل زيارة لاستلام الطفل.",
+            "يجب إبرازها عند البوابة قبل تسليم الطفل.",
+            "يُسلَّم الطفل فقط لحامل هذه البطاقة بعد التحقق من الهوية الوطنية.",
+            "لا يجوز إعارتها أو تسليمها لأي شخص آخر.",
+            "في حال الفقد، أبلغ مكتب الاستقبال فوراً لإلغائها وإصدار بديل.",
+            "يجب الالتزام بسياسة حماية الطفل في جميع الأوقات.",
+          ]
+        : variant === "day-pass"
+        ? [
+            "تصريح يوم واحد فقط – يُلغى تلقائياً عند تسجيل الخروج من البوابة.",
+            "في حال العودة بعد الخروج يجب إصدار تصريح طوارئ حراري جديد.",
+            "يجب ارتداؤها بشكل ظاهر طوال فترة الزيارة.",
+            "ممنوع التجول دون مرافقة المضيف المحدد.",
+            "ممنوع التصوير أو تسجيل الفيديو دون إذن خطي.",
+            "ملك للمدرسة – يجب إرجاعها عند المغادرة.",
+          ]
+        : [
+            "بطاقة زائر متكرر – صالحة لمدة سنة من تاريخ الإصدار.",
+            "يجب التسجيل عند البوابة في كل زيارة.",
+            "يجب ارتداؤها بشكل ظاهر داخل الحرم.",
+            "ممنوع التصوير أو تسجيل الفيديو دون إذن خطي.",
+            "يجب الالتزام بسياسة حماية الطفل.",
+            "ملك للمدرسة – تُرجَع عند انتهاء التعاقد أو الصلاحية.",
+          ]
+      : isPermanentPickup
       ? [
-          "هذه البطاقة ملك للمدرسة ويجب إعادتها عند المغادرة.",
-          "يجب ارتداؤها بشكل ظاهر طوال فترة الزيارة.",
-          variant === "guardian-pickup"
-            ? "تُسلَّم الطفل فقط لحامل هذه البطاقة بعد التحقق من الهوية."
-            : "يُمنع التجول دون مرافقة المضيف.",
-          "ممنوع التصوير أو تسجيل الفيديو دون إذن خطي.",
-          "يجب الالتزام بسياسات حماية الطفل في جميع الأوقات.",
-          "في حال فقدان البطاقة، أبلغ مكتب الاستقبال فوراً.",
+          "This card is the PROPERTY OF THE GUARDIAN — bring it on every collection visit.",
+          "Present it at the gate before the learner is released.",
+          "Learner will ONLY be released to the holder of this pass after national-ID verification.",
+          "Do NOT lend or surrender this card to any other person.",
+          "If lost, notify reception immediately to revoke and re-issue.",
+          "All holders must comply with the school's child-protection policy.",
+        ]
+      : variant === "day-pass"
+      ? [
+          "Single-day pass — automatically REVOKED the moment you check out at the gate.",
+          "If you return after check-out, a new thermal Emergency Re-entry Slip must be issued.",
+          "Must be worn visibly at all times while on premises.",
+          "No unescorted movement — remain with your assigned host.",
+          "Photography or video recording is strictly prohibited without written consent.",
+          "Property of the school — must be returned on exit.",
         ]
       : [
-          "This card remains the property of the school and must be returned on exit.",
+          "Reusable pass — valid for one (1) year from date of issue.",
+          "Must be signed in at the gate on every visit.",
           "Must be worn visibly at all times while on premises.",
-          variant === "guardian-pickup"
-            ? "Learner will only be released to the holder of this pass after ID verification."
-            : "Visitors must remain with their host at all times — no unescorted movement.",
           "Photography or video recording is strictly prohibited without written consent.",
-          "All visitors must comply with the school's child-protection policy.",
-          "Lost cards must be reported to reception immediately.",
+          "All holders must comply with the school's child-protection policy.",
+          "Property of the school — returned on contract end or expiry.",
         ];
 
     const backLabels = isRTL
@@ -703,9 +751,11 @@ export const VisitorIDCard = ({
               {format(issuedAt, "dd MMM yyyy HH:mm")}
             </div>
             <div>
-              <strong style={{ color: "#dc2626" }}>{labels.validUntil}:</strong>{" "}
-              <span style={{ fontWeight: 700, color: "#dc2626" }}>
-                {format(validUntil, variant === "day-pass" ? "dd MMM yyyy HH:mm" : "dd MMM yyyy")}
+              <strong style={{ color: isPermanentPickup ? v.accentDark : "#dc2626" }}>{labels.validUntil}:</strong>{" "}
+              <span style={{ fontWeight: 700, color: isPermanentPickup ? v.accentDark : "#dc2626" }}>
+                {isPermanentPickup
+                  ? "PERMANENT"
+                  : format(validUntil, variant === "day-pass" ? "dd MMM yyyy HH:mm" : "dd MMM yyyy")}
               </span>
             </div>
             <div style={{ gridColumn: "1 / -1", fontFamily: "monospace", fontSize: 8.5, color: "#64748b" }}>

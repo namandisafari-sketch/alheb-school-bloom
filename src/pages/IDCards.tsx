@@ -31,6 +31,7 @@ import { Search, Download, CreditCard, User, ChevronDown, Loader2, Package, User
 import { StaffIDCard } from "@/components/idcards/StaffIDCard";
 import { StudentIDCard } from "@/components/idcards/StudentIDCard";
 import { VisitorIDCard } from "@/components/idcards/VisitorIDCard";
+import { EmergencyReentrySlip } from "@/components/idcards/EmergencyReentrySlip";
 import { useVisitors, useVisitorVisits } from "@/hooks/useVisitors";
 import { Users } from "lucide-react";
 import { toPng } from "html-to-image";
@@ -499,16 +500,28 @@ const VisitorIdSection = ({
   learners: any[];
 }) => {
   const { data: visits = [] } = useVisitorVisits("active");
+  const { data: allVisits = [] } = useVisitorVisits("all");
   const { data: visitors = [] } = useVisitors();
   const [visitId, setVisitId] = useState<string>("");
   const [visitorId, setVisitorId] = useState<string>("");
   const [pickupLearnerId, setPickupLearnerId] = useState<string>("");
+  const [reentryVisitId, setReentryVisitId] = useState<string>("");
+  const [reentryDuration, setReentryDuration] = useState<number>(60);
+  const [reentryWidth, setReentryWidth] = useState<54 | 80>(80);
   const dayRef = useRef<HTMLDivElement>(null);
   const dayBackRef = useRef<HTMLDivElement>(null);
   const reusableRef = useRef<HTMLDivElement>(null);
   const reusableBackRef = useRef<HTMLDivElement>(null);
   const pickupRef = useRef<HTMLDivElement>(null);
   const pickupBackRef = useRef<HTMLDivElement>(null);
+  const reentryRef = useRef<HTMLDivElement>(null);
+
+  // Visitors who have checked out — eligible for emergency re-entry slip
+  const checkedOutVisits = useMemo(
+    () => allVisits.filter((v) => v.status === "checked_out").slice(0, 50),
+    [allVisits],
+  );
+  const reentryVisit = checkedOutVisits.find((v) => v.id === reentryVisitId);
 
   const visit = visits.find((v) => v.id === visitId);
   const visitor = visitors.find((v) => v.id === visitorId);
@@ -550,12 +563,27 @@ const VisitorIdSection = ({
   const pickupIssues = useMemo(() => {
     if (!pickupLearner) return [];
     const issues: { level: "error" | "warn"; msg: string }[] = [];
+
+    // Learner must be active
+    if (pickupLearner.status && pickupLearner.status !== "active") {
+      issues.push({
+        level: "error",
+        msg: `Learner record is "${pickupLearner.status}" — pick-up pass cannot be issued for an inactive learner.`,
+      });
+    }
+
     if (!pickupLearner.guardian_id) {
-      issues.push({ level: "error", msg: "No guardian on file for this learner. Add a guardian on the learner record before printing." });
+      issues.push({
+        level: "error",
+        msg: "No guardian on file for this learner. Add a guardian on the learner record before printing.",
+      });
+    } else if (pickupLearner.guardian_id && guardianRecord === null) {
+      // Query resolved but the guardian row could not be found → linked record is missing/inactive
+      issues.push({
+        level: "error",
+        msg: "Linked guardian record is missing or has been removed — the pick-up pass is invalid until a guardian is re-linked.",
+      });
     } else {
-      if (!guardianRecord && pickupLearner.guardian_id) {
-        // still loading or missing
-      }
       if (!guardianVisitor?.phone) {
         issues.push({ level: "warn", msg: "Guardian phone is missing — verification calls will not be possible." });
       }
@@ -585,6 +613,12 @@ const VisitorIdSection = ({
       issues.push({ level: "error", msg: "This visit has already been checked out — the day pass is no longer valid." });
     } else if (!sameDay) {
       issues.push({ level: "error", msg: `Day pass is from ${checkedIn.toLocaleDateString()} and has expired. Re-check the visitor in for today.` });
+    }
+    if (!visit.appointment_id) {
+      issues.push({
+        level: "error",
+        msg: "No appointment linked to this visit. Non-parent visitors must have a valid appointment verified at the gate before a day pass can be printed.",
+      });
     }
     if (!visit.visitor_phone) issues.push({ level: "warn", msg: "Visitor phone is missing." });
     if (!visit.visitor_photo_url) issues.push({ level: "warn", msg: "No visitor photo captured at check-in." });
@@ -799,6 +833,122 @@ const VisitorIdSection = ({
                 <VisitorIDCard visitor={visitor} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="reusable" side="back" />
               ) : (
                 <Placeholder label="Back side preview" />
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* EMERGENCY RE-ENTRY THERMAL SLIP */}
+      <Card className="border-2 border-destructive/30">
+        <CardContent className="pt-6 space-y-4">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            Emergency Re-entry Slip (thermal printout)
+            <span className="text-xs font-normal text-muted-foreground">
+              — for visitors returning after check-out
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Once a visitor has checked out, their day pass is automatically revoked. If they need
+            to re-enter the compound, issue this short-lived thermal slip so they can be
+            identified by security and not flagged as a stranger on the premises.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <Select value={reentryVisitId} onValueChange={setReentryVisitId}>
+              <SelectTrigger className="sm:col-span-2">
+                <SelectValue placeholder="Select recently checked-out visitor…" />
+              </SelectTrigger>
+              <SelectContent>
+                {checkedOutVisits.length === 0 && (
+                  <div className="p-2 text-xs text-muted-foreground">No checked-out visits</div>
+                )}
+                {checkedOutVisits.map((v) => (
+                  <SelectItem key={v.id} value={v.id}>
+                    {v.visitor_name} — {v.badge_number || "—"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={String(reentryDuration)} onValueChange={(v) => setReentryDuration(Number(v))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="15">15 minutes</SelectItem>
+                <SelectItem value="30">30 minutes</SelectItem>
+                <SelectItem value="60">1 hour</SelectItem>
+                <SelectItem value="120">2 hours</SelectItem>
+                <SelectItem value="240">4 hours</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={String(reentryWidth)} onValueChange={(v) => setReentryWidth(Number(v) as 54 | 80)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="54">54 mm thermal</SelectItem>
+                <SelectItem value="80">80 mm thermal</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button
+              disabled={!reentryVisit}
+              onClick={async () => {
+                if (!reentryRef.current || !reentryVisit) return;
+                const safe = reentryVisit.visitor_name.replace(/[^a-z0-9]/gi, "_");
+                const url = await toPng(reentryRef.current, { pixelRatio: 4, cacheBust: true, backgroundColor: "#ffffff" });
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `${safe}_REENTRY_${reentryWidth}mm.png`;
+                a.click();
+                toast({ title: "Slip ready", description: "Send the PNG to your thermal printer." });
+              }}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download thermal slip
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!reentryVisit}
+              onClick={() => {
+                if (!reentryRef.current) return;
+                const win = window.open("", "_blank", "width=400,height=700");
+                if (!win) return;
+                win.document.write(`<html><head><title>Re-entry Slip</title>
+                  <style>
+                    @page { size: ${reentryWidth}mm auto; margin: 0; }
+                    body { margin: 0; padding: 0; }
+                  </style></head><body>${reentryRef.current.outerHTML}</body></html>`);
+                win.document.close();
+                setTimeout(() => win.print(), 250);
+              }}
+            >
+              Print directly
+            </Button>
+          </div>
+
+          <div className="flex justify-center pt-2">
+            <div ref={reentryRef} className="inline-block">
+              {reentryVisit ? (
+                <EmergencyReentrySlip
+                  schoolName={schoolName}
+                  visitorName={reentryVisit.visitor_name}
+                  visitorPhone={reentryVisit.visitor_phone}
+                  purpose={reentryVisit.purpose}
+                  host={reentryVisit.host_name}
+                  durationMinutes={reentryDuration}
+                  width={reentryWidth}
+                  isRTL={isRTL}
+                  originalVisitId={reentryVisit.id}
+                />
+              ) : (
+                <div className="w-[220px] h-[400px] border-2 border-dashed border-muted-foreground/30 rounded-md flex items-center justify-center text-xs text-muted-foreground text-center px-4">
+                  Select a checked-out visitor to preview the thermal slip
+                </div>
               )}
             </div>
           </div>
