@@ -1,9 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { createRoot } from "react-dom/client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -24,7 +26,8 @@ import { useLearners } from "@/hooks/useLearners";
 import { useClasses } from "@/hooks/useClasses";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useIdCardSettings } from "@/hooks/useIdCardSettings";
-import { Search, Download, CreditCard, User, ChevronDown, Loader2, Package, UserCheck } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Search, Download, CreditCard, User, ChevronDown, Loader2, Package, UserCheck, AlertTriangle, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { StaffIDCard } from "@/components/idcards/StaffIDCard";
 import { StudentIDCard } from "@/components/idcards/StudentIDCard";
 import { VisitorIDCard } from "@/components/idcards/VisitorIDCard";
@@ -33,6 +36,22 @@ import { Users } from "lucide-react";
 import { toPng } from "html-to-image";
 import { toast } from "@/hooks/use-toast";
 import JSZip from "jszip";
+
+// Fetch a single guardian's full record by id
+const useGuardian = (guardianId?: string | null) =>
+  useQuery({
+    queryKey: ["guardian", guardianId],
+    enabled: !!guardianId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("guardians")
+        .select("*")
+        .eq("id", guardianId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
 
 const IDCards = () => {
   const { t, isRTL } = useLanguage();
@@ -495,21 +514,100 @@ const VisitorIdSection = ({
   const visitor = visitors.find((v) => v.id === visitorId);
   const pickupLearner = learners.find((l) => l.id === pickupLearnerId);
 
-  // Build a synthetic visitor object from the learner's guardian
-  const guardianVisitor = pickupLearner
-    ? ({
-        id: pickupLearner.guardian_id || pickupLearner.id,
-        full_name: pickupLearner.guardian_name || "Guardian (not set)",
-        phone: pickupLearner.guardian_phone || null,
-        email: null,
-        company: null,
-        id_number: null,
-        photo_url: null,
-        notes: null,
-        is_recurring: true,
-        created_at: new Date().toISOString(),
-      } as any)
-    : undefined;
+  // Fetch full guardian record for richer auto-fill (email, district, address, relationship)
+  const { data: guardianRecord } = useGuardian(pickupLearner?.guardian_id);
+
+  // Auto-built visitor object from learner → guardian
+  const guardianVisitor = useMemo(() => {
+    if (!pickupLearner) return undefined;
+    const name =
+      guardianRecord?.full_name ||
+      pickupLearner.guardian_name ||
+      "Guardian (not on file)";
+    const phone = guardianRecord?.phone || pickupLearner.guardian_phone || null;
+    const relationship = guardianRecord?.relationship || "guardian";
+    return {
+      id: pickupLearner.guardian_id || `gp-${pickupLearner.id}`,
+      full_name: name,
+      phone,
+      email: guardianRecord?.email || null,
+      // Show relationship in the "Organisation" slot so it reads e.g. "Father / Parent"
+      company: relationship.charAt(0).toUpperCase() + relationship.slice(1),
+      // Use guardian district / national ID slot — falls back to a generated ref
+      id_number:
+        guardianRecord?.district ||
+        (pickupLearner.guardian_id
+          ? `GRD-${pickupLearner.guardian_id.slice(0, 8).toUpperCase()}`
+          : null),
+      photo_url: null,
+      notes: guardianRecord?.address || null,
+      is_recurring: true,
+      created_at: guardianRecord?.created_at || new Date().toISOString(),
+    } as any;
+  }, [pickupLearner, guardianRecord]);
+
+  // ============== VALIDATION ==============
+  const pickupIssues = useMemo(() => {
+    if (!pickupLearner) return [];
+    const issues: { level: "error" | "warn"; msg: string }[] = [];
+    if (!pickupLearner.guardian_id) {
+      issues.push({ level: "error", msg: "No guardian on file for this learner. Add a guardian on the learner record before printing." });
+    } else {
+      if (!guardianRecord && pickupLearner.guardian_id) {
+        // still loading or missing
+      }
+      if (!guardianVisitor?.phone) {
+        issues.push({ level: "warn", msg: "Guardian phone is missing — verification calls will not be possible." });
+      }
+      if (!guardianRecord?.email) {
+        issues.push({ level: "warn", msg: "Guardian email is missing — no electronic confirmation can be sent." });
+      }
+      if (!guardianRecord?.district && !guardianRecord?.address) {
+        issues.push({ level: "warn", msg: "Guardian address / district is missing." });
+      }
+    }
+    if (!pickupLearner.photo_url) {
+      issues.push({ level: "warn", msg: "Learner has no photo on file — visual verification will be limited." });
+    }
+    return issues;
+  }, [pickupLearner, guardianRecord, guardianVisitor]);
+
+  const dayIssues = useMemo(() => {
+    if (!visit) return [];
+    const issues: { level: "error" | "warn"; msg: string }[] = [];
+    const checkedIn = new Date(visit.check_in_at);
+    const today = new Date();
+    const sameDay =
+      checkedIn.getFullYear() === today.getFullYear() &&
+      checkedIn.getMonth() === today.getMonth() &&
+      checkedIn.getDate() === today.getDate();
+    if (visit.status === "checked_out") {
+      issues.push({ level: "error", msg: "This visit has already been checked out — the day pass is no longer valid." });
+    } else if (!sameDay) {
+      issues.push({ level: "error", msg: `Day pass is from ${checkedIn.toLocaleDateString()} and has expired. Re-check the visitor in for today.` });
+    }
+    if (!visit.visitor_phone) issues.push({ level: "warn", msg: "Visitor phone is missing." });
+    if (!visit.visitor_photo_url) issues.push({ level: "warn", msg: "No visitor photo captured at check-in." });
+    if (!visit.host_name && !visit.host_staff_id) issues.push({ level: "warn", msg: "No host assigned for this visit." });
+    if (!visit.purpose) issues.push({ level: "warn", msg: "Purpose of visit not recorded." });
+    return issues;
+  }, [visit]);
+
+  const reusableIssues = useMemo(() => {
+    if (!visitor) return [];
+    const issues: { level: "error" | "warn"; msg: string }[] = [];
+    if (!visitor.is_recurring) {
+      issues.push({ level: "error", msg: "Selected visitor is not marked as recurring — issue a day pass instead." });
+    }
+    if (!visitor.phone) issues.push({ level: "warn", msg: "Phone number missing." });
+    if (!visitor.id_number) issues.push({ level: "warn", msg: "Government ID number not on file." });
+    if (!visitor.photo_url) issues.push({ level: "warn", msg: "No photo on file." });
+    if (!visitor.company) issues.push({ level: "warn", msg: "Organisation / employer not recorded." });
+    return issues;
+  }, [visitor]);
+
+  const hasBlockingIssue = (issues: { level: "error" | "warn"; msg: string }[]) =>
+    issues.some((i) => i.level === "error");
 
   const exportCard = async (
     frontEl: React.RefObject<HTMLDivElement>,
@@ -558,17 +656,19 @@ const VisitorIdSection = ({
               </SelectContent>
             </Select>
             <Button
-              disabled={!pickupLearner}
+              disabled={!pickupLearner || hasBlockingIssue(pickupIssues)}
               onClick={() => pickupLearner && exportCard(pickupRef, pickupBackRef, `${pickupLearner.full_name}_PICKUP`)}
             >
               <Download className="h-4 w-4 mr-2" />
               Print Pick-Up Pass (Front + Back)
             </Button>
           </div>
-          {pickupLearner && !pickupLearner.guardian_id && (
-            <p className="text-xs text-destructive">
-              ⚠ This learner has no guardian on file. Edit the learner to add guardian details for a complete pass.
-            </p>
+          {pickupLearner && (
+            <ValidationBanner
+              issues={pickupIssues}
+              okLabel="Auto-filled from learner record. Guardian details verified."
+              context="Guardian / pick-up validation"
+            />
           )}
           <div className="flex flex-wrap justify-center gap-6 pt-2">
             <div ref={pickupRef} className="inline-block">
@@ -626,10 +726,17 @@ const VisitorIdSection = ({
                 ))}
               </SelectContent>
             </Select>
-            <Button disabled={!visit} onClick={() => visit && exportCard(dayRef, dayBackRef, visit.visitor_name)}>
+            <Button disabled={!visit || hasBlockingIssue(dayIssues)} onClick={() => visit && exportCard(dayRef, dayBackRef, visit.visitor_name)}>
               <Download className="h-4 w-4 mr-2" />Print Day Pass (Front + Back)
             </Button>
           </div>
+          {visit && (
+            <ValidationBanner
+              issues={dayIssues}
+              okLabel="Day pass is valid for today. Visitor is currently on-site."
+              context="Day pass validation"
+            />
+          )}
           <div className="flex flex-wrap justify-center gap-6 pt-2">
             <div ref={dayRef} className="inline-block">
               {visit ? (
@@ -668,10 +775,17 @@ const VisitorIdSection = ({
                 ))}
               </SelectContent>
             </Select>
-            <Button disabled={!visitor} onClick={() => visitor && exportCard(reusableRef, reusableBackRef, visitor.full_name)}>
+            <Button disabled={!visitor || hasBlockingIssue(reusableIssues)} onClick={() => visitor && exportCard(reusableRef, reusableBackRef, visitor.full_name)}>
               <Download className="h-4 w-4 mr-2" />Print Card (Front + Back)
             </Button>
           </div>
+          {visitor && (
+            <ValidationBanner
+              issues={reusableIssues}
+              okLabel="Visitor record is complete and authorised."
+              context="Recurring visitor validation"
+            />
+          )}
           <div className="flex flex-wrap justify-center gap-6 pt-2">
             <div ref={reusableRef} className="inline-block">
               {visitor ? (
@@ -695,3 +809,46 @@ const VisitorIdSection = ({
 };
 
 export default IDCards;
+
+// ===================== Validation banner =====================
+type Issue = { level: "error" | "warn"; msg: string };
+
+const ValidationBanner = ({
+  issues,
+  okLabel,
+  context,
+}: {
+  issues: Issue[];
+  okLabel: string;
+  context: string;
+}) => {
+  if (issues.length === 0) {
+    return (
+      <Alert className="border-primary/40 bg-primary/5">
+        <CheckCircle2 className="h-4 w-4 text-primary" />
+        <AlertTitle className="text-sm text-primary">{context}</AlertTitle>
+        <AlertDescription className="text-xs text-muted-foreground">{okLabel}</AlertDescription>
+      </Alert>
+    );
+  }
+  const hasError = issues.some((i) => i.level === "error");
+  return (
+    <Alert variant={hasError ? "destructive" : "default"} className={!hasError ? "border-muted-foreground/30 bg-muted/40" : undefined}>
+      {hasError ? <ShieldAlert className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+      <AlertTitle className="text-sm">
+        {hasError ? "Cannot print this card yet" : "Card can be printed — review warnings"}
+        <span className="ml-2 text-xs font-normal opacity-70">({context})</span>
+      </AlertTitle>
+      <AlertDescription>
+        <ul className="mt-1 space-y-1 text-xs">
+          {issues.map((issue, i) => (
+            <li key={i} className="flex gap-2">
+              <span className="font-bold">{issue.level === "error" ? "✕" : "⚠"}</span>
+              <span>{issue.msg}</span>
+            </li>
+          ))}
+        </ul>
+      </AlertDescription>
+    </Alert>
+  );
+};
