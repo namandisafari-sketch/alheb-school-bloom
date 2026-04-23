@@ -77,10 +77,16 @@ export const VisitorIDCard = ({
   // Serial number — short, deterministic-ish
   const serial = (visit?.id || visitor?.id || `${Date.now()}`).replace(/-/g, "").slice(0, 12).toUpperCase();
   const issuedAt = visit?.check_in_at ? new Date(visit.check_in_at) : new Date();
+  // Validity policy:
+  //  - day-pass:        valid only while checked-in (auto-expires on check-out, same calendar day)
+  //  - reusable:        1 year (recurring contractor / staff-equivalent visitor)
+  //  - guardian-pickup: PERMANENT — property of the guardian, carried on every visit
   const validUntil =
     variant === "day-pass"
       ? new Date(new Date().setHours(23, 59, 0, 0))
-      : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
+      : variant === "reusable"
+      ? new Date(new Date().setFullYear(new Date().getFullYear() + 1))
+      : new Date(new Date().setFullYear(new Date().getFullYear() + 10)); // guardian-pickup ≈ permanent
 
   const labels = isRTL
     ? {
