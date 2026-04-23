@@ -152,6 +152,32 @@
 }
 
 @layer utilities {
+  /* Hide scrollbars but keep scroll functionality */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbars globally while keeping scroll */
+  html, body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  *::-webkit-scrollbar {
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent;
+  }
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
   .animate-fade-in {
     animation: fadeIn 0.5s ease-out forwards;
   }
