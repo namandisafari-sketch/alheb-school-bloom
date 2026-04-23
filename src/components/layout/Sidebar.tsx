@@ -15,6 +15,7 @@ import {
   Settings,
   Wallet,
   CreditCard,
+  Receipt,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,7 @@ const navItems: NavItem[] = [
   { icon: FileText, labelKey: "reports", path: "/reports", roles: ["admin", "teacher"] },
   { icon: Calendar, labelKey: "schedule", path: "/schedule", roles: ["admin", "teacher", "staff"] },
   { icon: ClipboardCheck, labelKey: "attendance", path: "/attendance", roles: ["admin", "teacher"] },
+  { icon: Receipt, labelKey: "feeManagement", path: "/fees", roles: ["admin", "staff"] },
   { icon: Wallet, labelKey: "salary", path: "/salary", roles: ["admin"] },
   { icon: CreditCard, labelKey: "idCards", path: "/id-cards", roles: ["admin"] },
   { icon: UserCog, labelKey: "userManagement", path: "/users", roles: ["admin"] },

@@ -22,6 +22,7 @@ const translations: Translations = {
   settings: { en: "Settings", ar: "الإعدادات" },
   salary: { en: "Salary Management", ar: "إدارة الرواتب" },
   idCards: { en: "ID Cards", ar: "البطاقات الشخصية" },
+  feeManagement: { en: "Fee Management", ar: "إدارة الرسوم" },
   
   // Actions
   add: { en: "Add", ar: "إضافة" },

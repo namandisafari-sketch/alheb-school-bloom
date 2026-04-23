@@ -72,6 +72,107 @@ export type Database = {
           },
         ]
       }
+      bursar_override_requests: {
+        Row: {
+          created_at: string | null
+          id: string
+          learner_id: string
+          outstanding_balance: number | null
+          reason: string | null
+          requested_by: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          rule_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          learner_id: string
+          outstanding_balance?: number | null
+          reason?: string | null
+          requested_by?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rule_id?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          learner_id?: string
+          outstanding_balance?: number | null
+          reason?: string | null
+          requested_by?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rule_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bursar_override_requests_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bursar_override_requests_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "bursar_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bursar_rules: {
+        Row: {
+          applies_to_all_classes: boolean
+          balance_threshold: number
+          class_id: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean
+          name: string
+          rule_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          applies_to_all_classes?: boolean
+          balance_threshold?: number
+          class_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          rule_type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          applies_to_all_classes?: boolean
+          balance_threshold?: number
+          class_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          rule_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bursar_rules_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       classes: {
         Row: {
           academic_year: number | null
@@ -115,6 +216,165 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fee_assignments: {
+        Row: {
+          created_at: string | null
+          custom_amount: number | null
+          fee_structure_id: string
+          id: string
+          is_exempted: boolean
+          learner_id: string
+          notes: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          custom_amount?: number | null
+          fee_structure_id: string
+          id?: string
+          is_exempted?: boolean
+          learner_id: string
+          notes?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          custom_amount?: number | null
+          fee_structure_id?: string
+          id?: string
+          is_exempted?: boolean
+          learner_id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_assignments_fee_structure_id_fkey"
+            columns: ["fee_structure_id"]
+            isOneToOne: false
+            referencedRelation: "fee_structures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_assignments_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fee_payments: {
+        Row: {
+          academic_year: number
+          amount: number
+          collected_by: string | null
+          created_at: string | null
+          currency: string
+          fee_structure_id: string | null
+          id: string
+          learner_id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string
+          receipt_number: string
+          reference_number: string | null
+          term: string | null
+        }
+        Insert: {
+          academic_year?: number
+          amount: number
+          collected_by?: string | null
+          created_at?: string | null
+          currency?: string
+          fee_structure_id?: string | null
+          id?: string
+          learner_id: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          receipt_number: string
+          reference_number?: string | null
+          term?: string | null
+        }
+        Update: {
+          academic_year?: number
+          amount?: number
+          collected_by?: string | null
+          created_at?: string | null
+          currency?: string
+          fee_structure_id?: string | null
+          id?: string
+          learner_id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          receipt_number?: string
+          reference_number?: string | null
+          term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fee_payments_fee_structure_id_fkey"
+            columns: ["fee_structure_id"]
+            isOneToOne: false
+            referencedRelation: "fee_structures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fee_payments_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fee_structures: {
+        Row: {
+          academic_year: number
+          amount: number
+          applies_to: string
+          category: string
+          class_level: number | null
+          created_at: string | null
+          currency: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          term: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          academic_year?: number
+          amount?: number
+          applies_to?: string
+          category?: string
+          class_level?: number | null
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          term?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          academic_year?: number
+          amount?: number
+          applies_to?: string
+          category?: string
+          class_level?: number | null
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          term?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       guardians: {
         Row: {
