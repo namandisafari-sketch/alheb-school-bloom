@@ -1,68 +1,139 @@
-import { User } from "lucide-react";
+import { User, ShieldCheck, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { QRCodeSVG } from "qrcode.react";
-import type { VisitorVisit } from "@/hooks/useVisitors";
-import type { Visitor } from "@/hooks/useVisitors";
+import type { VisitorVisit, Visitor } from "@/hooks/useVisitors";
+import type { Learner } from "@/hooks/useLearners";
 
 interface VisitorIDCardProps {
   visit?: VisitorVisit;
   visitor?: Visitor;
+  learner?: Learner;
   schoolName: string;
   schoolLogoUrl?: string;
   isRTL?: boolean;
-  variant: "day-pass" | "reusable";
+  variant: "day-pass" | "reusable" | "guardian-pickup";
 }
 
-export const VISITOR_CARD_WIDTH = 540;
-export const VISITOR_CARD_HEIGHT = 340;
+export const VISITOR_CARD_WIDTH = 580;
+export const VISITOR_CARD_HEIGHT = 365;
+
+const VARIANTS = {
+  "day-pass": {
+    accent: "hsl(15 88% 48%)",
+    accentDark: "hsl(15 88% 32%)",
+    accentLight: "hsl(15 88% 96%)",
+    stripe: "hsl(15 88% 48%)",
+    titleEn: "VISITOR DAY PASS",
+    titleAr: "تصريح زيارة يوم واحد",
+    classification: "TEMPORARY • SINGLE DAY",
+    classificationAr: "مؤقت • يوم واحد",
+  },
+  reusable: {
+    accent: "hsl(217 85% 42%)",
+    accentDark: "hsl(217 85% 28%)",
+    accentLight: "hsl(217 85% 96%)",
+    stripe: "hsl(217 85% 42%)",
+    titleEn: "AUTHORISED VISITOR",
+    titleAr: "زائر معتمد",
+    classification: "RECURRING • RESTRICTED ACCESS",
+    classificationAr: "زائر متكرر • وصول محدود",
+  },
+  "guardian-pickup": {
+    accent: "hsl(142 70% 32%)",
+    accentDark: "hsl(142 70% 22%)",
+    accentLight: "hsl(142 70% 96%)",
+    stripe: "hsl(142 70% 32%)",
+    titleEn: "AUTHORISED PICK-UP",
+    titleAr: "تصريح استلام الطفل",
+    classification: "PARENT / GUARDIAN • LEARNER COLLECTION",
+    classificationAr: "ولي الأمر • استلام الطالب",
+  },
+} as const;
 
 export const VisitorIDCard = ({
   visit,
   visitor,
+  learner,
   schoolName,
   schoolLogoUrl,
   isRTL = false,
   variant,
 }: VisitorIDCardProps) => {
+  const v = VARIANTS[variant];
+
   const name = visit?.visitor_name || visitor?.full_name || "—";
-  const phone = visit?.visitor_phone || visitor?.phone || "";
+  const phone = visit?.visitor_phone || visitor?.phone || "—";
   const photo = visit?.visitor_photo_url || visitor?.photo_url || "";
-  const badge = visit?.badge_number || (visitor ? `V-${visitor.id.slice(0, 6).toUpperCase()}` : "—");
-  const purpose = visit?.purpose || "";
+  const idNumber = visitor?.id_number || "";
+  const company = visitor?.company || "";
+  const badge =
+    visit?.badge_number ||
+    (visitor ? `V-${visitor.id.slice(0, 6).toUpperCase()}` : `V-${Date.now().toString().slice(-6)}`);
+  const purpose = visit?.purpose || (variant === "guardian-pickup" ? "Learner pickup" : "");
   const host = visit?.host_name || "";
 
-  const accent = variant === "day-pass" ? "hsl(25 95% 50%)" : "hsl(217 91% 45%)";
-  const accentDark = variant === "day-pass" ? "hsl(25 95% 35%)" : "hsl(217 91% 30%)";
+  // Serial number — short, deterministic-ish
+  const serial = (visit?.id || visitor?.id || `${Date.now()}`).replace(/-/g, "").slice(0, 12).toUpperCase();
+  const issuedAt = visit?.check_in_at ? new Date(visit.check_in_at) : new Date();
+  const validUntil =
+    variant === "day-pass"
+      ? new Date(new Date().setHours(23, 59, 0, 0))
+      : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
 
-  const validDate = variant === "day-pass" ? new Date() : new Date(new Date().setFullYear(new Date().getFullYear() + 1));
   const labels = isRTL
     ? {
-        title: variant === "day-pass" ? "تصريح زيارة يوم واحد" : "بطاقة زائر",
+        title: v.titleAr,
+        classification: v.classificationAr,
         name: "الاسم",
+        idNo: "رقم الهوية",
+        company: "الجهة",
         badge: "رقم البطاقة",
         purpose: "الغرض",
         host: "المضيف",
         phone: "الهاتف",
-        validUntil: variant === "day-pass" ? "صالحة اليوم" : "صالحة حتى",
-        return: "هذه البطاقة ملك للمدرسة. يجب إعادتها عند المغادرة.",
+        issued: "صدرت",
+        validUntil: variant === "day-pass" ? "صالحة حتى" : "صالحة حتى",
+        serial: "رقم تسلسلي",
+        learner: "الطالب",
+        admission: "رقم القبول",
+        class: "الصف",
+        signature: "توقيع المسؤول",
+        warning: "ممتلكات المدرسة. يجب إرجاعها عند المغادرة. أي إساءة استخدام تعرض حاملها للمساءلة.",
+        verify: "تحقق برمز QR",
       }
     : {
-        title: variant === "day-pass" ? "VISITOR DAY PASS" : "VISITOR ID CARD",
+        title: v.titleEn,
+        classification: v.classification,
         name: "Name",
+        idNo: "ID No.",
+        company: "Organisation",
         badge: "Badge",
         purpose: "Purpose",
         host: "Host",
         phone: "Phone",
-        validUntil: variant === "day-pass" ? "Valid Today" : "Valid Until",
-        return: "Property of the school. Please return on exit.",
+        issued: "Issued",
+        validUntil: variant === "day-pass" ? "Valid Until" : "Valid Until",
+        serial: "Serial",
+        learner: "Learner",
+        admission: "Adm. No.",
+        class: "Class",
+        signature: "Authorised Signature",
+        warning: "Property of the school. Must be worn visibly and returned on exit. Misuse will be prosecuted.",
+        verify: "Scan QR to verify",
       };
 
   const qrPayload = JSON.stringify({
-    type: "visitor",
+    t: "visitor",
     badge,
+    serial,
     visit_id: visit?.id,
     visitor_id: visitor?.id,
+    learner_id: learner?.id,
+    issued: issuedAt.toISOString(),
   });
+
+  // Subtle diagonal "VISITOR" watermark pattern
+  const watermarkText = variant === "guardian-pickup" ? "PICK-UP" : "VISITOR";
 
   return (
     <div
@@ -70,27 +141,73 @@ export const VisitorIDCard = ({
       style={{
         width: VISITOR_CARD_WIDTH,
         height: VISITOR_CARD_HEIGHT,
-        borderRadius: 14,
-        border: `2px solid ${accent}`,
+        borderRadius: 16,
+        border: `2px solid ${v.accent}`,
         background: "white",
         color: "#0f172a",
         fontFamily: isRTL
           ? "'Cairo', 'Tajawal', 'Noto Naskh Arabic', sans-serif"
           : "'Inter', 'Cairo', sans-serif",
         overflow: "hidden",
-        boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+        boxShadow: `0 12px 30px rgba(0,0,0,0.10), inset 0 0 0 1px ${v.accentLight}`,
         position: "relative",
       }}
     >
+      {/* Diagonal watermark */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `repeating-linear-gradient(-30deg, ${v.accent}0D 0 2px, transparent 2px 60px)`,
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 96,
+          fontWeight: 900,
+          color: v.accent,
+          opacity: 0.04,
+          letterSpacing: 12,
+          transform: "rotate(-18deg)",
+          pointerEvents: "none",
+          userSelect: "none",
+        }}
+      >
+        {watermarkText}
+      </div>
+
+      {/* Security stripe (left edge) */}
       <div
         style={{
-          height: 60,
-          background: `linear-gradient(135deg, ${accent} 0%, ${accentDark} 100%)`,
+          position: "absolute",
+          top: 0,
+          bottom: 0,
+          [isRTL ? "right" : "left"]: 0,
+          width: 8,
+          background: `linear-gradient(180deg, ${v.accent} 0%, ${v.accentDark} 100%)`,
+        }}
+      />
+
+      {/* HEADER */}
+      <div
+        style={{
+          height: 64,
+          background: `linear-gradient(135deg, ${v.accentDark} 0%, ${v.accent} 100%)`,
           color: "white",
           display: "flex",
           alignItems: "center",
-          padding: "0 16px",
+          padding: isRTL ? "0 18px 0 14px" : "0 14px 0 18px",
           gap: 12,
+          position: "relative",
+          zIndex: 1,
         }}
       >
         {schoolLogoUrl ? (
@@ -99,60 +216,101 @@ export const VisitorIDCard = ({
             alt="logo"
             crossOrigin="anonymous"
             style={{
-              width: 44,
-              height: 44,
+              width: 46,
+              height: 46,
               borderRadius: 8,
               background: "white",
               objectFit: "contain",
               padding: 3,
+              flexShrink: 0,
             }}
           />
         ) : (
           <div
             style={{
-              width: 44,
-              height: 44,
+              width: 46,
+              height: 46,
               borderRadius: 8,
               background: "rgba(255,255,255,0.2)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontWeight: 700,
-              fontSize: 20,
+              fontWeight: 800,
+              fontSize: 22,
+              flexShrink: 0,
             }}
           >
             {schoolName.charAt(0)}
           </div>
         )}
         <div style={{ flex: 1, lineHeight: 1.15, minWidth: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div
+            style={{
+              fontSize: 15,
+              fontWeight: 800,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              letterSpacing: 0.3,
+            }}
+          >
             {schoolName}
           </div>
-          <div style={{ fontSize: 9, opacity: 0.95, letterSpacing: 1.2, fontWeight: 600 }}>
-            {labels.title}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+            <ShieldCheck size={11} />
+            <div style={{ fontSize: 9.5, opacity: 0.95, letterSpacing: 1.4, fontWeight: 700 }}>
+              {labels.title}
+            </div>
           </div>
         </div>
         <div
           style={{
-            fontSize: 11,
-            fontWeight: 700,
-            background: "rgba(255,255,255,0.18)",
-            padding: "4px 10px",
-            borderRadius: 6,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: isRTL ? "flex-start" : "flex-end",
+            gap: 2,
+            flexShrink: 0,
           }}
         >
-          {badge}
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 800,
+              background: "white",
+              color: v.accentDark,
+              padding: "4px 10px",
+              borderRadius: 4,
+              fontFamily: "monospace",
+              letterSpacing: 1,
+            }}
+          >
+            {badge}
+          </div>
+          <div style={{ fontSize: 7.5, opacity: 0.9, letterSpacing: 0.8, fontWeight: 600 }}>
+            {labels.classification}
+          </div>
         </div>
       </div>
 
-      <div style={{ display: "flex", padding: 14, gap: 14, height: VISITOR_CARD_HEIGHT - 60 }}>
+      {/* BODY */}
+      <div
+        style={{
+          display: "flex",
+          padding: "12px 14px 10px",
+          gap: 14,
+          height: VISITOR_CARD_HEIGHT - 64 - 28, // header + footer
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        {/* LEFT — photo + QR */}
         <div
           style={{
-            width: 120,
+            width: 124,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 8,
+            gap: 6,
             flexShrink: 0,
           }}
         >
@@ -162,93 +320,228 @@ export const VisitorIDCard = ({
               alt={name}
               crossOrigin="anonymous"
               style={{
-                width: 110,
-                height: 130,
+                width: 116,
+                height: 138,
                 objectFit: "cover",
                 borderRadius: 8,
-                border: `2px solid ${accent}`,
+                border: `3px solid ${v.accent}`,
+                boxShadow: `0 0 0 1px white, 0 4px 8px rgba(0,0,0,0.1)`,
               }}
             />
           ) : (
             <div
               style={{
-                width: 110,
-                height: 130,
-                background: "#e2e8f0",
+                width: 116,
+                height: 138,
+                background: v.accentLight,
                 borderRadius: 8,
-                border: `2px solid ${accent}`,
+                border: `3px solid ${v.accent}`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <User size={56} color="#94a3b8" />
+              <User size={56} color={v.accent} />
             </div>
           )}
-          <div style={{ background: "white", padding: 4, borderRadius: 6, border: "1px solid #e2e8f0" }}>
-            <QRCodeSVG value={qrPayload} size={62} level="M" />
+          <div
+            style={{
+              background: "white",
+              padding: 4,
+              borderRadius: 6,
+              border: `1px solid ${v.accent}`,
+            }}
+          >
+            <QRCodeSVG value={qrPayload} size={64} level="M" fgColor={v.accentDark} />
+          </div>
+          <div style={{ fontSize: 7, color: "#64748b", letterSpacing: 0.4, fontWeight: 600 }}>
+            {labels.verify}
           </div>
         </div>
 
-        <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5, minWidth: 0 }}>
+        {/* RIGHT — details */}
+        <div style={{ flex: 1, fontSize: 11.5, lineHeight: 1.45, minWidth: 0 }}>
           <div
             style={{
-              fontSize: 16,
+              fontSize: 17,
               fontWeight: 800,
-              color: accentDark,
-              marginBottom: 4,
+              color: v.accentDark,
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
+              letterSpacing: 0.2,
             }}
           >
             {name}
           </div>
-          <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8 }}>
-            {visitor?.company || ""}
+          {company && (
+            <div
+              style={{
+                fontSize: 10,
+                color: "#475569",
+                fontWeight: 600,
+                marginBottom: 4,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {company}
+            </div>
+          )}
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "2px 12px",
+              marginTop: 6,
+            }}
+          >
+            <Field label={labels.phone} value={phone} isRTL={isRTL} />
+            {idNumber && <Field label={labels.idNo} value={idNumber} isRTL={isRTL} mono />}
+            {host && <Field label={labels.host} value={host} isRTL={isRTL} />}
+            {purpose && <Field label={labels.purpose} value={purpose} isRTL={isRTL} />}
           </div>
 
-          <Row label={labels.badge} value={badge} isRTL={isRTL} mono />
-          {purpose && <Row label={labels.purpose} value={purpose} isRTL={isRTL} />}
-          {host && <Row label={labels.host} value={host} isRTL={isRTL} />}
-          {phone && <Row label={labels.phone} value={phone} isRTL={isRTL} accent />}
+          {/* LEARNER block — only for guardian-pickup */}
+          {variant === "guardian-pickup" && learner && (
+            <div
+              style={{
+                marginTop: 6,
+                padding: "6px 8px",
+                background: v.accentLight,
+                border: `1px dashed ${v.accent}`,
+                borderRadius: 6,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 8,
+                  fontWeight: 700,
+                  color: v.accentDark,
+                  letterSpacing: 1,
+                  marginBottom: 2,
+                }}
+              >
+                {labels.learner.toUpperCase()}
+              </div>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: "#0f172a",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {learner.full_name}
+              </div>
+              <div style={{ display: "flex", gap: 12, fontSize: 9.5, color: "#334155", marginTop: 1 }}>
+                <span>
+                  <strong>{labels.admission}:</strong>{" "}
+                  <span style={{ fontFamily: "monospace" }}>{learner.admission_number || "—"}</span>
+                </span>
+                <span>
+                  <strong>{labels.class}:</strong> {learner.class_name || "—"}
+                </span>
+              </div>
+            </div>
+          )}
 
-          <div style={{ marginTop: 10, fontSize: 10, color: "#64748b" }}>
-            {labels.validUntil}:{" "}
-            <span style={{ fontWeight: 700, color: "#0f172a" }}>
-              {format(validDate, variant === "day-pass" ? "EEE dd MMM yyyy" : "MMM yyyy")}
-            </span>
+          <div
+            style={{
+              marginTop: 6,
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "0 12px",
+              fontSize: 9,
+              color: "#475569",
+            }}
+          >
+            <div>
+              <strong style={{ color: "#0f172a" }}>{labels.issued}:</strong>{" "}
+              {format(issuedAt, "dd MMM yyyy HH:mm")}
+            </div>
+            <div>
+              <strong style={{ color: "#dc2626" }}>{labels.validUntil}:</strong>{" "}
+              <span style={{ fontWeight: 700, color: "#dc2626" }}>
+                {format(validUntil, variant === "day-pass" ? "dd MMM yyyy HH:mm" : "dd MMM yyyy")}
+              </span>
+            </div>
+            <div style={{ gridColumn: "1 / -1", fontFamily: "monospace", fontSize: 8.5, color: "#64748b" }}>
+              {labels.serial}: {serial}
+            </div>
           </div>
+        </div>
+      </div>
 
-          <div style={{ marginTop: 8, fontSize: 9, color: "#64748b", lineHeight: 1.3 }}>
-            {labels.return}
-          </div>
+      {/* FOOTER — warning + signature line */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: 28,
+          background: v.accentDark,
+          color: "white",
+          display: "flex",
+          alignItems: "center",
+          padding: "0 12px",
+          gap: 8,
+          fontSize: 8.5,
+          fontWeight: 600,
+          letterSpacing: 0.2,
+        }}
+      >
+        <AlertTriangle size={11} style={{ flexShrink: 0 }} />
+        <div
+          style={{
+            flex: 1,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            opacity: 0.95,
+          }}
+        >
+          {labels.warning}
+        </div>
+        <div
+          style={{
+            fontSize: 8,
+            opacity: 0.85,
+            borderLeft: "1px solid rgba(255,255,255,0.3)",
+            paddingLeft: 8,
+            fontStyle: "italic",
+          }}
+        >
+          {labels.signature}: ____________
         </div>
       </div>
     </div>
   );
 };
 
-const Row = ({
+const Field = ({
   label,
   value,
   mono,
-  accent,
   isRTL,
 }: {
   label: string;
   value: string;
   mono?: boolean;
-  accent?: boolean;
   isRTL?: boolean;
 }) => (
-  <div style={{ display: "flex", marginBottom: 3, gap: 6 }}>
+  <div style={{ display: "flex", gap: 4, minWidth: 0 }}>
     <span
       style={{
-        width: 70,
         color: "#64748b",
         fontWeight: 600,
         flexShrink: 0,
+        fontSize: 10,
         textAlign: isRTL ? "right" : "left",
       }}
     >
@@ -258,11 +551,12 @@ const Row = ({
       style={{
         flex: 1,
         fontFamily: mono ? "monospace" : undefined,
-        color: accent ? "#dc2626" : "#0f172a",
-        fontWeight: accent ? 700 : 600,
+        color: "#0f172a",
+        fontWeight: 700,
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
+        fontSize: 10.5,
       }}
     >
       {value}

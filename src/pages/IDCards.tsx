@@ -29,6 +29,7 @@ import { StaffIDCard } from "@/components/idcards/StaffIDCard";
 import { StudentIDCard } from "@/components/idcards/StudentIDCard";
 import { VisitorIDCard } from "@/components/idcards/VisitorIDCard";
 import { useVisitors, useVisitorVisits } from "@/hooks/useVisitors";
+import { Users } from "lucide-react";
 import { toPng } from "html-to-image";
 import { toast } from "@/hooks/use-toast";
 import JSZip from "jszip";
@@ -439,7 +440,12 @@ const IDCards = () => {
             </div>
           </TabsContent>
           <TabsContent value="visitors" className="space-y-4">
-            <VisitorIdSection schoolName={schoolName} schoolLogoUrl={previewSettings.school_logo_url} isRTL={isRTL} />
+            <VisitorIdSection
+              schoolName={schoolName}
+              schoolLogoUrl={previewSettings.school_logo_url}
+              isRTL={isRTL}
+              learners={learners}
+            />
           </TabsContent>
         </Tabs>
       </div>
@@ -466,20 +472,41 @@ const VisitorIdSection = ({
   schoolName,
   schoolLogoUrl,
   isRTL,
+  learners,
 }: {
   schoolName: string;
   schoolLogoUrl?: string;
   isRTL: boolean;
+  learners: any[];
 }) => {
   const { data: visits = [] } = useVisitorVisits("active");
   const { data: visitors = [] } = useVisitors();
   const [visitId, setVisitId] = useState<string>("");
   const [visitorId, setVisitorId] = useState<string>("");
+  const [pickupLearnerId, setPickupLearnerId] = useState<string>("");
   const dayRef = useRef<HTMLDivElement>(null);
   const reusableRef = useRef<HTMLDivElement>(null);
+  const pickupRef = useRef<HTMLDivElement>(null);
 
   const visit = visits.find((v) => v.id === visitId);
   const visitor = visitors.find((v) => v.id === visitorId);
+  const pickupLearner = learners.find((l) => l.id === pickupLearnerId);
+
+  // Build a synthetic visitor object from the learner's guardian
+  const guardianVisitor = pickupLearner
+    ? ({
+        id: pickupLearner.guardian_id || pickupLearner.id,
+        full_name: pickupLearner.guardian_name || "Guardian (not set)",
+        phone: pickupLearner.guardian_phone || null,
+        email: null,
+        company: null,
+        id_number: null,
+        photo_url: null,
+        notes: null,
+        is_recurring: true,
+        created_at: new Date().toISOString(),
+      } as any)
+    : undefined;
 
   const exportCard = async (ref: React.RefObject<HTMLDivElement>, name: string) => {
     if (!ref.current) return;
@@ -492,6 +519,64 @@ const VisitorIdSection = ({
 
   return (
     <div className="space-y-6">
+      {/* GUARDIAN PICKUP CARD — tied to a learner */}
+      <Card className="border-2 border-primary/20">
+        <CardContent className="pt-6 space-y-4">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <Users className="h-4 w-4 text-primary" />
+            Authorised Pick-Up Pass
+            <span className="text-xs font-normal text-muted-foreground">
+              — for parent/guardian collecting a learner
+            </span>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Select value={pickupLearnerId} onValueChange={setPickupLearnerId}>
+              <SelectTrigger className="sm:w-[360px]">
+                <SelectValue placeholder="Select learner being collected…" />
+              </SelectTrigger>
+              <SelectContent>
+                {learners.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>
+                    {l.full_name}
+                    {l.admission_number ? ` — ${l.admission_number}` : ""}
+                    {l.guardian_name ? ` • ${l.guardian_name}` : " • (no guardian)"}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              disabled={!pickupLearner}
+              onClick={() => pickupLearner && exportCard(pickupRef, `${pickupLearner.full_name}_PICKUP`)}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Print Pick-Up Pass
+            </Button>
+          </div>
+          {pickupLearner && !pickupLearner.guardian_id && (
+            <p className="text-xs text-destructive">
+              ⚠ This learner has no guardian on file. Edit the learner to add guardian details for a complete pass.
+            </p>
+          )}
+          <div className="flex justify-center pt-2">
+            <div ref={pickupRef} className="inline-block">
+              {pickupLearner ? (
+                <VisitorIDCard
+                  visitor={guardianVisitor}
+                  learner={pickupLearner}
+                  schoolName={schoolName}
+                  schoolLogoUrl={schoolLogoUrl}
+                  isRTL={isRTL}
+                  variant="guardian-pickup"
+                />
+              ) : (
+                <Placeholder label="Select a learner to issue a pick-up pass" />
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* DAY PASS */}
       <Card>
         <CardContent className="pt-6 space-y-4">
           <div className="flex items-center gap-2 text-sm font-semibold">
@@ -528,6 +613,7 @@ const VisitorIdSection = ({
         </CardContent>
       </Card>
 
+      {/* REUSABLE */}
       <Card>
         <CardContent className="pt-6 space-y-4">
           <div className="flex items-center gap-2 text-sm font-semibold">
