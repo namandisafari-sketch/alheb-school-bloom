@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          duration_minutes: number
+          host_name: string | null
+          host_staff_id: string | null
+          id: string
+          learner_id: string | null
+          location: string | null
+          notes: string | null
+          purpose: string
+          reminder_enabled: boolean
+          scheduled_for: string
+          status: string
+          updated_at: string
+          visitor_id: string | null
+          visitor_name: string
+          visitor_phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number
+          host_name?: string | null
+          host_staff_id?: string | null
+          id?: string
+          learner_id?: string | null
+          location?: string | null
+          notes?: string | null
+          purpose: string
+          reminder_enabled?: boolean
+          scheduled_for: string
+          status?: string
+          updated_at?: string
+          visitor_id?: string | null
+          visitor_name: string
+          visitor_phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          duration_minutes?: number
+          host_name?: string | null
+          host_staff_id?: string | null
+          id?: string
+          learner_id?: string | null
+          location?: string | null
+          notes?: string | null
+          purpose?: string
+          reminder_enabled?: boolean
+          scheduled_for?: string
+          status?: string
+          updated_at?: string
+          visitor_id?: string | null
+          visitor_name?: string
+          visitor_phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_visitor_id_fkey"
+            columns: ["visitor_id"]
+            isOneToOne: false
+            referencedRelation: "visitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance: {
         Row: {
           check_in_time: string | null
@@ -406,6 +481,45 @@ export type Database = {
           id?: string
           phone?: string
           relationship?: string | null
+        }
+        Relationships: []
+      }
+      in_app_notifications: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_read: boolean
+          link: string | null
+          message: string
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          message: string
+          read_at?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          message?: string
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1235,6 +1349,133 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      visitor_visits: {
+        Row: {
+          appointment_id: string | null
+          badge_number: string | null
+          check_in_at: string
+          check_out_at: string | null
+          created_at: string
+          host_name: string | null
+          host_staff_id: string | null
+          id: string
+          learner_id: string | null
+          notes: string | null
+          purpose: string | null
+          recorded_by: string | null
+          status: string
+          visitor_id: string | null
+          visitor_name: string
+          visitor_phone: string | null
+          visitor_photo_url: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          badge_number?: string | null
+          check_in_at?: string
+          check_out_at?: string | null
+          created_at?: string
+          host_name?: string | null
+          host_staff_id?: string | null
+          id?: string
+          learner_id?: string | null
+          notes?: string | null
+          purpose?: string | null
+          recorded_by?: string | null
+          status?: string
+          visitor_id?: string | null
+          visitor_name: string
+          visitor_phone?: string | null
+          visitor_photo_url?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          badge_number?: string | null
+          check_in_at?: string
+          check_out_at?: string | null
+          created_at?: string
+          host_name?: string | null
+          host_staff_id?: string | null
+          id?: string
+          learner_id?: string | null
+          notes?: string | null
+          purpose?: string | null
+          recorded_by?: string | null
+          status?: string
+          visitor_id?: string | null
+          visitor_name?: string
+          visitor_phone?: string | null
+          visitor_photo_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visitor_visits_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_visits_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visitor_visits_visitor_id_fkey"
+            columns: ["visitor_id"]
+            isOneToOne: false
+            referencedRelation: "visitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visitors: {
+        Row: {
+          company: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          full_name: string
+          id: string
+          id_number: string | null
+          is_recurring: boolean
+          notes: string | null
+          phone: string | null
+          photo_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          id_number?: string | null
+          is_recurring?: boolean
+          notes?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          id_number?: string | null
+          is_recurring?: boolean
+          notes?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
