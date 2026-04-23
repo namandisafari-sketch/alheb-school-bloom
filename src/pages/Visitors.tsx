@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { format, formatDistanceToNow, isToday } from "date-fns";
+import { useState, useRef } from "react";
+import { format, formatDistanceToNow, isToday, isPast } from "date-fns";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,15 +18,21 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  LogIn, LogOut, Users, Plus, Search, Phone, MapPin, Clock,
+  LogIn, LogOut, Plus, Search, Phone, MapPin, Clock, AlertTriangle, Printer, Ban,
 } from "lucide-react";
 import {
   useVisitors, useCreateVisitor, useVisitorVisits, useCheckInVisitor, useCheckOutVisitor,
   type Visitor, type VisitorVisit,
 } from "@/hooks/useVisitors";
+import {
+  useReentrySlips, useIssueReentrySlip, useVoidReentrySlip, type ReentrySlip,
+} from "@/hooks/useReentrySlips";
 import { useAppointments } from "@/hooks/useAppointments";
 import { useAllStaff } from "@/hooks/useStaff";
 import { useLearners } from "@/hooks/useLearners";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { EmergencyReentrySlip } from "@/components/idcards/EmergencyReentrySlip";
 import { toast } from "@/hooks/use-toast";
 
 const Visitors = () => {
@@ -34,10 +40,13 @@ const Visitors = () => {
   const { data: allVisits = [] } = useVisitorVisits("all");
   const { data: visitors = [] } = useVisitors();
   const { data: appointments = [] } = useAppointments();
+  const { data: slips = [] } = useReentrySlips();
 
   const todayApptsScheduled = appointments.filter(
     (a) => isToday(new Date(a.scheduled_for)) && a.status === "scheduled"
   );
+
+  const activeSlips = slips.filter((s) => !s.voided && !isPast(new Date(s.expires_at))).length;
 
   return (
     <DashboardLayout title="Visitors" subtitle="Gate check-in / check-out and visitor records">
@@ -50,25 +59,39 @@ const Visitors = () => {
               <Badge variant="secondary" className="ml-2">{activeVisits.length}</Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="reentry">
+            Re-entry Slips
+            {activeSlips > 0 && <Badge variant="secondary" className="ml-2">{activeSlips}</Badge>}
+          </TabsTrigger>
           <TabsTrigger value="log">Visit Log</TabsTrigger>
           <TabsTrigger value="visitors">Recurring Visitors</TabsTrigger>
         </TabsList>
 
         {/* GATE DESK */}
         <TabsContent value="gate" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <StatTile label="Currently on-site" value={activeVisits.length} />
             <StatTile label="Today's appointments" value={appointments.filter(a => isToday(new Date(a.scheduled_for))).length} />
+            <StatTile label="Active re-entry slips" value={activeSlips} />
             <StatTile label="Recurring visitors" value={visitors.filter(v => v.is_recurring).length} />
           </div>
 
           <Card>
-            <CardHeader className="flex-row justify-between items-center">
+            <CardHeader className="flex-row justify-between items-center gap-2 flex-wrap">
               <div>
                 <CardTitle className="text-base">Today's Scheduled Appointments</CardTitle>
                 <CardDescription>One-click check-in for booked visitors</CardDescription>
               </div>
-              <CheckInDialog trigger={<Button><Plus className="h-4 w-4 mr-2" />Walk-in Check-In</Button>} />
+              <div className="flex gap-2">
+                <ReentrySlipDialog
+                  trigger={
+                    <Button variant="outline">
+                      <AlertTriangle className="h-4 w-4 mr-2" />Issue Re-entry Slip
+                    </Button>
+                  }
+                />
+                <CheckInDialog trigger={<Button><Plus className="h-4 w-4 mr-2" />Walk-in Check-In</Button>} />
+              </div>
             </CardHeader>
             <CardContent>
               {todayApptsScheduled.length === 0 ? (
@@ -132,6 +155,53 @@ const Visitors = () => {
           </Card>
         </TabsContent>
 
+        {/* RE-ENTRY SLIPS LOG */}
+        <TabsContent value="reentry" className="space-y-4">
+          <Card>
+            <CardHeader className="flex-row justify-between items-center gap-2 flex-wrap">
+              <div>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  Emergency Re-entry Slips
+                </CardTitle>
+                <CardDescription>
+                  Time-limited thermal passes for visitors returning after checkout
+                </CardDescription>
+              </div>
+              <ReentrySlipDialog
+                trigger={
+                  <Button>
+                    <Printer className="h-4 w-4 mr-2" />Issue New Slip
+                  </Button>
+                }
+              />
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              {slips.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No re-entry slips issued yet</p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Serial</TableHead>
+                      <TableHead>Visitor</TableHead>
+                      <TableHead>Host / Purpose</TableHead>
+                      <TableHead>Issued</TableHead>
+                      <TableHead>Expires</TableHead>
+                      <TableHead>Width</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {slips.map((s) => <ReentrySlipRow key={s.id} slip={s} />)}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* LOG */}
         <TabsContent value="log" className="space-y-4">
           <Card>
@@ -150,6 +220,7 @@ const Visitors = () => {
                     <TableHead>Check-In</TableHead>
                     <TableHead>Check-Out</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -168,6 +239,18 @@ const Visitors = () => {
                         <Badge className={v.status === "checked_in" ? "bg-amber-500" : "bg-green-600"}>
                           {v.status === "checked_in" ? "On-site" : "Departed"}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {v.status === "checked_out" && (
+                          <ReentrySlipDialog
+                            visit={v}
+                            trigger={
+                              <Button size="sm" variant="outline">
+                                <AlertTriangle className="h-3 w-3 mr-1" />Re-entry
+                              </Button>
+                            }
+                          />
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -215,6 +298,280 @@ const ActiveVisitRow = ({ visit }: { visit: VisitorVisit }) => {
         </Button>
       </TableCell>
     </TableRow>
+  );
+};
+
+const ReentrySlipRow = ({ slip }: { slip: ReentrySlip }) => {
+  const voidSlip = useVoidReentrySlip();
+  const expired = isPast(new Date(slip.expires_at));
+  const status = slip.voided
+    ? { label: "Voided", cls: "bg-muted text-muted-foreground" }
+    : expired
+      ? { label: "Expired", cls: "bg-destructive text-destructive-foreground" }
+      : { label: "Active", cls: "bg-green-600 text-white" };
+
+  return (
+    <TableRow>
+      <TableCell><span className="font-mono text-xs">{slip.serial}</span></TableCell>
+      <TableCell>
+        <div className="font-medium">{slip.visitor_name}</div>
+        {slip.visitor_phone && <div className="text-xs text-muted-foreground">{slip.visitor_phone}</div>}
+      </TableCell>
+      <TableCell className="text-sm">
+        {slip.host_name && <div>{slip.host_name}</div>}
+        {slip.purpose && <div className="text-xs text-muted-foreground line-clamp-1">{slip.purpose}</div>}
+      </TableCell>
+      <TableCell className="text-xs">{format(new Date(slip.issued_at), "dd MMM HH:mm")}</TableCell>
+      <TableCell className="text-xs">
+        {format(new Date(slip.expires_at), "dd MMM HH:mm")}
+        <div className="text-muted-foreground">{slip.duration_minutes} min</div>
+      </TableCell>
+      <TableCell className="text-xs">{slip.print_width}mm</TableCell>
+      <TableCell><Badge className={status.cls}>{status.label}</Badge></TableCell>
+      <TableCell className="text-right">
+        <div className="flex justify-end gap-1">
+          <ReprintSlipButton slip={slip} />
+          {!slip.voided && !expired && (
+            <Button size="sm" variant="ghost" onClick={() => voidSlip.mutate(slip.id)}>
+              <Ban className="h-3 w-3" />
+            </Button>
+          )}
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+};
+
+const ReprintSlipButton = ({ slip }: { slip: ReentrySlip }) => {
+  const [open, setOpen] = useState(false);
+  const { data: settings } = useSiteSettings();
+  const { language } = useLanguage();
+  const ref = useRef<HTMLDivElement>(null);
+  const schoolName = settings?.school_name || "Al-Heb School";
+
+  const remainingMin = Math.max(
+    0,
+    Math.round((new Date(slip.expires_at).getTime() - Date.now()) / 60000),
+  );
+
+  const handlePrint = () => {
+    if (!ref.current) return;
+    const w = window.open("", "_blank", "width=400,height=700");
+    if (!w) return;
+    w.document.write(`<html><head><title>${slip.serial}</title>
+      <style>body{margin:0;padding:8px;font-family:monospace;}</style>
+    </head><body>${ref.current.outerHTML}</body></html>`);
+    w.document.close();
+    setTimeout(() => { w.print(); w.close(); }, 250);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="ghost"><Printer className="h-3 w-3" /></Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Reprint Re-entry Slip</DialogTitle>
+          <DialogDescription>Serial {slip.serial}</DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-center bg-muted/30 p-4 rounded">
+          <div ref={ref}>
+            <EmergencyReentrySlip
+              schoolName={schoolName}
+              visitorName={slip.visitor_name}
+              visitorPhone={slip.visitor_phone}
+              idNumber={slip.id_number}
+              purpose={slip.purpose}
+              host={slip.host_name}
+              durationMinutes={remainingMin > 0 ? remainingMin : slip.duration_minutes}
+              width={slip.print_width as 54 | 80}
+              isRTL={language === "ar"}
+              badgeNumber={slip.badge_number}
+              originalVisitId={slip.original_visit_id}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Close</Button>
+          <Button onClick={handlePrint}><Printer className="h-4 w-4 mr-2" />Print</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const ReentrySlipDialog = ({
+  visit,
+  trigger,
+}: {
+  visit?: VisitorVisit;
+  trigger: React.ReactNode;
+}) => {
+  const [open, setOpen] = useState(false);
+  const issue = useIssueReentrySlip();
+  const { data: settings } = useSiteSettings();
+  const { language } = useLanguage();
+  const ref = useRef<HTMLDivElement>(null);
+  const [issued, setIssued] = useState<ReentrySlip | null>(null);
+  const schoolName = settings?.school_name || "Al-Heb School";
+
+  const [form, setForm] = useState({
+    visitor_name: visit?.visitor_name || "",
+    visitor_phone: visit?.visitor_phone || "",
+    id_number: "",
+    purpose: visit?.purpose || "",
+    host_name: visit?.host_name || "",
+    duration_minutes: 60,
+    print_width: 80 as 54 | 80,
+    notes: "",
+  });
+
+  const submit = async () => {
+    if (!form.visitor_name.trim()) {
+      toast({ title: "Visitor name required", variant: "destructive" });
+      return;
+    }
+    try {
+      const slip = await issue.mutateAsync({
+        visitor_name: form.visitor_name.trim(),
+        visitor_phone: form.visitor_phone.trim() || null,
+        id_number: form.id_number.trim() || null,
+        purpose: form.purpose.trim() || null,
+        host_name: form.host_name.trim() || null,
+        duration_minutes: form.duration_minutes,
+        print_width: form.print_width,
+        original_visit_id: visit?.id || null,
+        visitor_id: visit?.visitor_id || null,
+        notes: form.notes.trim() || null,
+      });
+      setIssued(slip);
+      toast({ title: "Slip issued", description: `Serial ${slip.serial}` });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const handlePrint = () => {
+    if (!ref.current) return;
+    const w = window.open("", "_blank", "width=400,height=700");
+    if (!w) return;
+    w.document.write(`<html><head><title>${issued?.serial}</title>
+      <style>body{margin:0;padding:8px;font-family:monospace;}</style>
+    </head><body>${ref.current.outerHTML}</body></html>`);
+    w.document.close();
+    setTimeout(() => { w.print(); w.close(); }, 250);
+  };
+
+  const close = () => {
+    setOpen(false);
+    setTimeout(() => setIssued(null), 300);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => (o ? setOpen(true) : close())}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-600" />
+            Emergency Re-entry Slip
+          </DialogTitle>
+          <DialogDescription>
+            Time-limited thermal pass for a visitor returning after checkout.
+          </DialogDescription>
+        </DialogHeader>
+
+        {!issued ? (
+          <div className="grid gap-3 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Visitor Name *</Label>
+                <Input value={form.visitor_name} onChange={(e) => setForm({ ...form, visitor_name: e.target.value })} maxLength={120} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Phone</Label>
+                <Input value={form.visitor_phone} onChange={(e) => setForm({ ...form, visitor_phone: e.target.value })} maxLength={30} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>National ID No.</Label>
+                <Input value={form.id_number} onChange={(e) => setForm({ ...form, id_number: e.target.value })} maxLength={40} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Host</Label>
+                <Input value={form.host_name} onChange={(e) => setForm({ ...form, host_name: e.target.value })} maxLength={120} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Purpose</Label>
+              <Input value={form.purpose} onChange={(e) => setForm({ ...form, purpose: e.target.value })} maxLength={200} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Duration</Label>
+                <Select value={String(form.duration_minutes)} onValueChange={(v) => setForm({ ...form, duration_minutes: Number(v) })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="15">15 minutes</SelectItem>
+                    <SelectItem value="30">30 minutes</SelectItem>
+                    <SelectItem value="60">1 hour</SelectItem>
+                    <SelectItem value="120">2 hours</SelectItem>
+                    <SelectItem value="240">4 hours</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Print Width</Label>
+                <Select value={String(form.print_width)} onValueChange={(v) => setForm({ ...form, print_width: Number(v) as 54 | 80 })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="54">54mm thermal</SelectItem>
+                    <SelectItem value="80">80mm thermal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Notes</Label>
+              <Textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} maxLength={500} />
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-center bg-muted/30 p-4 rounded">
+            <div ref={ref}>
+              <EmergencyReentrySlip
+                schoolName={schoolName}
+                visitorName={issued.visitor_name}
+                visitorPhone={issued.visitor_phone}
+                idNumber={issued.id_number}
+                purpose={issued.purpose}
+                host={issued.host_name}
+                durationMinutes={issued.duration_minutes}
+                width={issued.print_width as 54 | 80}
+                isRTL={language === "ar"}
+                badgeNumber={issued.badge_number}
+                originalVisitId={issued.original_visit_id}
+              />
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={close}>Close</Button>
+          {!issued ? (
+            <Button onClick={submit} disabled={issue.isPending}>
+              <Printer className="h-4 w-4 mr-2" />Issue Slip
+            </Button>
+          ) : (
+            <Button onClick={handlePrint}>
+              <Printer className="h-4 w-4 mr-2" />Print
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
