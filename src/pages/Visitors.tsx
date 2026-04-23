@@ -347,7 +347,7 @@ const ReprintSlipButton = ({ slip }: { slip: ReentrySlip }) => {
   const { data: settings } = useSiteSettings();
   const { language } = useLanguage();
   const ref = useRef<HTMLDivElement>(null);
-  const schoolName = settings?.school_name || "Al-Heb School";
+  const schoolName = settings?.landing_hero?.school_name || "Al-Heb School";
 
   const remainingMin = Math.max(
     0,
