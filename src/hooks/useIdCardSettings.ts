@@ -44,7 +44,7 @@ export const useUpdateIdCardSettings = () => {
     mutationFn: async (value: IdCardSettings) => {
       const { error } = await supabase
         .from("site_settings")
-        .upsert({ key: "id_card_settings", value }, { onConflict: "key" });
+        .upsert([{ key: "id_card_settings", value: value as any }], { onConflict: "key" });
       if (error) throw error;
     },
     onSuccess: () => {
