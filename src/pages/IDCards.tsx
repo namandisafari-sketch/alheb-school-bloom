@@ -440,7 +440,12 @@ const IDCards = () => {
             </div>
           </TabsContent>
           <TabsContent value="visitors" className="space-y-4">
-            <VisitorIdSection schoolName={schoolName} schoolLogoUrl={previewSettings.school_logo_url} isRTL={isRTL} />
+            <VisitorIdSection
+              schoolName={schoolName}
+              schoolLogoUrl={previewSettings.school_logo_url}
+              isRTL={isRTL}
+              learners={learners}
+            />
           </TabsContent>
         </Tabs>
       </div>
