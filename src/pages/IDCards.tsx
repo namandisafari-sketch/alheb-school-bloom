@@ -485,8 +485,11 @@ const VisitorIdSection = ({
   const [visitorId, setVisitorId] = useState<string>("");
   const [pickupLearnerId, setPickupLearnerId] = useState<string>("");
   const dayRef = useRef<HTMLDivElement>(null);
+  const dayBackRef = useRef<HTMLDivElement>(null);
   const reusableRef = useRef<HTMLDivElement>(null);
+  const reusableBackRef = useRef<HTMLDivElement>(null);
   const pickupRef = useRef<HTMLDivElement>(null);
+  const pickupBackRef = useRef<HTMLDivElement>(null);
 
   const visit = visits.find((v) => v.id === visitId);
   const visitor = visitors.find((v) => v.id === visitorId);
@@ -508,12 +511,22 @@ const VisitorIdSection = ({
       } as any)
     : undefined;
 
-  const exportCard = async (ref: React.RefObject<HTMLDivElement>, name: string) => {
-    if (!ref.current) return;
-    const dataUrl = await toPng(ref.current, { pixelRatio: 3, cacheBust: true, backgroundColor: "#ffffff" });
+  const exportCard = async (
+    frontEl: React.RefObject<HTMLDivElement>,
+    backEl: React.RefObject<HTMLDivElement>,
+    name: string,
+  ) => {
+    if (!frontEl.current || !backEl.current) return;
+    const safe = name.replace(/[^a-z0-9]/gi, "_");
+    const zip = new JSZip();
+    const front = await toPng(frontEl.current, { pixelRatio: 3, cacheBust: true, backgroundColor: "#ffffff" });
+    const back = await toPng(backEl.current, { pixelRatio: 3, cacheBust: true, backgroundColor: "#ffffff" });
+    zip.file(`${safe}_FRONT.png`, front.split(",")[1], { base64: true });
+    zip.file(`${safe}_BACK.png`, back.split(",")[1], { base64: true });
+    const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
-    a.href = dataUrl;
-    a.download = `${name.replace(/[^a-z0-9]/gi, "_")}_VISITOR.png`;
+    a.href = URL.createObjectURL(blob);
+    a.download = `${safe}_VISITOR.zip`;
     a.click();
   };
 
