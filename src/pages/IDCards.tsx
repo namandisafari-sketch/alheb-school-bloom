@@ -514,21 +514,100 @@ const VisitorIdSection = ({
   const visitor = visitors.find((v) => v.id === visitorId);
   const pickupLearner = learners.find((l) => l.id === pickupLearnerId);
 
-  // Build a synthetic visitor object from the learner's guardian
-  const guardianVisitor = pickupLearner
-    ? ({
-        id: pickupLearner.guardian_id || pickupLearner.id,
-        full_name: pickupLearner.guardian_name || "Guardian (not set)",
-        phone: pickupLearner.guardian_phone || null,
-        email: null,
-        company: null,
-        id_number: null,
-        photo_url: null,
-        notes: null,
-        is_recurring: true,
-        created_at: new Date().toISOString(),
-      } as any)
-    : undefined;
+  // Fetch full guardian record for richer auto-fill (email, district, address, relationship)
+  const { data: guardianRecord } = useGuardian(pickupLearner?.guardian_id);
+
+  // Auto-built visitor object from learner → guardian
+  const guardianVisitor = useMemo(() => {
+    if (!pickupLearner) return undefined;
+    const name =
+      guardianRecord?.full_name ||
+      pickupLearner.guardian_name ||
+      "Guardian (not on file)";
+    const phone = guardianRecord?.phone || pickupLearner.guardian_phone || null;
+    const relationship = guardianRecord?.relationship || "guardian";
+    return {
+      id: pickupLearner.guardian_id || `gp-${pickupLearner.id}`,
+      full_name: name,
+      phone,
+      email: guardianRecord?.email || null,
+      // Show relationship in the "Organisation" slot so it reads e.g. "Father / Parent"
+      company: relationship.charAt(0).toUpperCase() + relationship.slice(1),
+      // Use guardian district / national ID slot — falls back to a generated ref
+      id_number:
+        guardianRecord?.district ||
+        (pickupLearner.guardian_id
+          ? `GRD-${pickupLearner.guardian_id.slice(0, 8).toUpperCase()}`
+          : null),
+      photo_url: null,
+      notes: guardianRecord?.address || null,
+      is_recurring: true,
+      created_at: guardianRecord?.created_at || new Date().toISOString(),
+    } as any;
+  }, [pickupLearner, guardianRecord]);
+
+  // ============== VALIDATION ==============
+  const pickupIssues = useMemo(() => {
+    if (!pickupLearner) return [];
+    const issues: { level: "error" | "warn"; msg: string }[] = [];
+    if (!pickupLearner.guardian_id) {
+      issues.push({ level: "error", msg: "No guardian on file for this learner. Add a guardian on the learner record before printing." });
+    } else {
+      if (!guardianRecord && pickupLearner.guardian_id) {
+        // still loading or missing
+      }
+      if (!guardianVisitor?.phone) {
+        issues.push({ level: "warn", msg: "Guardian phone is missing — verification calls will not be possible." });
+      }
+      if (!guardianRecord?.email) {
+        issues.push({ level: "warn", msg: "Guardian email is missing — no electronic confirmation can be sent." });
+      }
+      if (!guardianRecord?.district && !guardianRecord?.address) {
+        issues.push({ level: "warn", msg: "Guardian address / district is missing." });
+      }
+    }
+    if (!pickupLearner.photo_url) {
+      issues.push({ level: "warn", msg: "Learner has no photo on file — visual verification will be limited." });
+    }
+    return issues;
+  }, [pickupLearner, guardianRecord, guardianVisitor]);
+
+  const dayIssues = useMemo(() => {
+    if (!visit) return [];
+    const issues: { level: "error" | "warn"; msg: string }[] = [];
+    const checkedIn = new Date(visit.check_in_at);
+    const today = new Date();
+    const sameDay =
+      checkedIn.getFullYear() === today.getFullYear() &&
+      checkedIn.getMonth() === today.getMonth() &&
+      checkedIn.getDate() === today.getDate();
+    if (visit.status === "checked_out") {
+      issues.push({ level: "error", msg: "This visit has already been checked out — the day pass is no longer valid." });
+    } else if (!sameDay) {
+      issues.push({ level: "error", msg: `Day pass is from ${checkedIn.toLocaleDateString()} and has expired. Re-check the visitor in for today.` });
+    }
+    if (!visit.visitor_phone) issues.push({ level: "warn", msg: "Visitor phone is missing." });
+    if (!visit.visitor_photo_url) issues.push({ level: "warn", msg: "No visitor photo captured at check-in." });
+    if (!visit.host_name && !visit.host_staff_id) issues.push({ level: "warn", msg: "No host assigned for this visit." });
+    if (!visit.purpose) issues.push({ level: "warn", msg: "Purpose of visit not recorded." });
+    return issues;
+  }, [visit]);
+
+  const reusableIssues = useMemo(() => {
+    if (!visitor) return [];
+    const issues: { level: "error" | "warn"; msg: string }[] = [];
+    if (!visitor.is_recurring) {
+      issues.push({ level: "error", msg: "Selected visitor is not marked as recurring — issue a day pass instead." });
+    }
+    if (!visitor.phone) issues.push({ level: "warn", msg: "Phone number missing." });
+    if (!visitor.id_number) issues.push({ level: "warn", msg: "Government ID number not on file." });
+    if (!visitor.photo_url) issues.push({ level: "warn", msg: "No photo on file." });
+    if (!visitor.company) issues.push({ level: "warn", msg: "Organisation / employer not recorded." });
+    return issues;
+  }, [visitor]);
+
+  const hasBlockingIssue = (issues: { level: "error" | "warn"; msg: string }[]) =>
+    issues.some((i) => i.level === "error");
 
   const exportCard = async (
     frontEl: React.RefObject<HTMLDivElement>,
