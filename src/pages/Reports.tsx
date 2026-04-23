@@ -72,7 +72,8 @@ const Reports = () => {
   const previewRef = useRef<HTMLDivElement>(null);
   const currentYear = new Date().getFullYear();
   const { toast } = useToast();
-  const { isAdmin } = useAuth();
+  const { role } = useAuth();
+  const isAdmin = role === "admin";
 
   const [selectedClass, setSelectedClass] = useState<string>(searchParams.get("class") || "");
   const [selectedTerm, setSelectedTerm] = useState<TermType>(
