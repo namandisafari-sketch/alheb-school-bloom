@@ -292,6 +292,87 @@ export type Database = {
           },
         ]
       }
+      emergency_reentry_slips: {
+        Row: {
+          badge_number: string
+          created_at: string
+          duration_minutes: number
+          expires_at: string
+          host_name: string | null
+          id: string
+          id_number: string | null
+          issued_at: string
+          issued_by: string | null
+          notes: string | null
+          original_visit_id: string | null
+          print_width: number
+          purpose: string | null
+          serial: string
+          visitor_id: string | null
+          visitor_name: string
+          visitor_phone: string | null
+          voided: boolean
+          voided_at: string | null
+        }
+        Insert: {
+          badge_number: string
+          created_at?: string
+          duration_minutes?: number
+          expires_at: string
+          host_name?: string | null
+          id?: string
+          id_number?: string | null
+          issued_at?: string
+          issued_by?: string | null
+          notes?: string | null
+          original_visit_id?: string | null
+          print_width?: number
+          purpose?: string | null
+          serial: string
+          visitor_id?: string | null
+          visitor_name: string
+          visitor_phone?: string | null
+          voided?: boolean
+          voided_at?: string | null
+        }
+        Update: {
+          badge_number?: string
+          created_at?: string
+          duration_minutes?: number
+          expires_at?: string
+          host_name?: string | null
+          id?: string
+          id_number?: string | null
+          issued_at?: string
+          issued_by?: string | null
+          notes?: string | null
+          original_visit_id?: string | null
+          print_width?: number
+          purpose?: string | null
+          serial?: string
+          visitor_id?: string | null
+          visitor_name?: string
+          visitor_phone?: string | null
+          voided?: boolean
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emergency_reentry_slips_original_visit_id_fkey"
+            columns: ["original_visit_id"]
+            isOneToOne: false
+            referencedRelation: "visitor_visits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "emergency_reentry_slips_visitor_id_fkey"
+            columns: ["visitor_id"]
+            isOneToOne: false
+            referencedRelation: "visitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fee_assignments: {
         Row: {
           created_at: string | null
