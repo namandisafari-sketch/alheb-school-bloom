@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useSiteSettings, useUpdateSiteSetting } from "@/hooks/useSiteSettings";
+import { useIdCardSettings, useUpdateIdCardSettings, uploadSignature, IdCardSettings } from "@/hooks/useIdCardSettings";
 import { toast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,12 +10,48 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Save, Eye, Palette, Layout, Phone, BarChart3 } from "lucide-react";
+import { Loader2, Save, Eye, Palette, Layout, Phone, BarChart3, CreditCard, Upload } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const SiteSettings = () => {
   const { data: settings, isLoading } = useSiteSettings();
   const updateSetting = useUpdateSiteSetting();
+  const { data: idCardSettings } = useIdCardSettings();
+  const updateIdCardSettings = useUpdateIdCardSettings();
+  const [idCard, setIdCard] = useState<IdCardSettings>({
+    director_name: "",
+    director_signature_url: "",
+    head_teacher_name: "",
+    head_teacher_signature_url: "",
+    school_logo_url: "",
+    back_policy: "",
+    back_policy_ar: "",
+  });
+  const [uploadingDir, setUploadingDir] = useState(false);
+  const [uploadingHead, setUploadingHead] = useState(false);
+
+  useEffect(() => {
+    if (idCardSettings) setIdCard(idCardSettings);
+  }, [idCardSettings]);
+
+  const handleSignatureUpload = async (file: File, type: "director" | "head_teacher") => {
+    const setLoad = type === "director" ? setUploadingDir : setUploadingHead;
+    setLoad(true);
+    try {
+      const url = await uploadSignature(file, type);
+      const next = {
+        ...idCard,
+        [type === "director" ? "director_signature_url" : "head_teacher_signature_url"]: url,
+      };
+      setIdCard(next);
+      await updateIdCardSettings.mutateAsync(next);
+      toast({ title: "Uploaded", description: "Signature saved" });
+    } catch (e: any) {
+      toast({ title: "Upload failed", description: e.message, variant: "destructive" });
+    } finally {
+      setLoad(false);
+    }
+  };
 
   const [hero, setHero] = useState({
     school_name: "",
@@ -111,28 +148,136 @@ const SiteSettings = () => {
         </div>
 
         <Tabs defaultValue="hero" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6">
             <TabsTrigger value="hero" className="gap-2">
               <Layout className="h-4 w-4" />
-              Hero
+              <span className="hidden sm:inline">Hero</span>
             </TabsTrigger>
             <TabsTrigger value="features" className="gap-2">
               <BarChart3 className="h-4 w-4" />
-              Features
+              <span className="hidden sm:inline">Features</span>
             </TabsTrigger>
             <TabsTrigger value="stats" className="gap-2">
               <BarChart3 className="h-4 w-4" />
-              Stats
+              <span className="hidden sm:inline">Stats</span>
             </TabsTrigger>
             <TabsTrigger value="contact" className="gap-2">
               <Phone className="h-4 w-4" />
-              Contact
+              <span className="hidden sm:inline">Contact</span>
             </TabsTrigger>
             <TabsTrigger value="theme" className="gap-2">
               <Palette className="h-4 w-4" />
-              Theme
+              <span className="hidden sm:inline">Theme</span>
+            </TabsTrigger>
+            <TabsTrigger value="idcards" className="gap-2">
+              <CreditCard className="h-4 w-4" />
+              <span className="hidden sm:inline">ID Cards</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* ID Cards Tab */}
+          <TabsContent value="idcards">
+            <Card>
+              <CardHeader>
+                <CardTitle>ID Card Signatures & Branding</CardTitle>
+                <CardDescription>
+                  Upload Director and Head Teacher signatures — they will appear on every generated ID card.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Director Name</Label>
+                    <Input
+                      value={idCard.director_name}
+                      onChange={(e) => setIdCard({ ...idCard, director_name: e.target.value })}
+                      placeholder="e.g. Sheikh Ahmed"
+                    />
+                    <Label>Director Signature</Label>
+                    <div className="flex items-center gap-3">
+                      {idCard.director_signature_url ? (
+                        <img src={idCard.director_signature_url} alt="director sig" className="h-14 max-w-[160px] object-contain border rounded bg-white p-1" />
+                      ) : (
+                        <div className="h-14 w-32 border border-dashed rounded flex items-center justify-center text-xs text-muted-foreground">No signature</div>
+                      )}
+                      <label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => e.target.files?.[0] && handleSignatureUpload(e.target.files[0], "director")}
+                        />
+                        <Button asChild variant="outline" size="sm">
+                          <span>{uploadingDir ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />} Upload</span>
+                        </Button>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Head Teacher Name</Label>
+                    <Input
+                      value={idCard.head_teacher_name}
+                      onChange={(e) => setIdCard({ ...idCard, head_teacher_name: e.target.value })}
+                      placeholder="e.g. Mrs. Fatima"
+                    />
+                    <Label>Head Teacher Signature</Label>
+                    <div className="flex items-center gap-3">
+                      {idCard.head_teacher_signature_url ? (
+                        <img src={idCard.head_teacher_signature_url} alt="head sig" className="h-14 max-w-[160px] object-contain border rounded bg-white p-1" />
+                      ) : (
+                        <div className="h-14 w-32 border border-dashed rounded flex items-center justify-center text-xs text-muted-foreground">No signature</div>
+                      )}
+                      <label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => e.target.files?.[0] && handleSignatureUpload(e.target.files[0], "head_teacher")}
+                        />
+                        <Button asChild variant="outline" size="sm">
+                          <span>{uploadingHead ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />} Upload</span>
+                        </Button>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>School Logo URL (optional)</Label>
+                  <Input
+                    value={idCard.school_logo_url}
+                    onChange={(e) => setIdCard({ ...idCard, school_logo_url: e.target.value })}
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Back-side Policy (English)</Label>
+                    <Textarea rows={3} value={idCard.back_policy} onChange={(e) => setIdCard({ ...idCard, back_policy: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Back-side Policy (Arabic)</Label>
+                    <Textarea rows={3} dir="rtl" value={idCard.back_policy_ar} onChange={(e) => setIdCard({ ...idCard, back_policy_ar: e.target.value })} />
+                  </div>
+                </div>
+
+                <Button
+                  onClick={async () => {
+                    await updateIdCardSettings.mutateAsync(idCard);
+                    toast({ title: "Saved", description: "ID card settings updated" });
+                  }}
+                  disabled={updateIdCardSettings.isPending}
+                  className="gap-2"
+                >
+                  {updateIdCardSettings.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Save ID Card Settings
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
 
           {/* Hero Tab */}
           <TabsContent value="hero">
