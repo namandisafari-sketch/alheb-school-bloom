@@ -6,8 +6,54 @@ import { ClassOverview } from "@/components/dashboard/ClassOverview";
 import { UpcomingEvents } from "@/components/dashboard/UpcomingEvents";
 import { FeeCollectionSummary, RecentFeePayments, OutstandingBalancesWidget } from "@/components/dashboard/FeeWidgets";
 import { Users, GraduationCap, BookOpen, ClipboardCheck } from "lucide-react";
+import { useLearners } from "@/hooks/useLearners";
+import { useTeachers } from "@/hooks/useTeachers";
+import { useClasses } from "@/hooks/useClasses";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { format, subDays } from "date-fns";
+
+const useAttendanceStats = () => {
+  return useQuery({
+    queryKey: ["attendance-stats"],
+    queryFn: async () => {
+      const today = format(new Date(), "yyyy-MM-dd");
+      const weekAgo = format(subDays(new Date(), 7), "yyyy-MM-dd");
+
+      const [todayRes, weekRes] = await Promise.all([
+        supabase.from("attendance").select("status").eq("date", today),
+        supabase.from("attendance").select("status").gte("date", weekAgo).lt("date", today),
+      ]);
+
+      const calc = (rows: { status: string }[] | null) => {
+        if (!rows?.length) return null;
+        const present = rows.filter((r) => r.status === "present" || r.status === "late").length;
+        return Math.round((present / rows.length) * 100);
+      };
+
+      const todayRate = calc(todayRes.data);
+      const lastWeekRate = calc(weekRes.data);
+      return { todayRate, lastWeekRate };
+    },
+    refetchInterval: 60000,
+  });
+};
 
 const Index = () => {
+  const { data: learners } = useLearners();
+  const { data: teachers } = useTeachers();
+  const { data: classes } = useClasses();
+  const { data: attStats } = useAttendanceStats();
+
+  const totalLearners = learners?.length ?? 0;
+  const totalTeachers = teachers?.length ?? 0;
+  const totalClasses = classes?.length ?? 0;
+  const attendanceRate = attStats?.todayRate;
+  const attDelta =
+    attStats?.todayRate != null && attStats?.lastWeekRate != null
+      ? attStats.todayRate - attStats.lastWeekRate
+      : null;
+
   return (
     <DashboardLayout 
       title="Dashboard" 
@@ -31,17 +77,17 @@ const Index = () => {
       <div className="grid gap-3 sm:gap-4 lg:gap-6 grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Learners"
-          value={210}
-          change="+15 this term"
-          changeType="positive"
+          value={totalLearners}
+          change={`${totalLearners} active`}
+          changeType="neutral"
           icon={Users}
           iconColor="primary"
           delay={0}
         />
         <StatCard
           title="Teachers"
-          value={8}
-          change="NCDC Certified"
+          value={totalTeachers}
+          change={totalTeachers > 0 ? "Active staff" : "No teachers yet"}
           changeType="neutral"
           icon={GraduationCap}
           iconColor="secondary"
@@ -49,8 +95,8 @@ const Index = () => {
         />
         <StatCard
           title="Classes (P1-P7)"
-          value={7}
-          change="All active"
+          value={totalClasses}
+          change={totalClasses > 0 ? "All active" : "No classes yet"}
           changeType="neutral"
           icon={BookOpen}
           iconColor="success"
@@ -58,9 +104,13 @@ const Index = () => {
         />
         <StatCard
           title="Attendance Rate"
-          value="92%"
-          change="+3% from last week"
-          changeType="positive"
+          value={attendanceRate != null ? `${attendanceRate}%` : "—"}
+          change={
+            attDelta != null
+              ? `${attDelta >= 0 ? "+" : ""}${attDelta}% from last week`
+              : "No data today"
+          }
+          changeType={attDelta != null ? (attDelta >= 0 ? "positive" : "negative") : "neutral"}
           icon={ClipboardCheck}
           iconColor="info"
           delay={300}
