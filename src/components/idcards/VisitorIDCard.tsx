@@ -156,25 +156,57 @@ export const VisitorIDCard = ({
   // ============================== BACK SIDE ==============================
   if (side === "back") {
     const rules = isRTL
+      ? isPermanentPickup
+        ? [
+            "هذه البطاقة ملك ولي الأمر ويجب إحضارها في كل زيارة لاستلام الطفل.",
+            "يجب إبرازها عند البوابة قبل تسليم الطفل.",
+            "يُسلَّم الطفل فقط لحامل هذه البطاقة بعد التحقق من الهوية الوطنية.",
+            "لا يجوز إعارتها أو تسليمها لأي شخص آخر.",
+            "في حال الفقد، أبلغ مكتب الاستقبال فوراً لإلغائها وإصدار بديل.",
+            "يجب الالتزام بسياسة حماية الطفل في جميع الأوقات.",
+          ]
+        : variant === "day-pass"
+        ? [
+            "تصريح يوم واحد فقط – يُلغى تلقائياً عند تسجيل الخروج من البوابة.",
+            "في حال العودة بعد الخروج يجب إصدار تصريح طوارئ حراري جديد.",
+            "يجب ارتداؤها بشكل ظاهر طوال فترة الزيارة.",
+            "ممنوع التجول دون مرافقة المضيف المحدد.",
+            "ممنوع التصوير أو تسجيل الفيديو دون إذن خطي.",
+            "ملك للمدرسة – يجب إرجاعها عند المغادرة.",
+          ]
+        : [
+            "بطاقة زائر متكرر – صالحة لمدة سنة من تاريخ الإصدار.",
+            "يجب التسجيل عند البوابة في كل زيارة.",
+            "يجب ارتداؤها بشكل ظاهر داخل الحرم.",
+            "ممنوع التصوير أو تسجيل الفيديو دون إذن خطي.",
+            "يجب الالتزام بسياسة حماية الطفل.",
+            "ملك للمدرسة – تُرجَع عند انتهاء التعاقد أو الصلاحية.",
+          ]
+      : isPermanentPickup
       ? [
-          "هذه البطاقة ملك للمدرسة ويجب إعادتها عند المغادرة.",
-          "يجب ارتداؤها بشكل ظاهر طوال فترة الزيارة.",
-          variant === "guardian-pickup"
-            ? "تُسلَّم الطفل فقط لحامل هذه البطاقة بعد التحقق من الهوية."
-            : "يُمنع التجول دون مرافقة المضيف.",
-          "ممنوع التصوير أو تسجيل الفيديو دون إذن خطي.",
-          "يجب الالتزام بسياسات حماية الطفل في جميع الأوقات.",
-          "في حال فقدان البطاقة، أبلغ مكتب الاستقبال فوراً.",
+          "This card is the PROPERTY OF THE GUARDIAN — bring it on every collection visit.",
+          "Present it at the gate before the learner is released.",
+          "Learner will ONLY be released to the holder of this pass after national-ID verification.",
+          "Do NOT lend or surrender this card to any other person.",
+          "If lost, notify reception immediately to revoke and re-issue.",
+          "All holders must comply with the school's child-protection policy.",
+        ]
+      : variant === "day-pass"
+      ? [
+          "Single-day pass — automatically REVOKED the moment you check out at the gate.",
+          "If you return after check-out, a new thermal Emergency Re-entry Slip must be issued.",
+          "Must be worn visibly at all times while on premises.",
+          "No unescorted movement — remain with your assigned host.",
+          "Photography or video recording is strictly prohibited without written consent.",
+          "Property of the school — must be returned on exit.",
         ]
       : [
-          "This card remains the property of the school and must be returned on exit.",
+          "Reusable pass — valid for one (1) year from date of issue.",
+          "Must be signed in at the gate on every visit.",
           "Must be worn visibly at all times while on premises.",
-          variant === "guardian-pickup"
-            ? "Learner will only be released to the holder of this pass after ID verification."
-            : "Visitors must remain with their host at all times — no unescorted movement.",
           "Photography or video recording is strictly prohibited without written consent.",
-          "All visitors must comply with the school's child-protection policy.",
-          "Lost cards must be reported to reception immediately.",
+          "All holders must comply with the school's child-protection policy.",
+          "Property of the school — returned on contract end or expiry.",
         ];
 
     const backLabels = isRTL
