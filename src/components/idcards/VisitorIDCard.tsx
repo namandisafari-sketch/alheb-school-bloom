@@ -1,4 +1,4 @@
-import { User, ShieldCheck, AlertTriangle } from "lucide-react";
+import { User, ShieldCheck, AlertTriangle, Phone, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { QRCodeSVG } from "qrcode.react";
 import type { VisitorVisit, Visitor } from "@/hooks/useVisitors";
@@ -12,6 +12,7 @@ interface VisitorIDCardProps {
   schoolLogoUrl?: string;
   isRTL?: boolean;
   variant: "day-pass" | "reusable" | "guardian-pickup";
+  side?: "front" | "back";
 }
 
 export const VISITOR_CARD_WIDTH = 580;
