@@ -21,6 +21,7 @@ import Notifications from "./pages/Notifications";
 import SiteSettings from "./pages/SiteSettings";
 import Salary from "./pages/Salary";
 import IDCards from "./pages/IDCards";
+import FeeManagement from "./pages/FeeManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -152,7 +153,15 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            
+            <Route
+              path="/fees"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "staff"]}>
+                  <FeeManagement />
+                </ProtectedRoute>
+              }
+            />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

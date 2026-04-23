@@ -4,6 +4,7 @@ import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { ClassOverview } from "@/components/dashboard/ClassOverview";
 import { UpcomingEvents } from "@/components/dashboard/UpcomingEvents";
+import { FeeCollectionSummary, RecentFeePayments, OutstandingBalancesWidget } from "@/components/dashboard/FeeWidgets";
 import { Users, GraduationCap, BookOpen, ClipboardCheck } from "lucide-react";
 
 const Index = () => {
@@ -66,17 +67,24 @@ const Index = () => {
         />
       </div>
 
+      {/* Fee Collection Summary */}
+      <div className="mt-4 lg:mt-6">
+        <FeeCollectionSummary />
+      </div>
+
       {/* Main Content Grid */}
       <div className="mt-4 lg:mt-6 grid gap-4 lg:gap-6 lg:grid-cols-3">
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-4 lg:space-y-6">
           <ClassOverview />
+          <RecentFeePayments />
           <RecentActivity />
         </div>
 
         {/* Right Column */}
         <div className="space-y-4 lg:space-y-6">
           <QuickActions />
+          <OutstandingBalancesWidget />
           <UpcomingEvents />
         </div>
       </div>
