@@ -414,7 +414,7 @@ const ReentrySlipDialog = ({
   const { language } = useLanguage();
   const ref = useRef<HTMLDivElement>(null);
   const [issued, setIssued] = useState<ReentrySlip | null>(null);
-  const schoolName = settings?.school_name || "Al-Heb School";
+  const schoolName = settings?.landing_hero?.school_name || "Al-Heb School";
 
   const [form, setForm] = useState({
     visitor_name: visit?.visitor_name || "",
