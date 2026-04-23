@@ -539,52 +539,94 @@ export type Database = {
       }
       report_cards: {
         Row: {
+          academic_average: number | null
+          academic_position: number | null
+          academic_total: number | null
           academic_year: number
           attendance_percentage: number | null
           class_id: string
+          class_size: number | null
           class_teacher_remarks: string | null
+          cleanliness_rating: string | null
           conduct_rating: Database["public"]["Enums"]["competency_level"] | null
+          days_absent: number | null
+          days_present: number | null
+          discipline_rating: string | null
           generated_at: string | null
           head_teacher_remarks: string | null
           id: string
+          islamic_position: number | null
+          islamic_teacher_remarks: string | null
           learner_id: string
           overall_competency:
             | Database["public"]["Enums"]["competency_level"]
             | null
+          participation_rating: string | null
+          published_at: string | null
+          published_by: string | null
+          status: Database["public"]["Enums"]["report_status"]
           term: Database["public"]["Enums"]["term_type"]
         }
         Insert: {
+          academic_average?: number | null
+          academic_position?: number | null
+          academic_total?: number | null
           academic_year?: number
           attendance_percentage?: number | null
           class_id: string
+          class_size?: number | null
           class_teacher_remarks?: string | null
+          cleanliness_rating?: string | null
           conduct_rating?:
             | Database["public"]["Enums"]["competency_level"]
             | null
+          days_absent?: number | null
+          days_present?: number | null
+          discipline_rating?: string | null
           generated_at?: string | null
           head_teacher_remarks?: string | null
           id?: string
+          islamic_position?: number | null
+          islamic_teacher_remarks?: string | null
           learner_id: string
           overall_competency?:
             | Database["public"]["Enums"]["competency_level"]
             | null
+          participation_rating?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
           term: Database["public"]["Enums"]["term_type"]
         }
         Update: {
+          academic_average?: number | null
+          academic_position?: number | null
+          academic_total?: number | null
           academic_year?: number
           attendance_percentage?: number | null
           class_id?: string
+          class_size?: number | null
           class_teacher_remarks?: string | null
+          cleanliness_rating?: string | null
           conduct_rating?:
             | Database["public"]["Enums"]["competency_level"]
             | null
+          days_absent?: number | null
+          days_present?: number | null
+          discipline_rating?: string | null
           generated_at?: string | null
           head_teacher_remarks?: string | null
           id?: string
+          islamic_position?: number | null
+          islamic_teacher_remarks?: string | null
           learner_id?: string
           overall_competency?:
             | Database["public"]["Enums"]["competency_level"]
             | null
+          participation_rating?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
           term?: Database["public"]["Enums"]["term_type"]
         }
         Relationships: [
@@ -798,8 +840,11 @@ export type Database = {
       }
       subjects: {
         Row: {
+          category: Database["public"]["Enums"]["subject_category"]
           code: string | null
           created_at: string | null
+          display_order: number
+          grading_type: Database["public"]["Enums"]["grading_type"]
           id: string
           is_core: boolean | null
           max_class_level: number | null
@@ -807,8 +852,11 @@ export type Database = {
           name: string
         }
         Insert: {
+          category?: Database["public"]["Enums"]["subject_category"]
           code?: string | null
           created_at?: string | null
+          display_order?: number
+          grading_type?: Database["public"]["Enums"]["grading_type"]
           id?: string
           is_core?: boolean | null
           max_class_level?: number | null
@@ -816,8 +864,11 @@ export type Database = {
           name: string
         }
         Update: {
+          category?: Database["public"]["Enums"]["subject_category"]
           code?: string | null
           created_at?: string | null
+          display_order?: number
+          grading_type?: Database["public"]["Enums"]["grading_type"]
           id?: string
           is_core?: boolean | null
           max_class_level?: number | null
@@ -833,7 +884,9 @@ export type Database = {
           competency_rating: Database["public"]["Enums"]["competency_level"]
           created_at: string | null
           id: string
+          juz_completed: number | null
           learner_id: string
+          letter_grade: string | null
           recorded_by: string | null
           score: number | null
           subject_id: string
@@ -847,7 +900,9 @@ export type Database = {
           competency_rating: Database["public"]["Enums"]["competency_level"]
           created_at?: string | null
           id?: string
+          juz_completed?: number | null
           learner_id: string
+          letter_grade?: string | null
           recorded_by?: string | null
           score?: number | null
           subject_id: string
@@ -861,7 +916,9 @@ export type Database = {
           competency_rating?: Database["public"]["Enums"]["competency_level"]
           created_at?: string | null
           id?: string
+          juz_completed?: number | null
           learner_id?: string
+          letter_grade?: string | null
           recorded_by?: string | null
           score?: number | null
           subject_id?: string
@@ -943,6 +1000,9 @@ export type Database = {
       attendance_status: "present" | "absent" | "late" | "excused"
       competency_level: "exceeding" | "meeting" | "approaching" | "beginning"
       gender_type: "male" | "female"
+      grading_type: "numeric" | "letter" | "descriptive"
+      report_status: "draft" | "published" | "locked"
+      subject_category: "academic" | "islamic" | "behavior"
       term_type: "term_1" | "term_2" | "term_3"
     }
     CompositeTypes: {
@@ -1075,6 +1135,9 @@ export const Constants = {
       attendance_status: ["present", "absent", "late", "excused"],
       competency_level: ["exceeding", "meeting", "approaching", "beginning"],
       gender_type: ["male", "female"],
+      grading_type: ["numeric", "letter", "descriptive"],
+      report_status: ["draft", "published", "locked"],
+      subject_category: ["academic", "islamic", "behavior"],
       term_type: ["term_1", "term_2", "term_3"],
     },
   },
