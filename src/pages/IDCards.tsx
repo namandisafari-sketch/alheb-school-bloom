@@ -1,9 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { createRoot } from "react-dom/client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -24,7 +26,8 @@ import { useLearners } from "@/hooks/useLearners";
 import { useClasses } from "@/hooks/useClasses";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useIdCardSettings } from "@/hooks/useIdCardSettings";
-import { Search, Download, CreditCard, User, ChevronDown, Loader2, Package, UserCheck } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Search, Download, CreditCard, User, ChevronDown, Loader2, Package, UserCheck, AlertTriangle, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { StaffIDCard } from "@/components/idcards/StaffIDCard";
 import { StudentIDCard } from "@/components/idcards/StudentIDCard";
 import { VisitorIDCard } from "@/components/idcards/VisitorIDCard";
@@ -33,6 +36,22 @@ import { Users } from "lucide-react";
 import { toPng } from "html-to-image";
 import { toast } from "@/hooks/use-toast";
 import JSZip from "jszip";
+
+// Fetch a single guardian's full record by id
+const useGuardian = (guardianId?: string | null) =>
+  useQuery({
+    queryKey: ["guardian", guardianId],
+    enabled: !!guardianId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("guardians")
+        .select("*")
+        .eq("id", guardianId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
 
 const IDCards = () => {
   const { t, isRTL } = useLanguage();
