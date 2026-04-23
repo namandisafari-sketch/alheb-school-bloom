@@ -137,6 +137,242 @@ export const VisitorIDCard = ({
   // Subtle diagonal "VISITOR" watermark pattern
   const watermarkText = variant === "guardian-pickup" ? "PICK-UP" : "VISITOR";
 
+  // ============================== BACK SIDE ==============================
+  if (side === "back") {
+    const rules = isRTL
+      ? [
+          "هذه البطاقة ملك للمدرسة ويجب إعادتها عند المغادرة.",
+          "يجب ارتداؤها بشكل ظاهر طوال فترة الزيارة.",
+          variant === "guardian-pickup"
+            ? "تُسلَّم الطفل فقط لحامل هذه البطاقة بعد التحقق من الهوية."
+            : "يُمنع التجول دون مرافقة المضيف.",
+          "ممنوع التصوير أو تسجيل الفيديو دون إذن خطي.",
+          "يجب الالتزام بسياسات حماية الطفل في جميع الأوقات.",
+          "في حال فقدان البطاقة، أبلغ مكتب الاستقبال فوراً.",
+        ]
+      : [
+          "This card remains the property of the school and must be returned on exit.",
+          "Must be worn visibly at all times while on premises.",
+          variant === "guardian-pickup"
+            ? "Learner will only be released to the holder of this pass after ID verification."
+            : "Visitors must remain with their host at all times — no unescorted movement.",
+          "Photography or video recording is strictly prohibited without written consent.",
+          "All visitors must comply with the school's child-protection policy.",
+          "Lost cards must be reported to reception immediately.",
+        ];
+
+    const backLabels = isRTL
+      ? {
+          rulesTitle: "شروط وأحكام الزيارة",
+          emergency: "في حالة الطوارئ",
+          reception: "الاستقبال",
+          security: "الأمن",
+          ifFound: "في حال العثور على هذه البطاقة، يرجى إعادتها إلى:",
+          schoolAddress: "إدارة المدرسة",
+          serial: "رقم تسلسلي",
+          authority: "صادرة بموجب صلاحية إدارة المدرسة",
+        }
+      : {
+          rulesTitle: "Visit Terms & Conditions",
+          emergency: "In Case of Emergency",
+          reception: "Reception",
+          security: "Security",
+          ifFound: "If found, please return this card to:",
+          schoolAddress: "School Administration Office",
+          serial: "Serial",
+          authority: "Issued under the authority of school administration",
+        };
+
+    return (
+      <div
+        dir={isRTL ? "rtl" : "ltr"}
+        style={{
+          width: VISITOR_CARD_WIDTH,
+          height: VISITOR_CARD_HEIGHT,
+          borderRadius: 16,
+          border: `2px solid ${v.accent}`,
+          background: "white",
+          color: "#0f172a",
+          fontFamily: isRTL
+            ? "'Cairo', 'Tajawal', 'Noto Naskh Arabic', sans-serif"
+            : "'Inter', 'Cairo', sans-serif",
+          overflow: "hidden",
+          boxShadow: `0 12px 30px rgba(0,0,0,0.10), inset 0 0 0 1px ${v.accentLight}`,
+          position: "relative",
+        }}
+      >
+        {/* Watermark */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `repeating-linear-gradient(-30deg, ${v.accent}0D 0 2px, transparent 2px 60px)`,
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 110,
+            fontWeight: 900,
+            color: v.accent,
+            opacity: 0.035,
+            letterSpacing: 14,
+            transform: "rotate(-18deg)",
+            pointerEvents: "none",
+            userSelect: "none",
+          }}
+        >
+          {watermarkText}
+        </div>
+
+        {/* Magnetic stripe */}
+        <div
+          style={{
+            height: 36,
+            background: "linear-gradient(180deg, #1e293b 0%, #0f172a 100%)",
+            marginTop: 14,
+            position: "relative",
+            zIndex: 1,
+          }}
+        />
+
+        {/* Header band */}
+        <div
+          style={{
+            background: `linear-gradient(135deg, ${v.accentDark} 0%, ${v.accent} 100%)`,
+            color: "white",
+            padding: "6px 14px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <ShieldCheck size={13} />
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.2 }}>
+              {backLabels.rulesTitle.toUpperCase()}
+            </div>
+          </div>
+          <div style={{ fontSize: 9, opacity: 0.95, fontWeight: 700, letterSpacing: 0.6 }}>
+            {schoolName}
+          </div>
+        </div>
+
+        {/* Rules list */}
+        <div
+          style={{
+            padding: "10px 16px 8px",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <ol
+            style={{
+              margin: 0,
+              padding: isRTL ? "0 16px 0 0" : "0 0 0 16px",
+              fontSize: 9.5,
+              lineHeight: 1.45,
+              color: "#1e293b",
+            }}
+          >
+            {rules.map((rule, i) => (
+              <li key={i} style={{ marginBottom: 3 }}>
+                {rule}
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        {/* Emergency contact strip */}
+        <div
+          style={{
+            margin: "0 14px",
+            padding: "6px 10px",
+            background: v.accentLight,
+            border: `1px solid ${v.accent}`,
+            borderRadius: 6,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            fontSize: 9,
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <AlertTriangle size={13} color={v.accentDark} style={{ flexShrink: 0 }} />
+          <div style={{ flex: 1, lineHeight: 1.3 }}>
+            <div style={{ fontWeight: 800, color: v.accentDark, fontSize: 9, letterSpacing: 0.6 }}>
+              {backLabels.emergency.toUpperCase()}
+            </div>
+            <div style={{ display: "flex", gap: 12, color: "#334155", marginTop: 1 }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                <Phone size={9} /> {backLabels.reception}: 999
+              </span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
+                <Phone size={9} /> {backLabels.security}: 911
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Return-to address */}
+        <div
+          style={{
+            padding: "8px 16px 0",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 8.5,
+            color: "#475569",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <MapPin size={10} color={v.accentDark} style={{ flexShrink: 0 }} />
+          <div style={{ lineHeight: 1.3 }}>
+            <strong style={{ color: "#0f172a" }}>{backLabels.ifFound}</strong>{" "}
+            {backLabels.schoolAddress} — {schoolName}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 28,
+            background: v.accentDark,
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 12px",
+            fontSize: 8,
+            fontWeight: 600,
+            letterSpacing: 0.3,
+          }}
+        >
+          <span style={{ opacity: 0.95 }}>{backLabels.authority}</span>
+          <span style={{ fontFamily: "monospace", opacity: 0.95 }}>
+            {backLabels.serial}: {serial}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // ============================== FRONT SIDE ==============================
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
