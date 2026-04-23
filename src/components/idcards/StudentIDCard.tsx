@@ -14,51 +14,71 @@ interface StudentIDCardProps {
   settings: IdCardSettings;
 }
 
-// Standard CR80 landscape proportions scaled up: 5.4cm x 8.55cm -> 540 x 340 px
+// Standard CR80 landscape proportions scaled up
 export const STUDENT_CARD_WIDTH = 540;
 export const STUDENT_CARD_HEIGHT = 340;
+
+const L = (isRTL: boolean) => ({
+  studentIdCard: isRTL ? "بطاقة هوية الطالب" : "STUDENT IDENTITY CARD",
+  name: isRTL ? "الاسم" : "Name",
+  admNo: isRTL ? "رقم القبول" : "Adm. No",
+  className: isRTL ? "الفصل" : "Class",
+  gender: isRTL ? "الجنس" : "Gender",
+  male: isRTL ? "ذكر" : "Male",
+  female: isRTL ? "أنثى" : "Female",
+  dob: isRTL ? "تاريخ الميلاد" : "DOB",
+  emergency: isRTL ? "طوارئ" : "Emergency",
+  validUntil: isRTL ? "صالحة حتى" : "Valid Until",
+  director: isRTL ? "المدير" : "Director",
+  headTeacher: isRTL ? "ناظر المدرسة" : "Head Teacher",
+  cardInformation: isRTL ? "معلومات البطاقة" : "CARD INFORMATION",
+  guardian: isRTL ? "ولي الأمر" : "Guardian",
+  district: isRTL ? "المنطقة" : "District",
+  religion: isRTL ? "الديانة" : "Religion",
+  enrolled: isRTL ? "تاريخ التسجيل" : "Enrolled",
+  scanForFees: isRTL ? "امسح للرسوم والتتبع" : "Scan for fees & tracking",
+});
 
 export const StudentIDCard = ({
   student,
   schoolName,
-  schoolTagline,
   isRTL = false,
   side,
   settings,
 }: StudentIDCardProps) => {
+  const t = L(isRTL);
   const validUntil = new Date();
   validUntil.setFullYear(validUntil.getFullYear() + 1);
 
   const admNo = student.admission_number || student.id.slice(0, 8).toUpperCase();
-  // Encode an attendance scan payload
   const qrPayload = JSON.stringify({
     type: "attendance",
     role: "student",
     id: student.id,
     adm: admNo,
   });
-  // Barcode payload for fees/internal tracking (alphanumeric, CODE128)
   const barcodePayload = `STU-${admNo}`;
+
+  const baseStyle: React.CSSProperties = {
+    width: STUDENT_CARD_WIDTH,
+    height: STUDENT_CARD_HEIGHT,
+    borderRadius: 14,
+    border: "2px solid hsl(158 64% 30%)",
+    fontFamily: isRTL
+      ? "'Cairo', 'Tajawal', 'Noto Naskh Arabic', sans-serif"
+      : "'Inter', 'Cairo', sans-serif",
+    background: "white",
+    color: "#0f172a",
+  };
 
   if (side === "front") {
     return (
-      <div
-        className="id-card relative overflow-hidden bg-white text-slate-900 shadow-xl"
-        dir={isRTL ? "rtl" : "ltr"}
-        style={{
-          width: STUDENT_CARD_WIDTH,
-          height: STUDENT_CARD_HEIGHT,
-          borderRadius: 14,
-          border: "2px solid hsl(158 64% 30%)",
-          fontFamily: "'Cairo', 'Inter', sans-serif",
-        }}
-      >
-        {/* Top accent stripe */}
+      <div className="id-card relative overflow-hidden shadow-xl" dir={isRTL ? "rtl" : "ltr"} style={baseStyle}>
+        {/* Header */}
         <div
           style={{
-            height: 56,
-            background:
-              "linear-gradient(135deg, hsl(158 64% 30%) 0%, hsl(158 64% 22%) 100%)",
+            height: 60,
+            background: "linear-gradient(135deg, hsl(158 64% 30%) 0%, hsl(158 64% 22%) 100%)",
             color: "white",
             display: "flex",
             alignItems: "center",
@@ -71,34 +91,71 @@ export const StudentIDCard = ({
               src={settings.school_logo_url}
               alt="logo"
               crossOrigin="anonymous"
-              style={{ width: 40, height: 40, borderRadius: 8, background: "white", objectFit: "contain", padding: 2 }}
+              style={{ width: 44, height: 44, borderRadius: 8, background: "white", objectFit: "contain", padding: 3 }}
             />
           ) : (
-            <div style={{ width: 40, height: 40, borderRadius: 8, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 8,
+                background: "rgba(255,255,255,0.2)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 700,
+                fontSize: 20,
+              }}
+            >
               {schoolName.charAt(0)}
             </div>
           )}
-          <div style={{ flex: 1, lineHeight: 1.1 }}>
-            <div style={{ fontSize: 16, fontWeight: 700 }}>{schoolName}</div>
-            <div style={{ fontSize: 10, opacity: 0.9, letterSpacing: 1, textTransform: "uppercase" }}>
-              {isRTL ? "بطاقة هوية الطالب" : "Student Identity Card"}
+          <div style={{ flex: 1, lineHeight: 1.15, minWidth: 0 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {schoolName}
+            </div>
+            <div style={{ fontSize: 9, opacity: 0.95, letterSpacing: 1.2, fontWeight: 600 }}>
+              {t.studentIdCard}
             </div>
           </div>
-          <div style={{ fontSize: 10, opacity: 0.9, textAlign: isRTL ? "left" : "right" }}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              background: "rgba(255,255,255,0.18)",
+              padding: "4px 10px",
+              borderRadius: 6,
+            }}
+          >
             {format(new Date(), "yyyy")}
           </div>
         </div>
 
-        {/* Body */}
-        <div style={{ display: "flex", padding: 14, gap: 14, height: STUDENT_CARD_HEIGHT - 56 - 44 }}>
-          {/* Photo */}
-          <div style={{ width: 110, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+        {/* Body — QR on the LEFT/start */}
+        <div style={{ display: "flex", padding: 14, gap: 14, height: STUDENT_CARD_HEIGHT - 60 - 46 }}>
+          {/* Left column: photo + QR */}
+          <div
+            style={{
+              width: 120,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 8,
+              flexShrink: 0,
+            }}
+          >
             {student.photo_url ? (
               <img
                 src={student.photo_url}
                 alt={student.full_name}
                 crossOrigin="anonymous"
-                style={{ width: 110, height: 130, objectFit: "cover", borderRadius: 8, border: "2px solid hsl(158 64% 30%)" }}
+                style={{
+                  width: 110,
+                  height: 130,
+                  objectFit: "cover",
+                  borderRadius: 8,
+                  border: "2px solid hsl(158 64% 30%)",
+                }}
               />
             ) : (
               <div
@@ -116,34 +173,69 @@ export const StudentIDCard = ({
                 <User size={56} color="#94a3b8" />
               </div>
             )}
-            <QRCodeSVG value={qrPayload} size={64} level="M" />
+            <div
+              style={{
+                background: "white",
+                padding: 4,
+                borderRadius: 6,
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              <QRCodeSVG value={qrPayload} size={62} level="M" />
+            </div>
           </div>
 
-          {/* Info */}
-          <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5 }}>
-            <Row label={isRTL ? "الاسم" : "Name"} value={student.full_name} />
-            <Row label={isRTL ? "رقم القبول" : "Adm. No"} value={admNo} mono />
-            <Row label={isRTL ? "الفصل" : "Class"} value={student.classes?.name || student.class_name || "—"} />
+          {/* Right column: structured info */}
+          <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 15,
+                fontWeight: 800,
+                color: "hsl(158 64% 22%)",
+                marginBottom: 4,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {student.full_name}
+            </div>
+            <div
+              style={{
+                fontSize: 10,
+                color: "#64748b",
+                marginBottom: 8,
+                fontFamily: "monospace",
+                letterSpacing: 0.5,
+              }}
+            >
+              {t.admNo}: <span style={{ color: "#0f172a", fontWeight: 700 }}>{admNo}</span>
+            </div>
+
+            <Row isRTL={isRTL} label={t.className} value={student.classes?.name || student.class_name || "—"} />
             <Row
-              label={isRTL ? "الجنس" : "Gender"}
-              value={student.gender === "male" ? (isRTL ? "ذكر" : "Male") : isRTL ? "أنثى" : "Female"}
+              isRTL={isRTL}
+              label={t.gender}
+              value={student.gender === "male" ? t.male : t.female}
             />
             {student.date_of_birth && (
               <Row
-                label={isRTL ? "تاريخ الميلاد" : "DOB"}
+                isRTL={isRTL}
+                label={t.dob}
                 value={format(new Date(student.date_of_birth), "dd/MM/yyyy")}
               />
             )}
             {(student.guardian?.phone || student.guardian_phone) && (
               <Row
-                label={isRTL ? "طوارئ" : "Emergency"}
+                isRTL={isRTL}
+                label={t.emergency}
                 value={student.guardian?.phone || student.guardian_phone || ""}
                 accent
               />
             )}
-            <div style={{ marginTop: 6, fontSize: 9, color: "#64748b" }}>
-              {isRTL ? "صالحة حتى" : "Valid Until"}:{" "}
-              <span style={{ fontWeight: 600, color: "#0f172a" }}>{format(validUntil, "MMM yyyy")}</span>
+            <div style={{ marginTop: 8, fontSize: 10, color: "#64748b" }}>
+              {t.validUntil}:{" "}
+              <span style={{ fontWeight: 700, color: "#0f172a" }}>{format(validUntil, "MMM yyyy")}</span>
             </div>
           </div>
         </div>
@@ -151,7 +243,7 @@ export const StudentIDCard = ({
         {/* Signature footer */}
         <div
           style={{
-            height: 44,
+            height: 46,
             borderTop: "1px solid #e2e8f0",
             display: "flex",
             background: "#f8fafc",
@@ -159,13 +251,9 @@ export const StudentIDCard = ({
             gap: 12,
           }}
         >
+          <SignatureBlock label={t.director} name={settings.director_name} url={settings.director_signature_url} />
           <SignatureBlock
-            label={isRTL ? "المدير" : "Director"}
-            name={settings.director_name}
-            url={settings.director_signature_url}
-          />
-          <SignatureBlock
-            label={isRTL ? "ناظر المدرسة" : "Head Teacher"}
+            label={t.headTeacher}
             name={settings.head_teacher_name}
             url={settings.head_teacher_signature_url}
           />
@@ -176,17 +264,7 @@ export const StudentIDCard = ({
 
   // Back side
   return (
-    <div
-      className="id-card relative overflow-hidden bg-white text-slate-900 shadow-xl"
-      dir={isRTL ? "rtl" : "ltr"}
-      style={{
-        width: STUDENT_CARD_WIDTH,
-        height: STUDENT_CARD_HEIGHT,
-        borderRadius: 14,
-        border: "2px solid hsl(158 64% 30%)",
-        fontFamily: "'Cairo', 'Inter', sans-serif",
-      }}
-    >
+    <div className="id-card relative overflow-hidden shadow-xl" dir={isRTL ? "rtl" : "ltr"} style={baseStyle}>
       <div
         style={{
           height: 36,
@@ -196,28 +274,24 @@ export const StudentIDCard = ({
           alignItems: "center",
           justifyContent: "center",
           fontSize: 12,
-          letterSpacing: 1,
-          textTransform: "uppercase",
+          letterSpacing: 1.5,
           fontWeight: 700,
         }}
       >
-        {isRTL ? "معلومات إضافية" : "Card Information"}
+        {t.cardInformation}
       </div>
 
       <div style={{ padding: 14, fontSize: 11, lineHeight: 1.5, height: STUDENT_CARD_HEIGHT - 36 }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
           {(student.guardian?.full_name || student.guardian_name) && (
-            <Row label={isRTL ? "ولي الأمر" : "Guardian"} value={student.guardian?.full_name || student.guardian_name || ""} />
+            <Row isRTL={isRTL} label={t.guardian} value={student.guardian?.full_name || student.guardian_name || ""} />
           )}
-          {student.district && (
-            <Row label={isRTL ? "المنطقة" : "District"} value={student.district} />
-          )}
-          {student.religion && (
-            <Row label={isRTL ? "الديانة" : "Religion"} value={student.religion} />
-          )}
+          {student.district && <Row isRTL={isRTL} label={t.district} value={student.district} />}
+          {student.religion && <Row isRTL={isRTL} label={t.religion} value={student.religion} />}
           {student.enrollment_date && (
             <Row
-              label={isRTL ? "تاريخ التسجيل" : "Enrolled"}
+              isRTL={isRTL}
+              label={t.enrolled}
               value={format(new Date(student.enrollment_date), "dd/MM/yyyy")}
             />
           )}
@@ -230,19 +304,13 @@ export const StudentIDCard = ({
             borderRadius: 8,
             padding: 8,
             display: "flex",
-            justifyContent: "center",
+            flexDirection: "column",
+            alignItems: "center",
             marginBottom: 8,
           }}
         >
-          <Barcode
-            value={barcodePayload}
-            format="CODE128"
-            width={1.6}
-            height={50}
-            fontSize={11}
-            margin={0}
-            displayValue
-          />
+          <Barcode value={barcodePayload} format="CODE128" width={1.6} height={48} fontSize={11} margin={0} displayValue />
+          <div style={{ fontSize: 8, color: "#64748b", marginTop: 2 }}>{t.scanForFees}</div>
         </div>
 
         <div style={{ fontSize: 9, color: "#64748b", textAlign: "center", lineHeight: 1.4 }}>
@@ -253,15 +321,32 @@ export const StudentIDCard = ({
   );
 };
 
-const Row = ({ label, value, mono, accent }: { label: string; value: string; mono?: boolean; accent?: boolean }) => (
-  <div style={{ display: "flex", marginBottom: 2 }}>
-    <span style={{ width: 90, color: "#64748b", fontWeight: 600 }}>{label}:</span>
+const Row = ({
+  label,
+  value,
+  mono,
+  accent,
+  isRTL,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  accent?: boolean;
+  isRTL?: boolean;
+}) => (
+  <div style={{ display: "flex", marginBottom: 3, gap: 6 }}>
+    <span style={{ width: 88, color: "#64748b", fontWeight: 600, flexShrink: 0, textAlign: isRTL ? "right" : "left" }}>
+      {label}:
+    </span>
     <span
       style={{
         flex: 1,
         fontFamily: mono ? "monospace" : undefined,
         color: accent ? "#dc2626" : "#0f172a",
-        fontWeight: accent ? 700 : 500,
+        fontWeight: accent ? 700 : 600,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
       }}
     >
       {value}

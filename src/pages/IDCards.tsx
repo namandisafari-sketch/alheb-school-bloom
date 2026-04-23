@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { createRoot } from "react-dom/client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,25 +21,31 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAllStaff } from "@/hooks/useStaff";
 import { useLearners } from "@/hooks/useLearners";
+import { useClasses } from "@/hooks/useClasses";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useIdCardSettings } from "@/hooks/useIdCardSettings";
-import { Search, Download, CreditCard, User, ChevronDown, Loader2 } from "lucide-react";
+import { Search, Download, CreditCard, User, ChevronDown, Loader2, Package } from "lucide-react";
 import { StaffIDCard } from "@/components/idcards/StaffIDCard";
 import { StudentIDCard } from "@/components/idcards/StudentIDCard";
 import { toPng } from "html-to-image";
 import { toast } from "@/hooks/use-toast";
+import JSZip from "jszip";
 
 const IDCards = () => {
   const { t, isRTL } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStaff, setSelectedStaff] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
+  const [batchClass, setBatchClass] = useState<string>("all");
   const [exporting, setExporting] = useState(false);
+  const [batchExporting, setBatchExporting] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
   const frontRef = useRef<HTMLDivElement>(null);
   const backRef = useRef<HTMLDivElement>(null);
 
   const { data: staff = [] } = useAllStaff();
   const { data: learners = [] } = useLearners();
+  const { data: classes = [] } = useClasses();
   const { data: siteSettings } = useSiteSettings();
   const { data: idSettings } = useIdCardSettings();
 
@@ -53,6 +60,16 @@ const IDCards = () => {
 
   const selectedStaffMember = staff.find((s) => s.id === selectedStaff);
   const selectedStudentMember = learners.find((l) => l.id === selectedStudent);
+
+  const previewSettings = idSettings || {
+    director_name: "",
+    director_signature_url: "",
+    head_teacher_name: "",
+    head_teacher_signature_url: "",
+    school_logo_url: "",
+    back_policy: "",
+    back_policy_ar: "",
+  };
 
   const exportNode = async (node: HTMLElement | null, filename: string) => {
     if (!node) return;
@@ -79,12 +96,126 @@ const IDCards = () => {
       if (which === "back" || which === "both") {
         await exportNode(backRef.current, `${baseName}_ID_BACK.png`);
       }
-      toast({ title: isRTL ? "تم التصدير" : "Exported", description: isRTL ? "تم تنزيل البطاقة" : "ID card downloaded" });
+      toast({ title: t("exported"), description: t("cardDownloaded") });
     } catch (e) {
       console.error(e);
-      toast({ title: isRTL ? "فشل" : "Failed", description: String(e), variant: "destructive" });
+      toast({ title: t("exportFailed"), description: String(e), variant: "destructive" });
     } finally {
       setExporting(false);
+    }
+  };
+
+  // Render an ID card to a PNG dataURL via an off-screen container
+  const renderCardToPng = async (cardJsx: React.ReactElement): Promise<string> => {
+    const host = document.createElement("div");
+    host.style.position = "fixed";
+    host.style.left = "-10000px";
+    host.style.top = "0";
+    host.style.background = "white";
+    document.body.appendChild(host);
+    const root = createRoot(host);
+
+    return new Promise<string>((resolve, reject) => {
+      root.render(cardJsx);
+      // Allow a tick for fonts/images to render
+      setTimeout(async () => {
+        try {
+          const target = host.firstElementChild as HTMLElement | null;
+          if (!target) throw new Error("Card render failed");
+          const dataUrl = await toPng(target, {
+            pixelRatio: 3,
+            cacheBust: true,
+            backgroundColor: "#ffffff",
+          });
+          resolve(dataUrl);
+        } catch (e) {
+          reject(e);
+        } finally {
+          root.unmount();
+          host.remove();
+        }
+      }, 250);
+    });
+  };
+
+  const dataUrlToBlob = (dataUrl: string): Blob => {
+    const [meta, b64] = dataUrl.split(",");
+    const mime = meta.match(/data:(.*?);/)?.[1] || "image/png";
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  };
+
+  const handleBatchExport = async () => {
+    const targets =
+      batchClass === "all"
+        ? learners
+        : learners.filter((l) => l.class_id === batchClass);
+
+    if (targets.length === 0) {
+      toast({ title: t("noData"), variant: "destructive" });
+      return;
+    }
+
+    setBatchExporting(true);
+    setBatchProgress({ current: 0, total: targets.length });
+    const zip = new JSZip();
+
+    try {
+      for (let i = 0; i < targets.length; i++) {
+        const learner = targets[i];
+        const safe = learner.full_name.replace(/[^a-z0-9]/gi, "_");
+        const className = (learner.classes?.name || learner.class_name || "Unassigned").replace(
+          /[^a-z0-9]/gi,
+          "_"
+        );
+        const folder = zip.folder(className)!;
+
+        const frontUrl = await renderCardToPng(
+          <StudentIDCard
+            student={learner}
+            schoolName={schoolName}
+            isRTL={isRTL}
+            side="front"
+            settings={previewSettings}
+          />
+        );
+        const backUrl = await renderCardToPng(
+          <StudentIDCard
+            student={learner}
+            schoolName={schoolName}
+            isRTL={isRTL}
+            side="back"
+            settings={previewSettings}
+          />
+        );
+
+        folder.file(`${safe}_FRONT.png`, dataUrlToBlob(frontUrl));
+        folder.file(`${safe}_BACK.png`, dataUrlToBlob(backUrl));
+
+        setBatchProgress({ current: i + 1, total: targets.length });
+      }
+
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const label =
+        batchClass === "all"
+          ? "all_classes"
+          : (classes.find((c) => c.id === batchClass)?.name || "class").replace(/[^a-z0-9]/gi, "_");
+      a.download = `ID_Cards_${label}_${new Date().toISOString().slice(0, 10)}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast({ title: t("exported"), description: `${targets.length} × ${t("idCards")}` });
+    } catch (e) {
+      console.error(e);
+      toast({ title: t("exportFailed"), description: String(e), variant: "destructive" });
+    } finally {
+      setBatchExporting(false);
+      setBatchProgress({ current: 0, total: 0 });
     }
   };
 
@@ -93,43 +224,30 @@ const IDCards = () => {
       <DropdownMenuTrigger asChild>
         <Button disabled={disabled || exporting} className="w-full sm:w-auto">
           {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
-          {isRTL ? "تصدير PNG" : "Export PNG"}
+          {t("exportPng")}
           <ChevronDown className="h-4 w-4 ml-1" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => handleExport("front")}>{isRTL ? "الوجه الأمامي فقط" : "Front side only"}</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleExport("back")}>{isRTL ? "الوجه الخلفي فقط" : "Back side only"}</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleExport("both")}>{isRTL ? "كلا الجانبين" : "Both sides"}</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport("front")}>{t("frontSideOnly")}</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport("back")}>{t("backSideOnly")}</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport("both")}>{t("bothSides")}</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 
-  const previewSettings = idSettings || {
-    director_name: "",
-    director_signature_url: "",
-    head_teacher_name: "",
-    head_teacher_signature_url: "",
-    school_logo_url: "",
-    back_policy: "",
-    back_policy_ar: "",
-  };
-
   return (
-    <DashboardLayout
-      title={t("idCards")}
-      subtitle={isRTL ? "إنشاء بطاقات الهوية للموظفين والطلاب" : "Generate ID cards for staff and students"}
-    >
+    <DashboardLayout title={t("idCards")} subtitle={t("generateIdSubtitle")}>
       <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
         <Tabs defaultValue="students">
           <TabsList>
             <TabsTrigger value="staff" className="gap-2">
               <CreditCard className="h-4 w-4" />
-              {isRTL ? "بطاقات الموظفين" : "Staff ID Cards"}
+              {t("staffIdCards")}
             </TabsTrigger>
             <TabsTrigger value="students" className="gap-2">
               <User className="h-4 w-4" />
-              {isRTL ? "بطاقات الطلاب" : "Student ID Cards"}
+              {t("studentIdCards")}
             </TabsTrigger>
           </TabsList>
 
@@ -139,7 +257,9 @@ const IDCards = () => {
               <CardContent className="pt-6 space-y-4">
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="relative flex-1">
-                    <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
+                    <Search
+                      className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`}
+                    />
                     <Input
                       placeholder={t("search")}
                       value={searchQuery}
@@ -149,7 +269,7 @@ const IDCards = () => {
                   </div>
                   <Select value={selectedStaff || ""} onValueChange={setSelectedStaff}>
                     <SelectTrigger className="sm:w-[280px]">
-                      <SelectValue placeholder={isRTL ? "اختر موظف" : "Select staff member"} />
+                      <SelectValue placeholder={t("selectStaffMember")} />
                     </SelectTrigger>
                     <SelectContent>
                       {filteredStaff.map((s) => (
@@ -165,21 +285,33 @@ const IDCards = () => {
             </Card>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <CardSlot title={isRTL ? "الوجه الأمامي" : "Front Side"}>
+              <CardSlot title={t("frontSide")}>
                 <div ref={frontRef} className="inline-block">
                   {selectedStaffMember ? (
-                    <StaffIDCard staff={selectedStaffMember} schoolName={schoolName} isRTL={isRTL} side="front" settings={previewSettings} />
+                    <StaffIDCard
+                      staff={selectedStaffMember}
+                      schoolName={schoolName}
+                      isRTL={isRTL}
+                      side="front"
+                      settings={previewSettings}
+                    />
                   ) : (
-                    <Placeholder isRTL={isRTL} />
+                    <Placeholder label={t("selectToPreview")} />
                   )}
                 </div>
               </CardSlot>
-              <CardSlot title={isRTL ? "الوجه الخلفي" : "Back Side"}>
+              <CardSlot title={t("backSide")}>
                 <div ref={backRef} className="inline-block">
                   {selectedStaffMember ? (
-                    <StaffIDCard staff={selectedStaffMember} schoolName={schoolName} isRTL={isRTL} side="back" settings={previewSettings} />
+                    <StaffIDCard
+                      staff={selectedStaffMember}
+                      schoolName={schoolName}
+                      isRTL={isRTL}
+                      side="back"
+                      settings={previewSettings}
+                    />
                   ) : (
-                    <Placeholder isRTL={isRTL} />
+                    <Placeholder label={t("selectToPreview")} />
                   )}
                 </div>
               </CardSlot>
@@ -188,11 +320,14 @@ const IDCards = () => {
 
           {/* STUDENTS */}
           <TabsContent value="students" className="space-y-4">
+            {/* Single student controls */}
             <Card>
               <CardContent className="pt-6 space-y-4">
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="relative flex-1">
-                    <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
+                    <Search
+                      className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`}
+                    />
                     <Input
                       placeholder={t("search")}
                       value={searchQuery}
@@ -202,7 +337,7 @@ const IDCards = () => {
                   </div>
                   <Select value={selectedStudent || ""} onValueChange={setSelectedStudent}>
                     <SelectTrigger className="sm:w-[280px]">
-                      <SelectValue placeholder={isRTL ? "اختر طالب" : "Select student"} />
+                      <SelectValue placeholder={t("selectStudent")} />
                     </SelectTrigger>
                     <SelectContent>
                       {filteredStudents.map((l) => (
@@ -217,22 +352,81 @@ const IDCards = () => {
               </CardContent>
             </Card>
 
+            {/* Batch export controls */}
+            <Card>
+              <CardContent className="pt-6 space-y-4">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Package className="h-4 w-4" />
+                  {t("batchExport")}
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Select value={batchClass} onValueChange={setBatchClass}>
+                    <SelectTrigger className="sm:w-[280px]">
+                      <SelectValue placeholder={t("selectClass")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">
+                        {t("allClasses")} ({learners.length})
+                      </SelectItem>
+                      {classes.map((c) => {
+                        const count = learners.filter((l) => l.class_id === c.id).length;
+                        return (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.name} ({count})
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={handleBatchExport}
+                    disabled={batchExporting}
+                    className="w-full sm:w-auto gap-2"
+                  >
+                    {batchExporting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {t("generatingZip")} ({batchProgress.current}/{batchProgress.total})
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4" />
+                        {t("downloadZip")}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <CardSlot title={isRTL ? "الوجه الأمامي" : "Front Side"}>
+              <CardSlot title={t("frontSide")}>
                 <div ref={frontRef} className="inline-block">
                   {selectedStudentMember ? (
-                    <StudentIDCard student={selectedStudentMember} schoolName={schoolName} isRTL={isRTL} side="front" settings={previewSettings} />
+                    <StudentIDCard
+                      student={selectedStudentMember}
+                      schoolName={schoolName}
+                      isRTL={isRTL}
+                      side="front"
+                      settings={previewSettings}
+                    />
                   ) : (
-                    <Placeholder isRTL={isRTL} />
+                    <Placeholder label={t("selectToPreview")} />
                   )}
                 </div>
               </CardSlot>
-              <CardSlot title={isRTL ? "الوجه الخلفي" : "Back Side"}>
+              <CardSlot title={t("backSide")}>
                 <div ref={backRef} className="inline-block">
                   {selectedStudentMember ? (
-                    <StudentIDCard student={selectedStudentMember} schoolName={schoolName} isRTL={isRTL} side="back" settings={previewSettings} />
+                    <StudentIDCard
+                      student={selectedStudentMember}
+                      schoolName={schoolName}
+                      isRTL={isRTL}
+                      side="back"
+                      settings={previewSettings}
+                    />
                   ) : (
-                    <Placeholder isRTL={isRTL} />
+                    <Placeholder label={t("selectToPreview")} />
                   )}
                 </div>
               </CardSlot>
@@ -253,9 +447,9 @@ const CardSlot = ({ title, children }: { title: string; children: React.ReactNod
   </Card>
 );
 
-const Placeholder = ({ isRTL }: { isRTL: boolean }) => (
+const Placeholder = ({ label }: { label: string }) => (
   <div className="w-[540px] max-w-full h-[340px] border-2 border-dashed border-muted-foreground/30 rounded-xl flex items-center justify-center">
-    <p className="text-muted-foreground text-sm">{isRTL ? "اختر شخصًا لعرض البطاقة" : "Select someone to preview"}</p>
+    <p className="text-muted-foreground text-sm">{label}</p>
   </div>
 );
 

@@ -17,7 +17,7 @@ export const STAFF_CARD_WIDTH = 540;
 export const STAFF_CARD_HEIGHT = 340;
 
 const roleLabels: Record<string, { en: string; ar: string }> = {
-  admin: { en: "Administrator", ar: "مدير" },
+  admin: { en: "Administrator", ar: "مدير النظام" },
   teacher: { en: "Teacher", ar: "معلم" },
   support: { en: "Support Staff", ar: "موظف دعم" },
   driver: { en: "Driver", ar: "سائق" },
@@ -27,17 +27,29 @@ const roleLabels: Record<string, { en: string; ar: string }> = {
   accountant: { en: "Accountant", ar: "محاسب" },
 };
 
+const L = (isRTL: boolean) => ({
+  staffIdCard: isRTL ? "بطاقة هوية الموظف" : "STAFF IDENTITY CARD",
+  name: isRTL ? "الاسم" : "Name",
+  staffId: isRTL ? "الرقم الوظيفي" : "Staff ID",
+  role: isRTL ? "الوظيفة" : "Role",
+  qualification: isRTL ? "المؤهل" : "Qualification",
+  phone: isRTL ? "الهاتف" : "Phone",
+  email: isRTL ? "البريد" : "Email",
+  validUntil: isRTL ? "صالحة حتى" : "Valid Until",
+  director: isRTL ? "المدير" : "Director",
+  headTeacher: isRTL ? "ناظر المدرسة" : "Head Teacher",
+  cardInformation: isRTL ? "معلومات البطاقة" : "CARD INFORMATION",
+  issued: isRTL ? "تاريخ الإصدار" : "Issued",
+  scanForRecords: isRTL ? "امسح للسجلات" : "Scan for records",
+});
+
 export const StaffIDCard = ({ staff, schoolName, isRTL = false, side, settings }: StaffIDCardProps) => {
+  const t = L(isRTL);
   const validUntil = new Date();
   validUntil.setFullYear(validUntil.getFullYear() + 1);
 
   const staffNo = staff.id.slice(0, 8).toUpperCase();
-  const qrPayload = JSON.stringify({
-    type: "attendance",
-    role: "staff",
-    id: staff.id,
-    no: staffNo,
-  });
+  const qrPayload = JSON.stringify({ type: "attendance", role: "staff", id: staff.id, no: staffNo });
   const barcodePayload = `STF-${staffNo}`;
   const role = roleLabels[staff.role || ""]?.[isRTL ? "ar" : "en"] || staff.role || "—";
 
@@ -46,15 +58,19 @@ export const StaffIDCard = ({ staff, schoolName, isRTL = false, side, settings }
     height: STAFF_CARD_HEIGHT,
     borderRadius: 14,
     border: "2px solid hsl(158 64% 30%)",
-    fontFamily: "'Cairo', 'Inter', sans-serif",
+    fontFamily: isRTL
+      ? "'Cairo', 'Tajawal', 'Noto Naskh Arabic', sans-serif"
+      : "'Inter', 'Cairo', sans-serif",
+    background: "white",
+    color: "#0f172a",
   };
 
   if (side === "front") {
     return (
-      <div className="id-card relative overflow-hidden bg-white text-slate-900 shadow-xl" dir={isRTL ? "rtl" : "ltr"} style={baseStyle}>
+      <div className="id-card relative overflow-hidden shadow-xl" dir={isRTL ? "rtl" : "ltr"} style={baseStyle}>
         <div
           style={{
-            height: 56,
+            height: 60,
             background: "linear-gradient(135deg, hsl(158 64% 30%) 0%, hsl(158 64% 22%) 100%)",
             color: "white",
             display: "flex",
@@ -64,63 +80,167 @@ export const StaffIDCard = ({ staff, schoolName, isRTL = false, side, settings }
           }}
         >
           {settings.school_logo_url ? (
-            <img src={settings.school_logo_url} alt="logo" crossOrigin="anonymous" style={{ width: 40, height: 40, borderRadius: 8, background: "white", objectFit: "contain", padding: 2 }} />
+            <img
+              src={settings.school_logo_url}
+              alt="logo"
+              crossOrigin="anonymous"
+              style={{ width: 44, height: 44, borderRadius: 8, background: "white", objectFit: "contain", padding: 3 }}
+            />
           ) : (
-            <div style={{ width: 40, height: 40, borderRadius: 8, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 8,
+                background: "rgba(255,255,255,0.2)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 700,
+                fontSize: 20,
+              }}
+            >
               {schoolName.charAt(0)}
             </div>
           )}
-          <div style={{ flex: 1, lineHeight: 1.1 }}>
-            <div style={{ fontSize: 16, fontWeight: 700 }}>{schoolName}</div>
-            <div style={{ fontSize: 10, opacity: 0.9, letterSpacing: 1, textTransform: "uppercase" }}>
-              {isRTL ? "بطاقة هوية الموظف" : "Staff Identity Card"}
+          <div style={{ flex: 1, lineHeight: 1.15, minWidth: 0 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {schoolName}
             </div>
+            <div style={{ fontSize: 9, opacity: 0.95, letterSpacing: 1.2, fontWeight: 600 }}>{t.staffIdCard}</div>
           </div>
-          <div style={{ fontSize: 10, opacity: 0.9 }}>{format(new Date(), "yyyy")}</div>
-        </div>
-
-        <div style={{ display: "flex", padding: 14, gap: 14, height: STAFF_CARD_HEIGHT - 56 - 44 }}>
-          <div style={{ width: 110, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 110, height: 130, background: "#e2e8f0", borderRadius: 8, border: "2px solid hsl(158 64% 30%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <User size={56} color="#94a3b8" />
-            </div>
-            <QRCodeSVG value={qrPayload} size={64} level="M" />
-          </div>
-
-          <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5 }}>
-            <Row label={isRTL ? "الاسم" : "Name"} value={staff.full_name} />
-            <Row label={isRTL ? "الرقم الوظيفي" : "Staff ID"} value={staffNo} mono />
-            <Row label={isRTL ? "الوظيفة" : "Role"} value={role} />
-            {staff.qualification && <Row label={isRTL ? "المؤهل" : "Qualification"} value={staff.qualification} />}
-            {staff.phone && <Row label={isRTL ? "الهاتف" : "Phone"} value={staff.phone} />}
-            {staff.email && <Row label={isRTL ? "البريد" : "Email"} value={staff.email} />}
-            <div style={{ marginTop: 6, fontSize: 9, color: "#64748b" }}>
-              {isRTL ? "صالحة حتى" : "Valid Until"}:{" "}
-              <span style={{ fontWeight: 600, color: "#0f172a" }}>{format(validUntil, "MMM yyyy")}</span>
-            </div>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              background: "rgba(255,255,255,0.18)",
+              padding: "4px 10px",
+              borderRadius: 6,
+            }}
+          >
+            {format(new Date(), "yyyy")}
           </div>
         </div>
 
-        <div style={{ height: 44, borderTop: "1px solid #e2e8f0", display: "flex", background: "#f8fafc", padding: "4px 14px", gap: 12 }}>
-          <SignatureBlock label={isRTL ? "المدير" : "Director"} name={settings.director_name} url={settings.director_signature_url} />
-          <SignatureBlock label={isRTL ? "ناظر المدرسة" : "Head Teacher"} name={settings.head_teacher_name} url={settings.head_teacher_signature_url} />
+        {/* Body — photo + QR on the LEFT */}
+        <div style={{ display: "flex", padding: 14, gap: 14, height: STAFF_CARD_HEIGHT - 60 - 46 }}>
+          <div
+            style={{
+              width: 120,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 8,
+              flexShrink: 0,
+            }}
+          >
+            {(staff as any).avatar_url ? (
+              <img
+                src={(staff as any).avatar_url}
+                alt={staff.full_name}
+                crossOrigin="anonymous"
+                style={{
+                  width: 110,
+                  height: 130,
+                  objectFit: "cover",
+                  borderRadius: 8,
+                  border: "2px solid hsl(158 64% 30%)",
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 110,
+                  height: 130,
+                  background: "#e2e8f0",
+                  borderRadius: 8,
+                  border: "2px solid hsl(158 64% 30%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <User size={56} color="#94a3b8" />
+              </div>
+            )}
+            <div style={{ background: "white", padding: 4, borderRadius: 6, border: "1px solid #e2e8f0" }}>
+              <QRCodeSVG value={qrPayload} size={62} level="M" />
+            </div>
+          </div>
+
+          <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 15,
+                fontWeight: 800,
+                color: "hsl(158 64% 22%)",
+                marginBottom: 4,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {staff.full_name}
+            </div>
+            <div style={{ fontSize: 10, color: "#64748b", marginBottom: 8, fontFamily: "monospace", letterSpacing: 0.5 }}>
+              {t.staffId}: <span style={{ color: "#0f172a", fontWeight: 700 }}>{staffNo}</span>
+            </div>
+
+            <Row isRTL={isRTL} label={t.role} value={role} />
+            {staff.qualification && <Row isRTL={isRTL} label={t.qualification} value={staff.qualification} />}
+            {staff.phone && <Row isRTL={isRTL} label={t.phone} value={staff.phone} />}
+            {staff.email && <Row isRTL={isRTL} label={t.email} value={staff.email} />}
+            <div style={{ marginTop: 8, fontSize: 10, color: "#64748b" }}>
+              {t.validUntil}:{" "}
+              <span style={{ fontWeight: 700, color: "#0f172a" }}>{format(validUntil, "MMM yyyy")}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ height: 46, borderTop: "1px solid #e2e8f0", display: "flex", background: "#f8fafc", padding: "4px 14px", gap: 12 }}>
+          <SignatureBlock label={t.director} name={settings.director_name} url={settings.director_signature_url} />
+          <SignatureBlock label={t.headTeacher} name={settings.head_teacher_name} url={settings.head_teacher_signature_url} />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="id-card relative overflow-hidden bg-white text-slate-900 shadow-xl" dir={isRTL ? "rtl" : "ltr"} style={baseStyle}>
-      <div style={{ height: 36, background: "linear-gradient(135deg, hsl(158 64% 30%) 0%, hsl(158 64% 22%) 100%)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, letterSpacing: 1, textTransform: "uppercase", fontWeight: 700 }}>
-        {isRTL ? "معلومات إضافية" : "Card Information"}
+    <div className="id-card relative overflow-hidden shadow-xl" dir={isRTL ? "rtl" : "ltr"} style={baseStyle}>
+      <div
+        style={{
+          height: 36,
+          background: "linear-gradient(135deg, hsl(158 64% 30%) 0%, hsl(158 64% 22%) 100%)",
+          color: "white",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 12,
+          letterSpacing: 1.5,
+          fontWeight: 700,
+        }}
+      >
+        {t.cardInformation}
       </div>
       <div style={{ padding: 14, fontSize: 11, lineHeight: 1.5, height: STAFF_CARD_HEIGHT - 36 }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
-          <Row label={isRTL ? "تاريخ الإصدار" : "Issued"} value={format(new Date(), "dd/MM/yyyy")} />
-          <Row label={isRTL ? "صالحة حتى" : "Valid Until"} value={format(validUntil, "dd/MM/yyyy")} />
+          <Row isRTL={isRTL} label={t.issued} value={format(new Date(), "dd/MM/yyyy")} />
+          <Row isRTL={isRTL} label={t.validUntil} value={format(validUntil, "dd/MM/yyyy")} />
         </div>
-        <div style={{ background: "white", border: "1px solid #e2e8f0", borderRadius: 8, padding: 8, display: "flex", justifyContent: "center", marginBottom: 8 }}>
-          <Barcode value={barcodePayload} format="CODE128" width={1.6} height={50} fontSize={11} margin={0} displayValue />
+        <div
+          style={{
+            background: "white",
+            border: "1px solid #e2e8f0",
+            borderRadius: 8,
+            padding: 8,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            marginBottom: 8,
+          }}
+        >
+          <Barcode value={barcodePayload} format="CODE128" width={1.6} height={48} fontSize={11} margin={0} displayValue />
+          <div style={{ fontSize: 8, color: "#64748b", marginTop: 2 }}>{t.scanForRecords}</div>
         </div>
         <div style={{ fontSize: 9, color: "#64748b", textAlign: "center", lineHeight: 1.4 }}>
           {isRTL ? settings.back_policy_ar : settings.back_policy}
@@ -130,10 +250,32 @@ export const StaffIDCard = ({ staff, schoolName, isRTL = false, side, settings }
   );
 };
 
-const Row = ({ label, value, mono }: { label: string; value: string; mono?: boolean }) => (
-  <div style={{ display: "flex", marginBottom: 2 }}>
-    <span style={{ width: 100, color: "#64748b", fontWeight: 600 }}>{label}:</span>
-    <span style={{ flex: 1, fontFamily: mono ? "monospace" : undefined, color: "#0f172a", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+const Row = ({
+  label,
+  value,
+  mono,
+  isRTL,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  isRTL?: boolean;
+}) => (
+  <div style={{ display: "flex", marginBottom: 3, gap: 6 }}>
+    <span style={{ width: 100, color: "#64748b", fontWeight: 600, flexShrink: 0, textAlign: isRTL ? "right" : "left" }}>
+      {label}:
+    </span>
+    <span
+      style={{
+        flex: 1,
+        fontFamily: mono ? "monospace" : undefined,
+        color: "#0f172a",
+        fontWeight: 600,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+      }}
+    >
       {value}
     </span>
   </div>
