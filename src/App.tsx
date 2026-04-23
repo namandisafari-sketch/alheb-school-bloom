@@ -18,7 +18,6 @@ import UserManagement from "./pages/UserManagement";
 import MarksEntry from "./pages/MarksEntry";
 import Reports from "./pages/Reports";
 import Notifications from "./pages/Notifications";
-import Landing from "./pages/Landing";
 import SiteSettings from "./pages/SiteSettings";
 import Salary from "./pages/Salary";
 import IDCards from "./pages/IDCards";
@@ -36,7 +35,6 @@ const App = () => (
           <BrowserRouter>
             <Routes>
             {/* Public Routes */}
-            <Route path="/welcome" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
             
             {/* Parent Portal */}
