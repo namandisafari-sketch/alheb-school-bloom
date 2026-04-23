@@ -33,11 +33,14 @@ const Auth = () => {
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/";
 
   useEffect(() => {
-    if (user && role) {
+    if (user) {
       if (role === "parent") {
         navigate("/parent", { replace: true });
-      } else {
+      } else if (role) {
         navigate(from, { replace: true });
+      } else {
+        // Logged in but no role assigned yet — send to home, ProtectedRoute will handle.
+        navigate(from === "/auth" ? "/" : from, { replace: true });
       }
     }
   }, [user, role, navigate, from]);
