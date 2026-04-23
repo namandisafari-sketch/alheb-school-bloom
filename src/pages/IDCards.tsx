@@ -29,6 +29,7 @@ import { StaffIDCard } from "@/components/idcards/StaffIDCard";
 import { StudentIDCard } from "@/components/idcards/StudentIDCard";
 import { VisitorIDCard } from "@/components/idcards/VisitorIDCard";
 import { useVisitors, useVisitorVisits } from "@/hooks/useVisitors";
+import { Users } from "lucide-react";
 import { toPng } from "html-to-image";
 import { toast } from "@/hooks/use-toast";
 import JSZip from "jszip";
