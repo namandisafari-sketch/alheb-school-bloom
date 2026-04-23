@@ -438,6 +438,9 @@ const IDCards = () => {
               </CardSlot>
             </div>
           </TabsContent>
+          <TabsContent value="visitors" className="space-y-4">
+            <VisitorIdSection schoolName={schoolName} schoolLogoUrl={previewSettings.school_logo_url} isRTL={isRTL} />
+          </TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>
@@ -459,4 +462,105 @@ const Placeholder = ({ label }: { label: string }) => (
   </div>
 );
 
-export default IDCards;
+const VisitorIdSection = ({
+  schoolName,
+  schoolLogoUrl,
+  isRTL,
+}: {
+  schoolName: string;
+  schoolLogoUrl?: string;
+  isRTL: boolean;
+}) => {
+  const { data: visits = [] } = useVisitorVisits("active");
+  const { data: visitors = [] } = useVisitors();
+  const [visitId, setVisitId] = useState<string>("");
+  const [visitorId, setVisitorId] = useState<string>("");
+  const dayRef = useRef<HTMLDivElement>(null);
+  const reusableRef = useRef<HTMLDivElement>(null);
+
+  const visit = visits.find((v) => v.id === visitId);
+  const visitor = visitors.find((v) => v.id === visitorId);
+
+  const exportCard = async (ref: React.RefObject<HTMLDivElement>, name: string) => {
+    if (!ref.current) return;
+    const dataUrl = await toPng(ref.current, { pixelRatio: 3, cacheBust: true, backgroundColor: "#ffffff" });
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `${name.replace(/[^a-z0-9]/gi, "_")}_VISITOR.png`;
+    a.click();
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <UserCheck className="h-4 w-4" />
+            Day Pass (from active check-in)
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Select value={visitId} onValueChange={setVisitId}>
+              <SelectTrigger className="sm:w-[320px]">
+                <SelectValue placeholder="Select on-site visitor…" />
+              </SelectTrigger>
+              <SelectContent>
+                {visits.length === 0 && <div className="p-2 text-xs text-muted-foreground">No active visits</div>}
+                {visits.map((v) => (
+                  <SelectItem key={v.id} value={v.id}>
+                    {v.visitor_name} — {v.badge_number}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button disabled={!visit} onClick={() => visit && exportCard(dayRef, visit.visitor_name)}>
+              <Download className="h-4 w-4 mr-2" />Print Day Pass
+            </Button>
+          </div>
+          <div className="flex justify-center pt-2">
+            <div ref={dayRef} className="inline-block">
+              {visit ? (
+                <VisitorIDCard visit={visit} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="day-pass" />
+              ) : (
+                <Placeholder label="Check in a visitor to print a day pass" />
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-6 space-y-4">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <CreditCard className="h-4 w-4" />
+            Reusable Visitor Card (recurring visitors)
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Select value={visitorId} onValueChange={setVisitorId}>
+              <SelectTrigger className="sm:w-[320px]">
+                <SelectValue placeholder="Select recurring visitor…" />
+              </SelectTrigger>
+              <SelectContent>
+                {visitors.filter((v) => v.is_recurring).length === 0 && <div className="p-2 text-xs text-muted-foreground">No recurring visitors</div>}
+                {visitors.filter((v) => v.is_recurring).map((v) => (
+                  <SelectItem key={v.id} value={v.id}>{v.full_name}{v.company ? ` — ${v.company}` : ""}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button disabled={!visitor} onClick={() => visitor && exportCard(reusableRef, visitor.full_name)}>
+              <Download className="h-4 w-4 mr-2" />Print Card
+            </Button>
+          </div>
+          <div className="flex justify-center pt-2">
+            <div ref={reusableRef} className="inline-block">
+              {visitor ? (
+                <VisitorIDCard visitor={visitor} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="reusable" />
+              ) : (
+                <Placeholder label="Add recurring visitors in the Visitors page" />
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
