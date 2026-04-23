@@ -1,10 +1,10 @@
 import { NavLink } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Users, 
-  GraduationCap, 
-  BookOpen, 
-  Calendar, 
+import {
+  LayoutDashboard,
+  Users,
+  GraduationCap,
+  BookOpen,
+  Calendar,
   ClipboardCheck,
   Bell,
   LogOut,
@@ -59,9 +59,11 @@ const roleLabels: Record<AppRole, string> = {
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
+export const Sidebar = ({ isOpen = false, onClose, collapsed = false }: SidebarProps) => {
   const { user, role, signOut } = useAuth();
 
   const filteredNavItems = navItems.filter(
@@ -73,33 +75,32 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
   );
 
   const handleNavClick = () => {
-    if (onClose) {
-      onClose();
-    }
+    if (onClose) onClose();
   };
 
   return (
-    <aside 
+    <aside
       className={cn(
-        "fixed left-0 top-0 z-50 h-screen w-64 bg-sidebar transition-transform duration-300 ease-in-out lg:translate-x-0",
+        "fixed left-0 top-0 z-50 h-screen bg-sidebar transition-all duration-300 ease-in-out w-64",
+        collapsed ? "lg:w-16" : "lg:w-64",
+        "lg:translate-x-0",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}
     >
       <div className="flex h-full flex-col">
         {/* Logo */}
-        <div className="flex h-20 items-center justify-between border-b border-sidebar-border px-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-primary">
+        <div className={cn("flex h-20 items-center justify-between border-b border-sidebar-border", collapsed ? "lg:px-2 px-6" : "px-6")}>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary">
               <BookOpen className="h-5 w-5 text-sidebar-primary-foreground" />
             </div>
-            <div>
-              <h1 className="font-display text-lg font-semibold text-sidebar-foreground">
+            <div className={cn("min-w-0", collapsed && "lg:hidden")}>
+              <h1 className="font-display text-lg font-semibold text-sidebar-foreground truncate">
                 Alheb Islamic
               </h1>
-              <p className="text-xs text-sidebar-foreground/70">Primary School</p>
+              <p className="text-xs text-sidebar-foreground/70 truncate">Primary School</p>
             </div>
           </div>
-          {/* Mobile close button */}
           <Button
             variant="ghost"
             size="icon"
@@ -111,12 +112,12 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
         </div>
 
         {/* User Info */}
-        <div className="border-b border-sidebar-border px-4 py-3">
+        <div className={cn("border-b border-sidebar-border py-3", collapsed ? "lg:px-2 px-4" : "px-4")}>
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent font-medium text-sidebar-accent-foreground">
               {user?.user_metadata?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || "U"}
             </div>
-            <div className="flex-1 min-w-0">
+            <div className={cn("flex-1 min-w-0", collapsed && "lg:hidden")}>
               <p className="text-sm font-medium text-sidebar-foreground truncate">
                 {user?.user_metadata?.full_name || user?.email}
               </p>
@@ -130,15 +131,17 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
+        <nav className={cn("flex-1 space-y-1 overflow-y-auto no-scrollbar", collapsed ? "lg:p-2 p-4" : "p-4")}>
           {filteredNavItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               onClick={handleNavClick}
+              title={item.label}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200",
+                  "flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200 px-4 py-3",
+                  collapsed && "lg:justify-center lg:px-2",
                   isActive
                     ? "bg-sidebar-accent text-sidebar-primary"
                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
@@ -146,21 +149,23 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
               }
             >
               <item.icon className="h-5 w-5 shrink-0" />
-              <span className="truncate">{item.label}</span>
+              <span className={cn("truncate", collapsed && "lg:hidden")}>{item.label}</span>
             </NavLink>
           ))}
         </nav>
 
         {/* Bottom Navigation */}
-        <div className="border-t border-sidebar-border p-4">
+        <div className={cn("border-t border-sidebar-border", collapsed ? "lg:p-2 p-4" : "p-4")}>
           {filteredBottomItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               onClick={handleNavClick}
+              title={item.label}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200",
+                  "flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200 px-4 py-3",
+                  collapsed && "lg:justify-center lg:px-2",
                   isActive
                     ? "bg-sidebar-accent text-sidebar-primary"
                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
@@ -168,15 +173,19 @@ export const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
               }
             >
               <item.icon className="h-5 w-5 shrink-0" />
-              <span className="truncate">{item.label}</span>
+              <span className={cn("truncate", collapsed && "lg:hidden")}>{item.label}</span>
             </NavLink>
           ))}
           <button
             onClick={signOut}
-            className="mt-2 flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-destructive/20 hover:text-destructive"
+            title="Logout"
+            className={cn(
+              "mt-2 flex w-full items-center gap-3 rounded-lg text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-destructive/20 hover:text-destructive px-4 py-3",
+              collapsed && "lg:justify-center lg:px-2"
+            )}
           >
             <LogOut className="h-5 w-5 shrink-0" />
-            <span className="truncate">Logout</span>
+            <span className={cn("truncate", collapsed && "lg:hidden")}>Logout</span>
           </button>
         </div>
       </div>
