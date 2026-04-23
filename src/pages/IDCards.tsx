@@ -656,17 +656,19 @@ const VisitorIdSection = ({
               </SelectContent>
             </Select>
             <Button
-              disabled={!pickupLearner}
+              disabled={!pickupLearner || hasBlockingIssue(pickupIssues)}
               onClick={() => pickupLearner && exportCard(pickupRef, pickupBackRef, `${pickupLearner.full_name}_PICKUP`)}
             >
               <Download className="h-4 w-4 mr-2" />
               Print Pick-Up Pass (Front + Back)
             </Button>
           </div>
-          {pickupLearner && !pickupLearner.guardian_id && (
-            <p className="text-xs text-destructive">
-              ⚠ This learner has no guardian on file. Edit the learner to add guardian details for a complete pass.
-            </p>
+          {pickupLearner && (
+            <ValidationBanner
+              issues={pickupIssues}
+              okLabel="Auto-filled from learner record. Guardian details verified."
+              context="Guardian / pick-up validation"
+            />
           )}
           <div className="flex flex-wrap justify-center gap-6 pt-2">
             <div ref={pickupRef} className="inline-block">
