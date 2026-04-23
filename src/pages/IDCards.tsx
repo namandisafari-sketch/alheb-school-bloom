@@ -824,32 +824,26 @@ const ValidationBanner = ({
 }) => {
   if (issues.length === 0) {
     return (
-      <Alert className="border-emerald-500/40 bg-emerald-500/5">
-        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-        <AlertTitle className="text-emerald-700 text-sm">{context}</AlertTitle>
-        <AlertDescription className="text-xs text-emerald-700/80">{okLabel}</AlertDescription>
+      <Alert className="border-primary/40 bg-primary/5">
+        <CheckCircle2 className="h-4 w-4 text-primary" />
+        <AlertTitle className="text-sm text-primary">{context}</AlertTitle>
+        <AlertDescription className="text-xs text-muted-foreground">{okLabel}</AlertDescription>
       </Alert>
     );
   }
   const hasError = issues.some((i) => i.level === "error");
   return (
-    <Alert variant={hasError ? "destructive" : "default"} className={!hasError ? "border-amber-500/50 bg-amber-500/5" : undefined}>
-      {hasError ? (
-        <ShieldAlert className="h-4 w-4" />
-      ) : (
-        <AlertTriangle className="h-4 w-4 text-amber-600" />
-      )}
-      <AlertTitle className={!hasError ? "text-amber-700 text-sm" : "text-sm"}>
+    <Alert variant={hasError ? "destructive" : "default"} className={!hasError ? "border-muted-foreground/30 bg-muted/40" : undefined}>
+      {hasError ? <ShieldAlert className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+      <AlertTitle className="text-sm">
         {hasError ? "Cannot print this card yet" : "Card can be printed — review warnings"}
         <span className="ml-2 text-xs font-normal opacity-70">({context})</span>
       </AlertTitle>
       <AlertDescription>
-        <ul className={`mt-1 space-y-1 text-xs ${!hasError ? "text-amber-700/90" : ""}`}>
+        <ul className="mt-1 space-y-1 text-xs">
           {issues.map((issue, i) => (
             <li key={i} className="flex gap-2">
-              <span className="font-bold">
-                {issue.level === "error" ? "✕" : "⚠"}
-              </span>
+              <span className="font-bold">{issue.level === "error" ? "✕" : "⚠"}</span>
               <span>{issue.msg}</span>
             </li>
           ))}
