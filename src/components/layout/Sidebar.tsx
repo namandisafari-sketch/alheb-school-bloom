@@ -12,7 +12,7 @@ import {
   UserCog,
   PenLine,
   FileText,
-  Globe,
+  Settings,
   Wallet,
   CreditCard,
   X,
@@ -21,40 +21,34 @@ import { cn } from "@/lib/utils";
 import { useAuth, AppRole } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface NavItem {
   icon: typeof LayoutDashboard;
-  label: string;
+  labelKey: string;
   path: string;
   roles?: AppRole[];
 }
 
 const navItems: NavItem[] = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/", roles: ["admin", "teacher", "staff"] },
-  { icon: Users, label: "Learners", path: "/students", roles: ["admin", "teacher"] },
-  { icon: GraduationCap, label: "Teachers", path: "/teachers", roles: ["admin"] },
-  { icon: HardHat, label: "Staff & Workers", path: "/staff", roles: ["admin"] },
-  { icon: BookOpen, label: "Classes", path: "/classes", roles: ["admin", "teacher"] },
-  { icon: PenLine, label: "Marks Entry", path: "/marks", roles: ["admin", "teacher"] },
-  { icon: FileText, label: "Reports", path: "/reports", roles: ["admin", "teacher"] },
-  { icon: Calendar, label: "Schedule", path: "/schedule", roles: ["admin", "teacher", "staff"] },
-  { icon: ClipboardCheck, label: "Attendance", path: "/attendance", roles: ["admin", "teacher"] },
-  { icon: Wallet, label: "Salary", path: "/salary", roles: ["admin"] },
-  { icon: CreditCard, label: "ID Cards", path: "/id-cards", roles: ["admin"] },
-  { icon: UserCog, label: "User Management", path: "/users", roles: ["admin"] },
+  { icon: LayoutDashboard, labelKey: "dashboard", path: "/", roles: ["admin", "teacher", "staff"] },
+  { icon: Users, labelKey: "learners", path: "/students", roles: ["admin", "teacher"] },
+  { icon: GraduationCap, labelKey: "teachers", path: "/teachers", roles: ["admin"] },
+  { icon: HardHat, labelKey: "staffWorkers", path: "/staff", roles: ["admin"] },
+  { icon: BookOpen, labelKey: "classes", path: "/classes", roles: ["admin", "teacher"] },
+  { icon: PenLine, labelKey: "marksEntry", path: "/marks", roles: ["admin", "teacher"] },
+  { icon: FileText, labelKey: "reports", path: "/reports", roles: ["admin", "teacher"] },
+  { icon: Calendar, labelKey: "schedule", path: "/schedule", roles: ["admin", "teacher", "staff"] },
+  { icon: ClipboardCheck, labelKey: "attendance", path: "/attendance", roles: ["admin", "teacher"] },
+  { icon: Wallet, labelKey: "salary", path: "/salary", roles: ["admin"] },
+  { icon: CreditCard, labelKey: "idCards", path: "/id-cards", roles: ["admin"] },
+  { icon: UserCog, labelKey: "userManagement", path: "/users", roles: ["admin"] },
 ];
 
 const bottomNavItems: NavItem[] = [
-  { icon: Bell, label: "Notifications", path: "/notifications", roles: ["admin"] },
-  { icon: Globe, label: "Site Settings", path: "/settings", roles: ["admin"] },
+  { icon: Bell, labelKey: "notifications", path: "/notifications", roles: ["admin"] },
+  { icon: Settings, labelKey: "systemSettings", path: "/settings", roles: ["admin"] },
 ];
-
-const roleLabels: Record<AppRole, string> = {
-  admin: "Administrator",
-  teacher: "Teacher",
-  parent: "Parent",
-  staff: "Staff",
-};
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -65,6 +59,7 @@ interface SidebarProps {
 
 export const Sidebar = ({ isOpen = false, onClose, collapsed = false }: SidebarProps) => {
   const { user, role, signOut } = useAuth();
+  const { t, isRTL } = useLanguage();
 
   const filteredNavItems = navItems.filter(
     (item) => !item.roles || (role && item.roles.includes(role))
@@ -78,18 +73,40 @@ export const Sidebar = ({ isOpen = false, onClose, collapsed = false }: SidebarP
     if (onClose) onClose();
   };
 
-  return (
-    <aside
-      className={cn(
+  const roleLabel = role
+    ? role === "admin"
+      ? t("administrator")
+      : role === "teacher"
+      ? t("teacher")
+      : role === "parent"
+      ? t("parent")
+      : t("staff")
+    : "";
+
+  const sideClass = isRTL
+    ? cn(
+        "fixed right-0 top-0 z-50 h-screen bg-sidebar transition-all duration-300 ease-in-out w-64",
+        collapsed ? "lg:w-16" : "lg:w-64",
+        "lg:translate-x-0",
+        isOpen ? "translate-x-0" : "translate-x-full"
+      )
+    : cn(
         "fixed left-0 top-0 z-50 h-screen bg-sidebar transition-all duration-300 ease-in-out w-64",
         collapsed ? "lg:w-16" : "lg:w-64",
         "lg:translate-x-0",
         isOpen ? "translate-x-0" : "-translate-x-full"
-      )}
-    >
+      );
+
+  return (
+    <aside className={sideClass}>
       <div className="flex h-full flex-col">
         {/* Logo */}
-        <div className={cn("flex h-20 items-center justify-between border-b border-sidebar-border", collapsed ? "lg:px-2 px-6" : "px-6")}>
+        <div
+          className={cn(
+            "flex h-20 items-center justify-between border-b border-sidebar-border",
+            collapsed ? "lg:px-2 px-6" : "px-6"
+          )}
+        >
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary">
               <BookOpen className="h-5 w-5 text-sidebar-primary-foreground" />
@@ -98,7 +115,7 @@ export const Sidebar = ({ isOpen = false, onClose, collapsed = false }: SidebarP
               <h1 className="font-display text-lg font-semibold text-sidebar-foreground truncate">
                 Alheb Islamic
               </h1>
-              <p className="text-xs text-sidebar-foreground/70 truncate">Primary School</p>
+              <p className="text-xs text-sidebar-foreground/70 truncate">{t("primarySchool")}</p>
             </div>
           </div>
           <Button
@@ -112,7 +129,12 @@ export const Sidebar = ({ isOpen = false, onClose, collapsed = false }: SidebarP
         </div>
 
         {/* User Info */}
-        <div className={cn("border-b border-sidebar-border py-3", collapsed ? "lg:px-2 px-4" : "px-4")}>
+        <div
+          className={cn(
+            "border-b border-sidebar-border py-3",
+            collapsed ? "lg:px-2 px-4" : "px-4"
+          )}
+        >
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sidebar-accent font-medium text-sidebar-accent-foreground">
               {user?.user_metadata?.full_name?.[0] || user?.email?.[0]?.toUpperCase() || "U"}
@@ -123,7 +145,7 @@ export const Sidebar = ({ isOpen = false, onClose, collapsed = false }: SidebarP
               </p>
               {role && (
                 <Badge variant="secondary" className="text-xs mt-0.5">
-                  {roleLabels[role]}
+                  {roleLabel}
                 </Badge>
               )}
             </div>
@@ -131,13 +153,18 @@ export const Sidebar = ({ isOpen = false, onClose, collapsed = false }: SidebarP
         </div>
 
         {/* Navigation */}
-        <nav className={cn("flex-1 space-y-1 overflow-y-auto no-scrollbar", collapsed ? "lg:p-2 p-4" : "p-4")}>
+        <nav
+          className={cn(
+            "flex-1 space-y-1 overflow-y-auto no-scrollbar",
+            collapsed ? "lg:p-2 p-4" : "p-4"
+          )}
+        >
           {filteredNavItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               onClick={handleNavClick}
-              title={item.label}
+              title={t(item.labelKey)}
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200 px-4 py-3",
@@ -149,7 +176,7 @@ export const Sidebar = ({ isOpen = false, onClose, collapsed = false }: SidebarP
               }
             >
               <item.icon className="h-5 w-5 shrink-0" />
-              <span className={cn("truncate", collapsed && "lg:hidden")}>{item.label}</span>
+              <span className={cn("truncate", collapsed && "lg:hidden")}>{t(item.labelKey)}</span>
             </NavLink>
           ))}
         </nav>
@@ -161,7 +188,7 @@ export const Sidebar = ({ isOpen = false, onClose, collapsed = false }: SidebarP
               key={item.path}
               to={item.path}
               onClick={handleNavClick}
-              title={item.label}
+              title={t(item.labelKey)}
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200 px-4 py-3",
@@ -173,19 +200,19 @@ export const Sidebar = ({ isOpen = false, onClose, collapsed = false }: SidebarP
               }
             >
               <item.icon className="h-5 w-5 shrink-0" />
-              <span className={cn("truncate", collapsed && "lg:hidden")}>{item.label}</span>
+              <span className={cn("truncate", collapsed && "lg:hidden")}>{t(item.labelKey)}</span>
             </NavLink>
           ))}
           <button
             onClick={signOut}
-            title="Logout"
+            title={t("logout")}
             className={cn(
               "mt-2 flex w-full items-center gap-3 rounded-lg text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-destructive/20 hover:text-destructive px-4 py-3",
               collapsed && "lg:justify-center lg:px-2"
             )}
           >
             <LogOut className="h-5 w-5 shrink-0" />
-            <span className={cn("truncate", collapsed && "lg:hidden")}>Logout</span>
+            <span className={cn("truncate", collapsed && "lg:hidden")}>{t("logout")}</span>
           </button>
         </div>
       </div>
