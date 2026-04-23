@@ -751,9 +751,11 @@ export const VisitorIDCard = ({
               {format(issuedAt, "dd MMM yyyy HH:mm")}
             </div>
             <div>
-              <strong style={{ color: "#dc2626" }}>{labels.validUntil}:</strong>{" "}
-              <span style={{ fontWeight: 700, color: "#dc2626" }}>
-                {format(validUntil, variant === "day-pass" ? "dd MMM yyyy HH:mm" : "dd MMM yyyy")}
+              <strong style={{ color: isPermanentPickup ? v.accentDark : "#dc2626" }}>{labels.validUntil}:</strong>{" "}
+              <span style={{ fontWeight: 700, color: isPermanentPickup ? v.accentDark : "#dc2626" }}>
+                {isPermanentPickup
+                  ? "PERMANENT"
+                  : format(validUntil, variant === "day-pass" ? "dd MMM yyyy HH:mm" : "dd MMM yyyy")}
               </span>
             </div>
             <div style={{ gridColumn: "1 / -1", fontFamily: "monospace", fontSize: 8.5, color: "#64748b" }}>
