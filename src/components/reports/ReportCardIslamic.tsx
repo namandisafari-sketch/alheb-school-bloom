@@ -41,7 +41,7 @@ const getDivision = (totalAgg: number, subjectsCount: number): string => {
   return "U";
 };
 
-export const ReportCard = ({
+export const ReportCardIslamic = ({
   learner,
   results,
   subjects,
