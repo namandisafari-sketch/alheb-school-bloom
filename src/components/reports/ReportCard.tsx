@@ -521,11 +521,16 @@ export const ReportCard = ({
             </div>
             <div>
               <span className="font-bold">SIGNATURE:</span>{" "}
-              <img
-                src={headteacherSignature}
-                alt="Headteacher signature"
-                className="inline-block h-8 object-contain"
-              />
+              {headteacherSignature ? (
+                <img
+                  src={headteacherSignature}
+                  alt="Headteacher signature"
+                  className="inline-block object-contain align-middle"
+                  style={{ height: sigHeight, maxWidth: 180 }}
+                />
+              ) : (
+                <span className="border-b border-black inline-block min-w-[120px]"></span>
+              )}
             </div>
           </div>
         </div>
@@ -551,11 +556,14 @@ export const ReportCard = ({
           <span className="border-b border-black inline-block min-w-[180px]"></span>
         </div>
         <div className="text-center">
-          <img
-            src={alheibStamp}
-            alt="Official school stamp"
-            className="h-20 object-contain mx-auto"
-          />
+          {stamp ? (
+            <img
+              src={stamp}
+              alt="Official school stamp"
+              className="object-contain mx-auto"
+              style={{ height: stampSize, maxWidth: stampSize * 2.5 }}
+            />
+          ) : null}
         </div>
       </div>
     </div>
