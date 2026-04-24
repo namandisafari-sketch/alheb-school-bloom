@@ -239,19 +239,19 @@ export const ReportCard = ({
             enLabel="AD NO"
             enValue={learner.admission_number ?? "—"}
             arLabel="رقم القيد"
-            arValue={learner.admission_number ?? "—"}
+            arValue={toAr(learner.admission_number ?? "—")}
             inline
           />
           <BioRow
             enLabel="PRINT DATE"
             enValue={format(new Date(), "dd/MM/yyyy")}
             arLabel="تاريخ الطباعة"
-            arValue={format(new Date(), "dd/MM/yyyy")}
+            arValue={toAr(format(new Date(), "dd/MM/yyyy"))}
             inline
           />
         </div>
         <div className="grid grid-cols-3 gap-3">
-          <BioRow enLabel="CLASS" enValue={className} arLabel="الصف" arValue={className} inline />
+          <BioRow enLabel="CLASS" enValue={className} arLabel="الصف" arValue={toAr(className)} inline />
           <BioRow
             enLabel="SEX"
             enValue={learner.gender === "male" ? "M" : "F"}
@@ -263,7 +263,7 @@ export const ReportCard = ({
             enLabel="YEAR"
             enValue={String(academicYear)}
             arLabel="السنة الدراسية"
-            arValue={String(academicYear)}
+            arValue={toAr(academicYear)}
             inline
           />
         </div>
@@ -272,14 +272,14 @@ export const ReportCard = ({
             enLabel="POSITION"
             enValue={meta?.academic_position ? String(meta.academic_position) : "—"}
             arLabel="الترتيب"
-            arValue={meta?.academic_position ? String(meta.academic_position) : "—"}
+            arValue={meta?.academic_position ? toAr(meta.academic_position) : "—"}
             inline
           />
           <BioRow
             enLabel="OUT OF"
             enValue={meta?.class_size ? String(meta.class_size) : "—"}
             arLabel="من أصل"
-            arValue={meta?.class_size ? String(meta.class_size) : "—"}
+            arValue={meta?.class_size ? toAr(meta.class_size) : "—"}
             inline
           />
           <BioRow
