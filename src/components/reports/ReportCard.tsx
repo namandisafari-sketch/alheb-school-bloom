@@ -4,6 +4,9 @@ import { Database } from "@/integrations/supabase/types";
 import { useIdCardSettings } from "@/hooks/useIdCardSettings";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { format } from "date-fns";
+import alheibLogo from "@/assets/alheib-logo.png";
+import alheibStamp from "@/assets/alheib-stamp.png";
+import alheibHeadteacherSig from "@/assets/alheib-headteacher-signature.png";
 
 type TermType = Database["public"]["Enums"]["term_type"];
 
@@ -106,7 +109,10 @@ export const ReportCard = ({
   const poBox = "P.O. BOX 2891 KAMPALA - UGANDA";
   const phone = site?.landing_contact?.phone || "0788 402156 / 0745397122";
   const email = site?.landing_contact?.email || "aps@iico.org";
-  const logo = idSettings?.school_logo_url;
+  const logo = idSettings?.school_logo_url || alheibLogo;
+  const headteacherSignature =
+    idSettings?.head_teacher_signature_url || alheibHeadteacherSig;
+  const headteacherName = idSettings?.head_teacher_name || "HEADTEACHER";
 
   // Split English (LTR) academics vs Islamic/Arabic (RTL) subjects
   const academics = subjects.filter((s) => s.category !== "islamic");
@@ -179,13 +185,7 @@ export const ReportCard = ({
           <div>Email: {email}</div>
         </div>
         <div className="flex flex-col items-center" style={{ width: "20%" }}>
-          {logo ? (
-            <img src={logo} alt="School crest" className="h-20 w-20 object-contain" />
-          ) : (
-            <div className="h-20 w-20 rounded-full border-2 border-black flex items-center justify-center text-[8pt] text-center">
-              SCHOOL<br />CREST
-            </div>
-          )}
+          <img src={logo} alt="School crest" className="h-24 w-24 object-contain" />
         </div>
         <div
           className="text-[9pt] leading-tight text-right"
@@ -497,20 +497,16 @@ export const ReportCard = ({
             <div>
               <span className="font-bold">NAME:</span>{" "}
               <span className="border-b border-black inline-block min-w-[120px]">
-                {idSettings?.head_teacher_name ?? ""}
+                {headteacherName}
               </span>
             </div>
             <div>
               <span className="font-bold">SIGNATURE:</span>{" "}
-              {idSettings?.head_teacher_signature_url ? (
-                <img
-                  src={idSettings.head_teacher_signature_url}
-                  alt="Headteacher signature"
-                  className="inline-block h-6"
-                />
-              ) : (
-                <span className="border-b border-black inline-block min-w-[120px]"></span>
-              )}
+              <img
+                src={headteacherSignature}
+                alt="Headteacher signature"
+                className="inline-block h-8 object-contain"
+              />
             </div>
           </div>
         </div>
@@ -529,18 +525,18 @@ export const ReportCard = ({
         </div>
       </div>
 
-      {/* Footer — Next term + headteacher stamp area */}
+      {/* Footer — Next term + official school stamp */}
       <div className="flex justify-between items-end mt-4 pt-2 border-t border-black">
         <div className="text-[9pt]">
           <span className="font-bold">NEXT TERM BEGINS ON:</span>{" "}
           <span className="border-b border-black inline-block min-w-[180px]"></span>
         </div>
         <div className="text-center">
-          <div className="border-2 border-black rounded px-3 py-2 text-[8pt] font-bold">
-            <div>{schoolName.toUpperCase()}</div>
-            <div className="text-[7pt] mt-1">★ HEADTEACHER'S OFFICE ★</div>
-            <div className="text-[7pt]">{poBox}</div>
-          </div>
+          <img
+            src={alheibStamp}
+            alt="Official school stamp"
+            className="h-20 object-contain mx-auto"
+          />
         </div>
       </div>
     </div>
