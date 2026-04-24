@@ -430,25 +430,19 @@ export const enToAr: Record<string, string> = {
   "Select a learner to link to this parent account": "اختر متعلمًا لربطه بحساب ولي الأمر هذا",
   "Select learner": "اختر متعلمًا",
   "Administrators": "المسؤولون",
-  "Teachers": "المعلمون",
   "Parents": "أولياء الأمور",
   "Staffs": "موظفون",
 
   // Misc
-  "Failed": "فشل",
-  "Success": "نجاح",
   "Delete this appointment?": "حذف هذا الموعد؟",
   "Appointment scheduled": "تم جدولة الموعد",
   "Appointment updated": "تم تحديث الموعد",
   "Missing fields": "حقول مفقودة",
   "Visitor name and purpose are required": "اسم الزائر والغرض مطلوبان",
-  "Today": "اليوم",
-  "Checked In": "تم تسجيل الدخول",
   "Cancelled": "ملغى",
   "No-show": "لم يحضر",
 
-  // Status badges
-  "active": "نشط",
+  // Status badges (lowercase)
   "inactive": "غير نشط",
   "completed": "مكتمل",
   "pending": "معلَّق",
