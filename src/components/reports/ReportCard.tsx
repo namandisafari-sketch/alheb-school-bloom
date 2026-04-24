@@ -172,13 +172,15 @@ export const ReportCard = ({
 
   return (
     <div
-      className="bg-white text-black mx-auto font-serif"
+      className="report-card-root bg-white text-black mx-auto font-serif flex flex-col"
       style={{
         width: "210mm",
-        minHeight: "297mm",
-        padding: "10mm",
-        fontSize: "10pt",
-        lineHeight: 1.3,
+        height: "297mm",
+        padding: "6mm 7mm",
+        fontSize: "9pt",
+        lineHeight: 1.25,
+        overflow: "hidden",
+        boxSizing: "border-box",
       }}
     >
       {/* Header — English left, crest center, Arabic right */}
