@@ -50,6 +50,7 @@ import {
   Download,
 } from "lucide-react";
 import { ReportCard } from "@/components/reports/ReportCard";
+import { AssetSizeControls } from "@/components/settings/AssetSizeControls";
 import { Database } from "@/integrations/supabase/types";
 import { computeAggregate } from "@/lib/grading";
 import { useToast } from "@/hooks/use-toast";
