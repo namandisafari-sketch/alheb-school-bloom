@@ -84,13 +84,20 @@ export const StaffIDCard = ({ staff, schoolName, isRTL = false, side, settings }
               src={settings.school_logo_url}
               alt="logo"
               crossOrigin="anonymous"
-              style={{ width: 44, height: 44, borderRadius: 8, background: "white", objectFit: "contain", padding: 3 }}
+              style={{
+                width: settings.logo_size_id,
+                height: settings.logo_size_id,
+                borderRadius: 8,
+                background: "white",
+                objectFit: "contain",
+                padding: 3,
+              }}
             />
           ) : (
             <div
               style={{
-                width: 44,
-                height: 44,
+                width: settings.logo_size_id,
+                height: settings.logo_size_id,
                 borderRadius: 8,
                 background: "rgba(255,255,255,0.2)",
                 display: "flex",
@@ -198,8 +205,8 @@ export const StaffIDCard = ({ staff, schoolName, isRTL = false, side, settings }
         </div>
 
         <div style={{ height: 46, borderTop: "1px solid #e2e8f0", display: "flex", background: "#f8fafc", padding: "4px 14px", gap: 12 }}>
-          <SignatureBlock label={t.director} name={settings.director_name} url={settings.director_signature_url} />
-          <SignatureBlock label={t.headTeacher} name={settings.head_teacher_name} url={settings.head_teacher_signature_url} />
+          <SignatureBlock label={t.director} name={settings.director_name} url={settings.director_signature_url} height={settings.signature_height_id} />
+          <SignatureBlock label={t.headTeacher} name={settings.head_teacher_name} url={settings.head_teacher_signature_url} height={settings.signature_height_id} />
         </div>
       </div>
     );
@@ -281,11 +288,21 @@ const Row = ({
   </div>
 );
 
-const SignatureBlock = ({ label, name, url }: { label: string; name?: string; url?: string }) => (
+const SignatureBlock = ({
+  label,
+  name,
+  url,
+  height = 22,
+}: {
+  label: string;
+  name?: string;
+  url?: string;
+  height?: number;
+}) => (
   <div style={{ flex: 1, textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-    <div style={{ height: 22, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ height: height + 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
       {url ? (
-        <img src={url} alt={label} crossOrigin="anonymous" style={{ maxHeight: 22, maxWidth: "100%", objectFit: "contain" }} />
+        <img src={url} alt={label} crossOrigin="anonymous" style={{ maxHeight: height, maxWidth: "100%", objectFit: "contain" }} />
       ) : (
         <div style={{ height: 1, width: "70%", borderTop: "1px solid #94a3b8" }} />
       )}
