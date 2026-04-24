@@ -311,7 +311,7 @@ export const ReportCard = ({
             {academicRows.map((s, i) => {
               const r = s ? resultFor(s.id) : undefined;
               return (
-                <tr key={`ac-${i}`} style={{ height: "26px" }}>
+                <tr key={`ac-${i}`} style={{ height: "20px" }}>
                   <td className="border border-black px-1 py-1 font-semibold uppercase">
                     {s?.name ?? ""}
                   </td>
@@ -361,7 +361,7 @@ export const ReportCard = ({
             {islamicRows.map((s, i) => {
               const r = s ? resultFor(s.id) : undefined;
               return (
-                <tr key={`is-${i}`} style={{ height: "26px" }}>
+                <tr key={`is-${i}`} style={{ height: "20px" }}>
                   <td className="border border-black px-1 py-1 font-semibold">
                     {s ? arName(s.name) : ""}
                   </td>
