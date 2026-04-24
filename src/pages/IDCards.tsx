@@ -25,7 +25,7 @@ import { useAllStaff } from "@/hooks/useStaff";
 import { useLearners } from "@/hooks/useLearners";
 import { useClasses } from "@/hooks/useClasses";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { useIdCardSettings } from "@/hooks/useIdCardSettings";
+import { useIdCardSettings, IdCardSettings } from "@/hooks/useIdCardSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Download, CreditCard, User, ChevronDown, Loader2, Package, UserCheck, AlertTriangle, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { StaffIDCard } from "@/components/idcards/StaffIDCard";
@@ -84,14 +84,20 @@ const IDCards = () => {
   const selectedStaffMember = staff.find((s) => s.id === selectedStaff);
   const selectedStudentMember = learners.find((l) => l.id === selectedStudent);
 
-  const previewSettings = idSettings || {
+  const previewSettings: IdCardSettings = idSettings || {
     director_name: "",
     director_signature_url: "",
     head_teacher_name: "",
     head_teacher_signature_url: "",
     school_logo_url: "",
+    school_stamp_url: "",
     back_policy: "",
     back_policy_ar: "",
+    logo_size_report: 96,
+    logo_size_id: 44,
+    signature_height_report: 32,
+    signature_height_id: 22,
+    stamp_size_report: 80,
   };
 
   const exportNode = async (node: HTMLElement | null, filename: string) => {

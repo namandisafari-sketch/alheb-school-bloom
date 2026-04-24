@@ -4,9 +4,12 @@ import { Database } from "@/integrations/supabase/types";
 import { useIdCardSettings } from "@/hooks/useIdCardSettings";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { format } from "date-fns";
-import alheibLogo from "@/assets/alheib-logo.png";
-import alheibStamp from "@/assets/alheib-stamp.png";
-import alheibHeadteacherSig from "@/assets/alheib-headteacher-signature.png";
+
+// Convert ASCII digits → Arabic-Indic digits (٠١٢٣٤٥٦٧٨٩)
+const toAr = (s: string | number | null | undefined): string => {
+  if (s === null || s === undefined) return "";
+  return String(s).replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
+};
 
 type TermType = Database["public"]["Enums"]["term_type"];
 
@@ -109,10 +112,13 @@ export const ReportCard = ({
   const poBox = "P.O. BOX 2891 KAMPALA - UGANDA";
   const phone = site?.landing_contact?.phone || "0788 402156 / 0745397122";
   const email = site?.landing_contact?.email || "aps@iico.org";
-  const logo = idSettings?.school_logo_url || alheibLogo;
-  const headteacherSignature =
-    idSettings?.head_teacher_signature_url || alheibHeadteacherSig;
+  const logo = idSettings?.school_logo_url;
+  const headteacherSignature = idSettings?.head_teacher_signature_url;
+  const stamp = idSettings?.school_stamp_url;
   const headteacherName = idSettings?.head_teacher_name || "HEADTEACHER";
+  const logoSize = idSettings?.logo_size_report ?? 96;
+  const sigHeight = idSettings?.signature_height_report ?? 32;
+  const stampSize = idSettings?.stamp_size_report ?? 80;
 
   // Split English (LTR) academics vs Islamic/Arabic (RTL) subjects
   const academics = subjects.filter((s) => s.category !== "islamic");
@@ -185,7 +191,20 @@ export const ReportCard = ({
           <div>Email: {email}</div>
         </div>
         <div className="flex flex-col items-center" style={{ width: "20%" }}>
-          <img src={logo} alt="School crest" className="h-24 w-24 object-contain" />
+          {logo ? (
+            <img
+              src={logo}
+              alt="School crest"
+              style={{ width: logoSize, height: logoSize, objectFit: "contain" }}
+            />
+          ) : (
+            <div
+              className="rounded-full border-2 border-black flex items-center justify-center text-[8pt] text-center"
+              style={{ width: logoSize, height: logoSize }}
+            >
+              SCHOOL<br />CREST
+            </div>
+          )}
         </div>
         <div
           className="text-[9pt] leading-tight text-right"
@@ -220,19 +239,19 @@ export const ReportCard = ({
             enLabel="AD NO"
             enValue={learner.admission_number ?? "—"}
             arLabel="رقم القيد"
-            arValue={learner.admission_number ?? "—"}
+            arValue={toAr(learner.admission_number ?? "—")}
             inline
           />
           <BioRow
             enLabel="PRINT DATE"
             enValue={format(new Date(), "dd/MM/yyyy")}
             arLabel="تاريخ الطباعة"
-            arValue={format(new Date(), "dd/MM/yyyy")}
+            arValue={toAr(format(new Date(), "dd/MM/yyyy"))}
             inline
           />
         </div>
         <div className="grid grid-cols-3 gap-3">
-          <BioRow enLabel="CLASS" enValue={className} arLabel="الصف" arValue={className} inline />
+          <BioRow enLabel="CLASS" enValue={className} arLabel="الصف" arValue={toAr(className)} inline />
           <BioRow
             enLabel="SEX"
             enValue={learner.gender === "male" ? "M" : "F"}
@@ -244,7 +263,7 @@ export const ReportCard = ({
             enLabel="YEAR"
             enValue={String(academicYear)}
             arLabel="السنة الدراسية"
-            arValue={String(academicYear)}
+            arValue={toAr(academicYear)}
             inline
           />
         </div>
@@ -253,14 +272,14 @@ export const ReportCard = ({
             enLabel="POSITION"
             enValue={meta?.academic_position ? String(meta.academic_position) : "—"}
             arLabel="الترتيب"
-            arValue={meta?.academic_position ? String(meta.academic_position) : "—"}
+            arValue={meta?.academic_position ? toAr(meta.academic_position) : "—"}
             inline
           />
           <BioRow
             enLabel="OUT OF"
             enValue={meta?.class_size ? String(meta.class_size) : "—"}
             arLabel="من أصل"
-            arValue={meta?.class_size ? String(meta.class_size) : "—"}
+            arValue={meta?.class_size ? toAr(meta.class_size) : "—"}
             inline
           />
           <BioRow
@@ -345,10 +364,10 @@ export const ReportCard = ({
                     {s ? arName(s.name) : ""}
                   </td>
                   <td className="border border-black px-1 py-1 text-center">
-                    {s ? "100" : ""}
+                    {s ? "١٠٠" : ""}
                   </td>
                   <td className="border border-black px-1 py-1 text-center font-mono">
-                    {r?.score ?? ""}
+                    {r?.score != null ? toAr(r.score) : ""}
                   </td>
                   <td className="border border-black px-1 py-1 text-center text-[8pt]">
                     {r?.letter_grade ?? ""}
@@ -358,9 +377,9 @@ export const ReportCard = ({
             })}
             <tr className="bg-gray-100 font-bold">
               <td className="border border-black px-1 py-1">المجموع</td>
-              <td className="border border-black px-1 py-1 text-center">{islamicTotalMax}</td>
+              <td className="border border-black px-1 py-1 text-center">{toAr(islamicTotalMax)}</td>
               <td className="border border-black px-1 py-1 text-center font-mono">
-                {islamicTotalScore}
+                {toAr(islamicTotalScore)}
               </td>
               <td className="border border-black"></td>
             </tr>
@@ -392,7 +411,7 @@ export const ReportCard = ({
           <tbody>
             {[1, 2].map((m) => (
               <tr key={`ma-${m}`} style={{ height: "24px" }}>
-                <td className="border border-black px-1 py-1 text-center font-mono">{m}</td>
+                <td className="border border-black px-1 py-1 text-center font-mono">{toAr(m)}</td>
                 <td className="border border-black"></td>
                 <td className="border border-black"></td>
                 <td className="border border-black"></td>
@@ -502,11 +521,16 @@ export const ReportCard = ({
             </div>
             <div>
               <span className="font-bold">SIGNATURE:</span>{" "}
-              <img
-                src={headteacherSignature}
-                alt="Headteacher signature"
-                className="inline-block h-8 object-contain"
-              />
+              {headteacherSignature ? (
+                <img
+                  src={headteacherSignature}
+                  alt="Headteacher signature"
+                  className="inline-block object-contain align-middle"
+                  style={{ height: sigHeight, maxWidth: 180 }}
+                />
+              ) : (
+                <span className="border-b border-black inline-block min-w-[120px]"></span>
+              )}
             </div>
           </div>
         </div>
@@ -532,11 +556,14 @@ export const ReportCard = ({
           <span className="border-b border-black inline-block min-w-[180px]"></span>
         </div>
         <div className="text-center">
-          <img
-            src={alheibStamp}
-            alt="Official school stamp"
-            className="h-20 object-contain mx-auto"
-          />
+          {stamp ? (
+            <img
+              src={stamp}
+              alt="Official school stamp"
+              className="object-contain mx-auto"
+              style={{ height: stampSize, maxWidth: stampSize * 2.5 }}
+            />
+          ) : null}
         </div>
       </div>
     </div>

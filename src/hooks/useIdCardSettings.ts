@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import alheibLogo from "@/assets/alheib-logo.png";
+import alheibStamp from "@/assets/alheib-stamp.png";
+import alheibHeadteacherSig from "@/assets/alheib-headteacher-signature.png";
 
 export interface IdCardSettings {
   director_name: string;
@@ -7,20 +10,33 @@ export interface IdCardSettings {
   head_teacher_name: string;
   head_teacher_signature_url: string;
   school_logo_url: string;
+  school_stamp_url: string;
   back_policy: string;
   back_policy_ar: string;
+  // Display sizes (px) — fitted with object-contain so no cropping ever occurs
+  logo_size_report: number;
+  logo_size_id: number;
+  signature_height_report: number;
+  signature_height_id: number;
+  stamp_size_report: number;
 }
 
 const DEFAULTS: IdCardSettings = {
   director_name: "",
   director_signature_url: "",
-  head_teacher_name: "",
-  head_teacher_signature_url: "",
-  school_logo_url: "",
+  head_teacher_name: "HEADTEACHER",
+  head_teacher_signature_url: alheibHeadteacherSig,
+  school_logo_url: alheibLogo,
+  school_stamp_url: alheibStamp,
   back_policy:
     "This card remains the property of the school. If found, please return to the school office.",
   back_policy_ar:
     "هذه البطاقة ملك للمدرسة. في حال العثور عليها، يرجى إعادتها إلى مكتب المدرسة.",
+  logo_size_report: 96,
+  logo_size_id: 44,
+  signature_height_report: 32,
+  signature_height_id: 22,
+  stamp_size_report: 80,
 };
 
 export const useIdCardSettings = () => {
