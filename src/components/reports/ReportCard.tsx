@@ -508,8 +508,8 @@ export const ReportCard = ({
         </div>
       </div>
 
-      {/* Footer — Next term + official school stamp */}
-      <div className="flex justify-between items-end mt-4 pt-2 border-t border-black">
+      {/* Footer — Next term + official school stamp (pinned to bottom) */}
+      <div className="flex justify-between items-end mt-auto pt-2 border-t border-black">
         <div className="text-[9pt]">
           <span className="font-bold">NEXT TERM BEGINS ON:</span>{" "}
           <span className="border-b border-black inline-block min-w-[180px]"></span>
