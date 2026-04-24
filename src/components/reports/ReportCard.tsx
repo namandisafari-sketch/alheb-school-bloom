@@ -172,13 +172,15 @@ export const ReportCard = ({
 
   return (
     <div
-      className="bg-white text-black mx-auto font-serif"
+      className="report-card-root bg-white text-black mx-auto font-serif flex flex-col"
       style={{
         width: "210mm",
-        minHeight: "297mm",
-        padding: "10mm",
-        fontSize: "10pt",
-        lineHeight: 1.3,
+        height: "297mm",
+        padding: "6mm 7mm",
+        fontSize: "9pt",
+        lineHeight: 1.25,
+        overflow: "hidden",
+        boxSizing: "border-box",
       }}
     >
       {/* Header — English left, crest center, Arabic right */}
@@ -309,7 +311,7 @@ export const ReportCard = ({
             {academicRows.map((s, i) => {
               const r = s ? resultFor(s.id) : undefined;
               return (
-                <tr key={`ac-${i}`} style={{ height: "26px" }}>
+                <tr key={`ac-${i}`} style={{ height: "20px" }}>
                   <td className="border border-black px-1 py-1 font-semibold uppercase">
                     {s?.name ?? ""}
                   </td>
@@ -359,7 +361,7 @@ export const ReportCard = ({
             {islamicRows.map((s, i) => {
               const r = s ? resultFor(s.id) : undefined;
               return (
-                <tr key={`is-${i}`} style={{ height: "26px" }}>
+                <tr key={`is-${i}`} style={{ height: "20px" }}>
                   <td className="border border-black px-1 py-1 font-semibold">
                     {s ? arName(s.name) : ""}
                   </td>
@@ -387,40 +389,7 @@ export const ReportCard = ({
         </table>
       </div>
 
-      {/* Monthly Assessment (Islamic) */}
-      <div className="mt-2">
-        <div
-          className="text-center font-bold text-[10pt] border border-black border-b-0 py-1 bg-gray-100"
-          style={{ direction: "rtl" }}
-        >
-          MONTHLY ASSESSMENT — التقييم الشهري
-        </div>
-        <table
-          className="w-full border-collapse border border-black text-[9pt]"
-          style={{ direction: "rtl" }}
-        >
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="border border-black px-1 py-1">الشهر</th>
-              <th className="border border-black px-1 py-1">علوم القرآن</th>
-              <th className="border border-black px-1 py-1">الفقه</th>
-              <th className="border border-black px-1 py-1">التربية الإسلامية</th>
-              <th className="border border-black px-1 py-1">علوم اللغة</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[1, 2].map((m) => (
-              <tr key={`ma-${m}`} style={{ height: "24px" }}>
-                <td className="border border-black px-1 py-1 text-center font-mono">{toAr(m)}</td>
-                <td className="border border-black"></td>
-                <td className="border border-black"></td>
-                <td className="border border-black"></td>
-                <td className="border border-black"></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* (Islamic Monthly Assessment block removed to keep report on one page) */}
 
       {/* Bottom monthly performance — ENG / MTC / SCIE / SST / AGG / DIV / REMARKS */}
       <table className="w-full border-collapse border border-black text-[9pt] mt-2">
@@ -439,7 +408,7 @@ export const ReportCard = ({
           </tr>
         </thead>
         <tbody>
-          <tr style={{ height: "26px" }}>
+          <tr style={{ height: "20px" }}>
             <td className="border border-black px-1 py-1 text-center font-semibold">
               {termLabel[term]}
             </td>
@@ -461,16 +430,6 @@ export const ReportCard = ({
             <td className="border border-black px-1 py-1 text-[8pt]">
               {meta?.class_teacher_remarks ?? ""}
             </td>
-          </tr>
-          <tr style={{ height: "26px" }}>
-            <td className="border border-black px-1 py-1 text-center text-gray-400">—</td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
           </tr>
         </tbody>
       </table>
@@ -549,8 +508,8 @@ export const ReportCard = ({
         </div>
       </div>
 
-      {/* Footer — Next term + official school stamp */}
-      <div className="flex justify-between items-end mt-4 pt-2 border-t border-black">
+      {/* Footer — Next term + official school stamp (pinned to bottom) */}
+      <div className="flex justify-between items-end mt-auto pt-2 border-t border-black">
         <div className="text-[9pt]">
           <span className="font-bold">NEXT TERM BEGINS ON:</span>{" "}
           <span className="border-b border-black inline-block min-w-[180px]"></span>

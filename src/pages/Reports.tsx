@@ -50,6 +50,7 @@ import {
   Download,
 } from "lucide-react";
 import { ReportCard } from "@/components/reports/ReportCard";
+import { AssetSizeControls } from "@/components/settings/AssetSizeControls";
 import { Database } from "@/integrations/supabase/types";
 import { computeAggregate } from "@/lib/grading";
 import { useToast } from "@/hooks/use-toast";
@@ -277,14 +278,21 @@ const Reports = () => {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
-      /* Each report card is exactly one A4 page */
+      /* Each report card is exactly one A4 page — no overflow allowed */
       .report-card {
         width: 210mm;
-        min-height: 297mm;
+        height: 297mm;
         margin: 0 auto;
         page-break-after: always;
         break-after: page;
+        page-break-inside: avoid;
+        break-inside: avoid;
         overflow: hidden;
+      }
+      .report-card > * {
+        width: 210mm;
+        height: 297mm;
+        box-sizing: border-box;
       }
       .report-card:last-child {
         page-break-after: auto;
@@ -502,25 +510,35 @@ const Reports = () => {
         })}
       </div>
 
-      {/* Preview dialog */}
+      {/* Preview dialog with live size controls */}
       <Dialog open={!!previewLearner} onOpenChange={(o) => !o && setPreviewLearnerId(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto no-scrollbar">
+        <DialogContent className="max-w-[95vw] sm:max-w-6xl max-h-[92vh] overflow-y-auto no-scrollbar">
           <DialogHeader>
             <DialogTitle>Preview — {previewLearner?.full_name}</DialogTitle>
           </DialogHeader>
           {previewLearner && (
-            <div ref={previewRef}>
-              <ReportCard
-                learner={previewLearner}
-                results={getLearnerResults(previewLearner.id)}
-                subjects={subjects}
-                className={selectedClassData?.name || ""}
-                classLevel={selectedClassData?.level}
-                term={selectedTerm}
-                academicYear={academicYear}
-                teacherName={selectedClassData?.teacher_name || ""}
-                meta={getMeta(previewLearner.id)}
-              />
+            <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+              <div ref={previewRef} className="overflow-auto bg-muted/20 p-2 rounded-md">
+                <div style={{ transform: "scale(0.78)", transformOrigin: "top left", width: "210mm" }}>
+                  <ReportCard
+                    learner={previewLearner}
+                    results={getLearnerResults(previewLearner.id)}
+                    subjects={subjects}
+                    className={selectedClassData?.name || ""}
+                    classLevel={selectedClassData?.level}
+                    term={selectedTerm}
+                    academicYear={academicYear}
+                    teacherName={selectedClassData?.teacher_name || ""}
+                    meta={getMeta(previewLearner.id)}
+                  />
+                </div>
+              </div>
+              <div className="lg:sticky lg:top-0 self-start space-y-3">
+                <AssetSizeControls surface="report" title="Report sizes" />
+                <p className="text-xs text-muted-foreground px-1">
+                  Changes apply instantly to all report cards and PDF exports.
+                </p>
+              </div>
             </div>
           )}
         </DialogContent>

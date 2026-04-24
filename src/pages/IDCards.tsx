@@ -32,6 +32,7 @@ import { StaffIDCard } from "@/components/idcards/StaffIDCard";
 import { StudentIDCard } from "@/components/idcards/StudentIDCard";
 import { VisitorIDCard } from "@/components/idcards/VisitorIDCard";
 import { EmergencyReentrySlip } from "@/components/idcards/EmergencyReentrySlip";
+import { AssetSizeControls } from "@/components/settings/AssetSizeControls";
 import { useVisitors, useVisitorVisits } from "@/hooks/useVisitors";
 import { Users } from "lucide-react";
 import { toPng } from "html-to-image";
@@ -317,6 +318,10 @@ const IDCards = () => {
               </CardContent>
             </Card>
 
+            <div className="mb-4">
+              <AssetSizeControls surface="id" title="ID card sizes (live preview)" />
+            </div>
+
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <CardSlot title={t("frontSide")}>
                 <div ref={frontRef} className="inline-block">
@@ -431,6 +436,10 @@ const IDCards = () => {
                 </div>
               </CardContent>
             </Card>
+
+            <div className="mb-4">
+              <AssetSizeControls surface="id" title="ID card sizes (live preview)" />
+            </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <CardSlot title={t("frontSide")}>
