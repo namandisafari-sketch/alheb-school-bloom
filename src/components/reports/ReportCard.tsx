@@ -4,9 +4,12 @@ import { Database } from "@/integrations/supabase/types";
 import { useIdCardSettings } from "@/hooks/useIdCardSettings";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { format } from "date-fns";
-import alheibLogo from "@/assets/alheib-logo.png";
-import alheibStamp from "@/assets/alheib-stamp.png";
-import alheibHeadteacherSig from "@/assets/alheib-headteacher-signature.png";
+
+// Convert ASCII digits → Arabic-Indic digits (٠١٢٣٤٥٦٧٨٩)
+const toAr = (s: string | number | null | undefined): string => {
+  if (s === null || s === undefined) return "";
+  return String(s).replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
+};
 
 type TermType = Database["public"]["Enums"]["term_type"];
 
