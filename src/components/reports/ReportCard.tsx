@@ -112,10 +112,13 @@ export const ReportCard = ({
   const poBox = "P.O. BOX 2891 KAMPALA - UGANDA";
   const phone = site?.landing_contact?.phone || "0788 402156 / 0745397122";
   const email = site?.landing_contact?.email || "aps@iico.org";
-  const logo = idSettings?.school_logo_url || alheibLogo;
-  const headteacherSignature =
-    idSettings?.head_teacher_signature_url || alheibHeadteacherSig;
+  const logo = idSettings?.school_logo_url;
+  const headteacherSignature = idSettings?.head_teacher_signature_url;
+  const stamp = idSettings?.school_stamp_url;
   const headteacherName = idSettings?.head_teacher_name || "HEADTEACHER";
+  const logoSize = idSettings?.logo_size_report ?? 96;
+  const sigHeight = idSettings?.signature_height_report ?? 32;
+  const stampSize = idSettings?.stamp_size_report ?? 80;
 
   // Split English (LTR) academics vs Islamic/Arabic (RTL) subjects
   const academics = subjects.filter((s) => s.category !== "islamic");
@@ -188,7 +191,20 @@ export const ReportCard = ({
           <div>Email: {email}</div>
         </div>
         <div className="flex flex-col items-center" style={{ width: "20%" }}>
-          <img src={logo} alt="School crest" className="h-24 w-24 object-contain" />
+          {logo ? (
+            <img
+              src={logo}
+              alt="School crest"
+              style={{ width: logoSize, height: logoSize, objectFit: "contain" }}
+            />
+          ) : (
+            <div
+              className="rounded-full border-2 border-black flex items-center justify-center text-[8pt] text-center"
+              style={{ width: logoSize, height: logoSize }}
+            >
+              SCHOOL<br />CREST
+            </div>
+          )}
         </div>
         <div
           className="text-[9pt] leading-tight text-right"
