@@ -408,7 +408,7 @@ export const ReportCard = ({
           </tr>
         </thead>
         <tbody>
-          <tr style={{ height: "26px" }}>
+          <tr style={{ height: "20px" }}>
             <td className="border border-black px-1 py-1 text-center font-semibold">
               {termLabel[term]}
             </td>
@@ -430,16 +430,6 @@ export const ReportCard = ({
             <td className="border border-black px-1 py-1 text-[8pt]">
               {meta?.class_teacher_remarks ?? ""}
             </td>
-          </tr>
-          <tr style={{ height: "26px" }}>
-            <td className="border border-black px-1 py-1 text-center text-gray-400">—</td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
-            <td className="border border-black"></td>
           </tr>
         </tbody>
       </table>
