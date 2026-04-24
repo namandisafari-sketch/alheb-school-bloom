@@ -84,14 +84,20 @@ const IDCards = () => {
   const selectedStaffMember = staff.find((s) => s.id === selectedStaff);
   const selectedStudentMember = learners.find((l) => l.id === selectedStudent);
 
-  const previewSettings = idSettings || {
+  const previewSettings: IdCardSettings = idSettings || {
     director_name: "",
     director_signature_url: "",
     head_teacher_name: "",
     head_teacher_signature_url: "",
     school_logo_url: "",
+    school_stamp_url: "",
     back_policy: "",
     back_policy_ar: "",
+    logo_size_report: 96,
+    logo_size_id: 44,
+    signature_height_report: 32,
+    signature_height_id: 22,
+    stamp_size_report: 80,
   };
 
   const exportNode = async (node: HTMLElement | null, filename: string) => {
