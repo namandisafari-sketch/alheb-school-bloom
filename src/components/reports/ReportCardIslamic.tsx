@@ -162,7 +162,22 @@ export const ReportCardIslamic = ({
         lineHeight: 1.35,
       }}
     >
-      {/* ═══ HEADER ═══ Logo center with school name on both sides */}
+      {/* ═══ BISMILLAH BANNER ═══ */}
+      <div
+        style={{
+          textAlign: "center",
+          fontFamily: "'Amiri','Scheherazade New','Cairo',serif",
+          fontSize: "20pt",
+          color: "#15803d",
+          padding: "4px 0 6px",
+          letterSpacing: "0.5px",
+          direction: "rtl",
+        }}
+      >
+        بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+      </div>
+
+      {/* ═══ HEADER ═══ Arabic name prominent, gold/green */}
       <div
         style={{
           display: "grid",
@@ -170,11 +185,20 @@ export const ReportCardIslamic = ({
           alignItems: "center",
           gap: "12px",
           paddingBottom: "8px",
-          borderBottom: "3px double #0f172a",
+          borderBottom: "3px double #15803d",
         }}
       >
-        <div style={{ textAlign: "right", fontSize: "16pt", fontWeight: 800, color: "#15803d" }}>
-          {language === "ar" ? schoolName.split(" ").slice(0, 2).join(" ") : "ALHEB ISLAMIC"}
+        <div
+          style={{
+            textAlign: "right",
+            fontFamily: "'Amiri','Cairo',serif",
+            fontSize: "18pt",
+            fontWeight: 800,
+            color: "#15803d",
+            direction: "rtl",
+          }}
+        >
+          مدرسة الهب الإسلامية
         </div>
         {settings?.school_logo_url ? (
           <img
@@ -200,8 +224,9 @@ export const ReportCardIslamic = ({
             LOGO
           </div>
         )}
-        <div style={{ textAlign: "left", fontSize: "16pt", fontWeight: 800, color: "#15803d" }}>
-          {language === "ar" ? schoolName.split(" ").slice(2).join(" ") : "PRIMARY SCHOOL"}
+        <div style={{ textAlign: "left", fontSize: "14pt", fontWeight: 800, color: "#15803d" }}>
+          ALHEB ISLAMIC<br />
+          <span style={{ fontSize: "11pt", color: "#a16207" }}>PRIMARY SCHOOL</span>
         </div>
       </div>
 

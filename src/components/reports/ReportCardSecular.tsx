@@ -122,7 +122,7 @@ export const ReportCardSecular = ({
   const t = (k: keyof typeof labels) => labels[k][language];
 
   const today = new Date().toLocaleDateString(language === "ar" ? "ar-EG" : "en-GB");
-  const schoolName = settings?.school_name || "ALHEB PRIMARY SCHOOL";
+  const schoolName = "ALHEB PRIMARY SCHOOL";
 
   return (
     <div
