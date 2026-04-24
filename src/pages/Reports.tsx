@@ -277,14 +277,21 @@ const Reports = () => {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
-      /* Each report card is exactly one A4 page */
+      /* Each report card is exactly one A4 page — no overflow allowed */
       .report-card {
         width: 210mm;
-        min-height: 297mm;
+        height: 297mm;
         margin: 0 auto;
         page-break-after: always;
         break-after: page;
+        page-break-inside: avoid;
+        break-inside: avoid;
         overflow: hidden;
+      }
+      .report-card > * {
+        width: 210mm;
+        height: 297mm;
+        box-sizing: border-box;
       }
       .report-card:last-child {
         page-break-after: auto;
