@@ -1,20 +1,15 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useRef } from "react";
+import { enToAr, translateText, toArabicDigits } from "./translations";
 
 type Language = "en" | "ar";
 
-interface Translations {
-  [key: string]: {
-    en: string;
-    ar: string;
-  };
-}
-
-const translations: Translations = {
+// Legacy keyed translations kept for explicit t("key") calls scattered through the app.
+const keyedTranslations: Record<string, { en: string; ar: string }> = {
   // Common
   dashboard: { en: "Dashboard", ar: "لوحة التحكم" },
   students: { en: "Students", ar: "الطلاب" },
-  teachers: { en: "Teachers", ar: "المعلمين" },
-  staff: { en: "Staff", ar: "الموظفين" },
+  teachers: { en: "Teachers", ar: "المعلمون" },
+  staff: { en: "Staff", ar: "الموظفون" },
   classes: { en: "Classes", ar: "الفصول" },
   attendance: { en: "Attendance", ar: "الحضور" },
   reports: { en: "Reports", ar: "التقارير" },
@@ -24,8 +19,7 @@ const translations: Translations = {
   idCards: { en: "ID Cards", ar: "البطاقات الشخصية" },
   feeManagement: { en: "Fee Management", ar: "إدارة الرسوم" },
   visitors: { en: "Visitors", ar: "الزوار" },
-  
-  // Actions
+
   add: { en: "Add", ar: "إضافة" },
   edit: { en: "Edit", ar: "تعديل" },
   delete: { en: "Delete", ar: "حذف" },
@@ -36,8 +30,7 @@ const translations: Translations = {
   print: { en: "Print", ar: "طباعة" },
   download: { en: "Download", ar: "تحميل" },
   generate: { en: "Generate", ar: "توليد" },
-  
-  // Salary
+
   basicSalary: { en: "Basic Salary", ar: "الراتب الأساسي" },
   allowances: { en: "Allowances", ar: "البدلات" },
   deductions: { en: "Deductions", ar: "الخصومات" },
@@ -49,16 +42,14 @@ const translations: Translations = {
   cash: { en: "Cash", ar: "نقدي" },
   cheque: { en: "Cheque", ar: "شيك" },
   mobilePayment: { en: "Mobile Payment", ar: "دفع عبر الهاتف" },
-  
-  // ID Card
+
   studentId: { en: "Student ID", ar: "رقم الطالب" },
   staffId: { en: "Staff ID", ar: "رقم الموظف" },
   bloodGroup: { en: "Blood Group", ar: "فصيلة الدم" },
   emergencyContact: { en: "Emergency Contact", ar: "جهة اتصال الطوارئ" },
   validUntil: { en: "Valid Until", ar: "صالح حتى" },
   issuedOn: { en: "Issued On", ar: "تاريخ الإصدار" },
-  
-  // Report Card
+
   reportCard: { en: "Report Card", ar: "بطاقة التقرير" },
   academicYear: { en: "Academic Year", ar: "العام الدراسي" },
   term: { en: "Term", ar: "الفصل الدراسي" },
@@ -74,8 +65,7 @@ const translations: Translations = {
   beginning: { en: "Beginning", ar: "مبتدئ" },
   teacherRemarks: { en: "Teacher's Remarks", ar: "ملاحظات المعلم" },
   headTeacherRemarks: { en: "Head Teacher's Remarks", ar: "ملاحظات المدير" },
-  
-  // Common Labels
+
   name: { en: "Name", ar: "الاسم" },
   fullName: { en: "Full Name", ar: "الاسم الكامل" },
   email: { en: "Email", ar: "البريد الإلكتروني" },
@@ -89,20 +79,17 @@ const translations: Translations = {
   dateOfBirth: { en: "Date of Birth", ar: "تاريخ الميلاد" },
   admissionNumber: { en: "Admission Number", ar: "رقم القبول" },
   guardian: { en: "Guardian", ar: "ولي الأمر" },
-  
-  // Status
+
   active: { en: "Active", ar: "نشط" },
   inactive: { en: "Inactive", ar: "غير نشط" },
   pending: { en: "Pending", ar: "معلق" },
   completed: { en: "Completed", ar: "مكتمل" },
-  
-  // Messages
+
   loading: { en: "Loading...", ar: "جاري التحميل..." },
   noData: { en: "No data found", ar: "لا توجد بيانات" },
   success: { en: "Success", ar: "تم بنجاح" },
   error: { en: "Error", ar: "خطأ" },
 
-  // Sidebar / Nav
   learners: { en: "Learners", ar: "المتعلمون" },
   staffWorkers: { en: "Staff & Workers", ar: "الموظفون والعمال" },
   marksEntry: { en: "Marks Entry", ar: "إدخال الدرجات" },
@@ -115,7 +102,6 @@ const translations: Translations = {
   teacher: { en: "Teacher", ar: "معلم" },
   primarySchool: { en: "Primary School", ar: "مدرسة ابتدائية" },
 
-  // ID Cards page
   staffIdCards: { en: "Staff ID Cards", ar: "بطاقات هوية الموظفين" },
   studentIdCards: { en: "Student ID Cards", ar: "بطاقات هوية الطلاب" },
   selectStaffMember: { en: "Select staff member", ar: "اختر موظفًا" },
@@ -142,7 +128,6 @@ const translations: Translations = {
   exportFailed: { en: "Export failed", ar: "فشل التصدير" },
   cardDownloaded: { en: "ID card downloaded", ar: "تم تنزيل البطاقة" },
 
-  // ID card fields
   admNo: { en: "Adm. No", ar: "رقم القبول" },
   staffIdShort: { en: "Staff ID", ar: "رقم الوظيفي" },
   qualification: { en: "Qualification", ar: "المؤهل" },
@@ -157,7 +142,6 @@ const translations: Translations = {
   religion: { en: "Religion", ar: "الديانة" },
   enrolled: { en: "Enrolled", ar: "تاريخ التسجيل" },
 
-  // System Settings
   idCardSignaturesBranding: { en: "ID Card Signatures & Branding", ar: "توقيعات وعلامة بطاقة الهوية" },
   idCardSettingsDesc: {
     en: "Upload Director and Head Teacher signatures — they will appear on every generated ID card.",
@@ -176,7 +160,6 @@ const translations: Translations = {
   saved: { en: "Saved", ar: "تم الحفظ" },
   settingsUpdated: { en: "Settings updated", ar: "تم تحديث الإعدادات" },
 
-  // Marks & Reports
   academic: { en: "Academic", ar: "أكاديمي" },
   islamic: { en: "Islamic", ar: "إسلامي" },
   copyPreviousTerm: { en: "Copy previous term", ar: "نسخ الفصل السابق" },
@@ -212,10 +195,57 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
+  tr: (text: string | number) => string;
   isRTL: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Global DOM auto-translator: walks visible text nodes and substitutes any
+// English token found in the dictionary with its Arabic equivalent. Also
+// converts Western digits to Arabic-Indic digits. Runs only when lang=ar.
+// ─────────────────────────────────────────────────────────────────────────────
+const SKIP_TAGS = new Set([
+  "SCRIPT", "STYLE", "NOSCRIPT", "TEXTAREA", "INPUT", "CODE", "PRE",
+  "SVG", "PATH", "CANVAS", "IMG", "VIDEO", "AUDIO",
+]);
+
+const translateNode = (node: Node) => {
+  if (node.nodeType === Node.TEXT_NODE) {
+    const original = node.nodeValue;
+    if (!original || !original.trim()) return;
+    // Don't re-translate already-Arabic text
+    if (/[\u0600-\u06FF]/.test(original) && !/[A-Za-z]/.test(original)) {
+      // still convert digits
+      const digitsOnly = toArabicDigits(original);
+      if (digitsOnly !== original) node.nodeValue = digitsOnly;
+      return;
+    }
+    const next = translateText(original, "ar");
+    if (next !== original) node.nodeValue = next;
+    return;
+  }
+  if (node.nodeType !== Node.ELEMENT_NODE) return;
+  const el = node as Element;
+  if (SKIP_TAGS.has(el.tagName)) return;
+  // Skip elements explicitly opted out (e.g. brand strings, code identifiers)
+  if (el.hasAttribute("data-no-translate")) return;
+  // Translate placeholder & title attributes too
+  if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+    const ph = el.getAttribute("placeholder");
+    if (ph) {
+      const next = translateText(ph, "ar");
+      if (next !== ph) el.setAttribute("placeholder", next);
+    }
+  }
+  const t = el.getAttribute("title");
+  if (t) {
+    const next = translateText(t, "ar");
+    if (next !== t) el.setAttribute("title", next);
+  }
+  el.childNodes.forEach(translateNode);
+};
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState<Language>(() => {
@@ -224,19 +254,78 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const isRTL = language === "ar";
+  const observerRef = useRef<MutationObserver | null>(null);
 
   useEffect(() => {
     localStorage.setItem("language", language);
     document.documentElement.dir = isRTL ? "rtl" : "ltr";
     document.documentElement.lang = language;
+
+    // Tear down previous observer
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+
+    if (!isRTL) {
+      // Reload to restore original English DOM (since we mutated text nodes in-place)
+      // Use a soft reload only if we previously translated.
+      if (document.documentElement.getAttribute("data-translated") === "ar") {
+        document.documentElement.removeAttribute("data-translated");
+        // Force React to re-render by triggering a route refresh: reload the page.
+        window.location.reload();
+      }
+      return;
+    }
+
+    document.documentElement.setAttribute("data-translated", "ar");
+
+    // Initial sweep — defer to next tick so React has flushed.
+    const sweep = () => translateNode(document.body);
+    requestAnimationFrame(sweep);
+
+    // Watch for future DOM updates from React renders.
+    const observer = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        m.addedNodes.forEach(translateNode);
+        if (m.type === "characterData" && m.target.nodeType === Node.TEXT_NODE) {
+          translateNode(m.target);
+        }
+        if (m.type === "attributes" && m.target.nodeType === Node.ELEMENT_NODE) {
+          translateNode(m.target);
+        }
+      }
+    });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["placeholder", "title", "value"],
+    });
+    observerRef.current = observer;
+
+    return () => {
+      observer.disconnect();
+    };
   }, [language, isRTL]);
 
   const t = (key: string): string => {
-    return translations[key]?.[language] || key;
+    const entry = keyedTranslations[key];
+    if (entry) return entry[language];
+    // Fallback: treat the key itself as English text and translate via dictionary.
+    return translateText(key, language);
+  };
+
+  // Universal translate-any-string helper. Use on dynamic strings to ensure
+  // they appear in Arabic when language=ar.
+  const tr = (text: string | number): string => {
+    const s = String(text);
+    return language === "ar" ? translateText(s, "ar") : s;
   };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, isRTL }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, tr, isRTL }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -249,3 +338,5 @@ export const useLanguage = () => {
   }
   return context;
 };
+
+export { enToAr };
