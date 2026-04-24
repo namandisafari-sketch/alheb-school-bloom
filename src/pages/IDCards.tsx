@@ -437,6 +437,10 @@ const IDCards = () => {
               </CardContent>
             </Card>
 
+            <div className="mb-4">
+              <AssetSizeControls surface="id" title="ID card sizes (live preview)" />
+            </div>
+
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <CardSlot title={t("frontSide")}>
                 <div ref={frontRef} className="inline-block">
