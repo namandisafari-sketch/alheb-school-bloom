@@ -389,40 +389,7 @@ export const ReportCard = ({
         </table>
       </div>
 
-      {/* Monthly Assessment (Islamic) */}
-      <div className="mt-2">
-        <div
-          className="text-center font-bold text-[10pt] border border-black border-b-0 py-1 bg-gray-100"
-          style={{ direction: "rtl" }}
-        >
-          MONTHLY ASSESSMENT — التقييم الشهري
-        </div>
-        <table
-          className="w-full border-collapse border border-black text-[9pt]"
-          style={{ direction: "rtl" }}
-        >
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="border border-black px-1 py-1">الشهر</th>
-              <th className="border border-black px-1 py-1">علوم القرآن</th>
-              <th className="border border-black px-1 py-1">الفقه</th>
-              <th className="border border-black px-1 py-1">التربية الإسلامية</th>
-              <th className="border border-black px-1 py-1">علوم اللغة</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[1, 2].map((m) => (
-              <tr key={`ma-${m}`} style={{ height: "24px" }}>
-                <td className="border border-black px-1 py-1 text-center font-mono">{toAr(m)}</td>
-                <td className="border border-black"></td>
-                <td className="border border-black"></td>
-                <td className="border border-black"></td>
-                <td className="border border-black"></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* (Islamic Monthly Assessment block removed to keep report on one page) */}
 
       {/* Bottom monthly performance — ENG / MTC / SCIE / SST / AGG / DIV / REMARKS */}
       <table className="w-full border-collapse border border-black text-[9pt] mt-2">
