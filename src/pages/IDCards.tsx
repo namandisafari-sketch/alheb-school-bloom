@@ -25,7 +25,7 @@ import { useAllStaff } from "@/hooks/useStaff";
 import { useLearners } from "@/hooks/useLearners";
 import { useClasses } from "@/hooks/useClasses";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { useIdCardSettings } from "@/hooks/useIdCardSettings";
+import { useIdCardSettings, IdCardSettings } from "@/hooks/useIdCardSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { Search, Download, CreditCard, User, ChevronDown, Loader2, Package, UserCheck, AlertTriangle, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { StaffIDCard } from "@/components/idcards/StaffIDCard";
