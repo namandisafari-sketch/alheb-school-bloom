@@ -485,7 +485,7 @@ const Reports = () => {
           const learner = classLearners.find((l) => l.id === id);
           if (!learner) return null;
           return (
-            <div key={id} data-learner={learner.full_name.replace(/\s+/g, "_")}>
+            <div key={id} className="report-card" data-learner={learner.full_name.replace(/\s+/g, "_")}>
               <ReportCard
                 learner={learner}
                 results={getLearnerResults(id)}
