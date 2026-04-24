@@ -510,25 +510,35 @@ const Reports = () => {
         })}
       </div>
 
-      {/* Preview dialog */}
+      {/* Preview dialog with live size controls */}
       <Dialog open={!!previewLearner} onOpenChange={(o) => !o && setPreviewLearnerId(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto no-scrollbar">
+        <DialogContent className="max-w-[95vw] sm:max-w-6xl max-h-[92vh] overflow-y-auto no-scrollbar">
           <DialogHeader>
             <DialogTitle>Preview — {previewLearner?.full_name}</DialogTitle>
           </DialogHeader>
           {previewLearner && (
-            <div ref={previewRef}>
-              <ReportCard
-                learner={previewLearner}
-                results={getLearnerResults(previewLearner.id)}
-                subjects={subjects}
-                className={selectedClassData?.name || ""}
-                classLevel={selectedClassData?.level}
-                term={selectedTerm}
-                academicYear={academicYear}
-                teacherName={selectedClassData?.teacher_name || ""}
-                meta={getMeta(previewLearner.id)}
-              />
+            <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+              <div ref={previewRef} className="overflow-auto bg-muted/20 p-2 rounded-md">
+                <div style={{ transform: "scale(0.78)", transformOrigin: "top left", width: "210mm" }}>
+                  <ReportCard
+                    learner={previewLearner}
+                    results={getLearnerResults(previewLearner.id)}
+                    subjects={subjects}
+                    className={selectedClassData?.name || ""}
+                    classLevel={selectedClassData?.level}
+                    term={selectedTerm}
+                    academicYear={academicYear}
+                    teacherName={selectedClassData?.teacher_name || ""}
+                    meta={getMeta(previewLearner.id)}
+                  />
+                </div>
+              </div>
+              <div className="lg:sticky lg:top-0 self-start space-y-3">
+                <AssetSizeControls surface="report" title="Report sizes" />
+                <p className="text-xs text-muted-foreground px-1">
+                  Changes apply instantly to all report cards and PDF exports.
+                </p>
+              </div>
             </div>
           )}
         </DialogContent>
