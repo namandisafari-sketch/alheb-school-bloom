@@ -364,10 +364,10 @@ export const ReportCard = ({
                     {s ? arName(s.name) : ""}
                   </td>
                   <td className="border border-black px-1 py-1 text-center">
-                    {s ? "100" : ""}
+                    {s ? "١٠٠" : ""}
                   </td>
                   <td className="border border-black px-1 py-1 text-center font-mono">
-                    {r?.score ?? ""}
+                    {r?.score != null ? toAr(r.score) : ""}
                   </td>
                   <td className="border border-black px-1 py-1 text-center text-[8pt]">
                     {r?.letter_grade ?? ""}
@@ -377,9 +377,9 @@ export const ReportCard = ({
             })}
             <tr className="bg-gray-100 font-bold">
               <td className="border border-black px-1 py-1">المجموع</td>
-              <td className="border border-black px-1 py-1 text-center">{islamicTotalMax}</td>
+              <td className="border border-black px-1 py-1 text-center">{toAr(islamicTotalMax)}</td>
               <td className="border border-black px-1 py-1 text-center font-mono">
-                {islamicTotalScore}
+                {toAr(islamicTotalScore)}
               </td>
               <td className="border border-black"></td>
             </tr>
@@ -411,7 +411,7 @@ export const ReportCard = ({
           <tbody>
             {[1, 2].map((m) => (
               <tr key={`ma-${m}`} style={{ height: "24px" }}>
-                <td className="border border-black px-1 py-1 text-center font-mono">{m}</td>
+                <td className="border border-black px-1 py-1 text-center font-mono">{toAr(m)}</td>
                 <td className="border border-black"></td>
                 <td className="border border-black"></td>
                 <td className="border border-black"></td>
