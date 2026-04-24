@@ -316,6 +316,103 @@ export const ReportCardIslamic = ({
         </div>
       </div>
 
+      {/* ═══ ISLAMIC STUDIES FIRST (Muslim learner) ═══ */}
+      {showIslamic && (
+        <>
+          <SectionTitle accent="#a16207">{t("islamicPerf")}</SectionTitle>
+          <table style={tableStyle}>
+            <thead>
+              <tr style={{ ...headerRowStyle, background: "#fef3c7" }}>
+                <th
+                  style={{
+                    ...thStyle,
+                    width: "35%",
+                    textAlign: isRTL ? "right" : "left",
+                    borderColor: "#a16207",
+                  }}
+                >
+                  {t("subject")}
+                </th>
+                <th style={{ ...thStyle, borderColor: "#a16207" }}>{t("fullMarks")}</th>
+                <th style={{ ...thStyle, borderColor: "#a16207" }}>{t("marksGained")}</th>
+                <th style={{ ...thStyle, borderColor: "#a16207" }}>{t("grade")}</th>
+                <th
+                  style={{
+                    ...thStyle,
+                    textAlign: isRTL ? "right" : "left",
+                    borderColor: "#a16207",
+                  }}
+                >
+                  {t("remark")}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {islamicSubjects.map((s) => {
+                const r = getResult(s.id);
+                const display =
+                  s.grading_type === "letter"
+                    ? r?.letter_grade ?? "—"
+                    : s.grading_type === "descriptive"
+                    ? r?.juz_completed
+                      ? `${labels.juzCompleted[language]} ${r.juz_completed}`
+                      : "—"
+                    : r?.score != null
+                    ? calculateGrade(r.score, classLevel).grade
+                    : "—";
+                return (
+                  <tr key={s.id}>
+                    <td
+                      style={{
+                        ...tdStyle,
+                        textAlign: isRTL ? "right" : "left",
+                        fontWeight: 600,
+                        borderColor: "#fde68a",
+                      }}
+                    >
+                      {s.name}
+                    </td>
+                    <td style={{ ...tdStyle, textAlign: "center", borderColor: "#fde68a" }}>100</td>
+                    <td
+                      style={{
+                        ...tdStyle,
+                        textAlign: "center",
+                        fontWeight: 700,
+                        borderColor: "#fde68a",
+                      }}
+                    >
+                      {r?.score ?? "—"}
+                    </td>
+                    <td
+                      style={{
+                        ...tdStyle,
+                        textAlign: "center",
+                        fontWeight: 800,
+                        color: "#a16207",
+                        borderColor: "#fde68a",
+                      }}
+                    >
+                      {display}
+                    </td>
+                    <td
+                      style={{
+                        ...tdStyle,
+                        textAlign: isRTL ? "right" : "left",
+                        fontStyle: "italic",
+                        fontSize: "9pt",
+                        borderColor: "#fde68a",
+                      }}
+                    >
+                      {r?.teacher_remarks ?? "—"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </>
+      )}
+
       {/* ═══ ACADEMIC RESULTS TABLE ═══ */}
       <SectionTitle>{t("academicPerf")}</SectionTitle>
       <table style={tableStyle}>
@@ -393,10 +490,10 @@ export const ReportCardIslamic = ({
         </tbody>
       </table>
 
-      {/* ═══ SUMMARY BLACK BAR (Sharebility-style) ═══ */}
+      {/* ═══ SUMMARY GREEN BAR (Islamic theme) ═══ */}
       <div
         style={{
-          background: "#0f172a",
+          background: "#15803d",
           color: "white",
           padding: "8px 12px",
           marginTop: "0",
@@ -409,130 +506,26 @@ export const ReportCardIslamic = ({
         }}
       >
         <span>
-          {t("avgMark")}: <span style={{ color: "#86efac" }}>{acAvg ? acAvg.toFixed(1) : "—"}</span>
+          {t("avgMark")}: <span style={{ color: "#fde68a" }}>{acAvg ? acAvg.toFixed(1) : "—"}</span>
         </span>
         <span>
           {t("position")}:{" "}
-          <span style={{ color: "#86efac" }}>
+          <span style={{ color: "#fde68a" }}>
             {meta?.academic_position ?? "—"} {t("outOf")} {meta?.class_size ?? "?"}
           </span>
         </span>
         {isUpperPrimary && (
           <>
             <span>
-              {t("aggregates")}: <span style={{ color: "#86efac" }}>{totalAgg || "—"}</span>
+              {t("aggregates")}: <span style={{ color: "#fde68a" }}>{totalAgg || "—"}</span>
             </span>
             <span>
-              {t("division")}: <span style={{ color: "#fde047" }}>{division}</span>
+              {t("division")}: <span style={{ color: "#fef08a" }}>{division}</span>
             </span>
           </>
         )}
       </div>
 
-      {/* ═══ ISLAMIC STUDIES (only for Muslim learners) ═══ */}
-      {showIslamic && (
-        <>
-          <SectionTitle accent="#0e7490">{t("islamicPerf")}</SectionTitle>
-          <table style={tableStyle}>
-            <thead>
-              <tr style={{ ...headerRowStyle, background: "#cffafe" }}>
-                <th
-                  style={{
-                    ...thStyle,
-                    width: "35%",
-                    textAlign: isRTL ? "right" : "left",
-                    borderColor: "#0e7490",
-                  }}
-                >
-                  {t("subject")}
-                </th>
-                <th style={{ ...thStyle, borderColor: "#0e7490" }}>{t("fullMarks")}</th>
-                <th style={{ ...thStyle, borderColor: "#0e7490" }}>{t("marksGained")}</th>
-                <th style={{ ...thStyle, borderColor: "#0e7490" }}>{t("grade")}</th>
-                <th
-                  style={{
-                    ...thStyle,
-                    textAlign: isRTL ? "right" : "left",
-                    borderColor: "#0e7490",
-                  }}
-                >
-                  {t("remark")}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {islamicSubjects.map((s) => {
-                const r = getResult(s.id);
-                const display =
-                  s.grading_type === "letter"
-                    ? r?.letter_grade ?? "—"
-                    : s.grading_type === "descriptive"
-                    ? r?.juz_completed
-                      ? `${labels.juzCompleted[language]} ${r.juz_completed}`
-                      : "—"
-                    : r?.score != null
-                    ? calculateGrade(r.score, classLevel).grade
-                    : "—";
-                return (
-                  <tr key={s.id}>
-                    <td
-                      style={{
-                        ...tdStyle,
-                        textAlign: isRTL ? "right" : "left",
-                        fontWeight: 600,
-                        borderColor: "#a5f3fc",
-                      }}
-                    >
-                      {s.name}
-                    </td>
-                    <td
-                      style={{
-                        ...tdStyle,
-                        textAlign: "center",
-                        borderColor: "#a5f3fc",
-                      }}
-                    >
-                      100
-                    </td>
-                    <td
-                      style={{
-                        ...tdStyle,
-                        textAlign: "center",
-                        fontWeight: 700,
-                        borderColor: "#a5f3fc",
-                      }}
-                    >
-                      {r?.score ?? "—"}
-                    </td>
-                    <td
-                      style={{
-                        ...tdStyle,
-                        textAlign: "center",
-                        fontWeight: 800,
-                        color: "#0e7490",
-                        borderColor: "#a5f3fc",
-                      }}
-                    >
-                      {display}
-                    </td>
-                    <td
-                      style={{
-                        ...tdStyle,
-                        textAlign: isRTL ? "right" : "left",
-                        fontStyle: "italic",
-                        fontSize: "9pt",
-                        borderColor: "#a5f3fc",
-                      }}
-                    >
-                      {r?.teacher_remarks ?? "—"}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </>
-      )}
 
       {/* ═══ ATTENDANCE & BEHAVIOR (compact row) ═══ */}
       <div
