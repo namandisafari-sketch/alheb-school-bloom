@@ -32,6 +32,7 @@ import { StaffIDCard } from "@/components/idcards/StaffIDCard";
 import { StudentIDCard } from "@/components/idcards/StudentIDCard";
 import { VisitorIDCard } from "@/components/idcards/VisitorIDCard";
 import { EmergencyReentrySlip } from "@/components/idcards/EmergencyReentrySlip";
+import { AssetSizeControls } from "@/components/settings/AssetSizeControls";
 import { useVisitors, useVisitorVisits } from "@/hooks/useVisitors";
 import { Users } from "lucide-react";
 import { toPng } from "html-to-image";
