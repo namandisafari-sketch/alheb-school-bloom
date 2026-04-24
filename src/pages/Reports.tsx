@@ -251,18 +251,84 @@ const Reports = () => {
     if (!printRef.current) return;
     const win = window.open("", "_blank");
     if (!win) return;
-    win.document.write(`
-      <!DOCTYPE html><html><head><title>Reports</title>
-      <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:'Inter',sans-serif}
-        .report-card{page-break-after:always}
-        .report-card:last-child{page-break-after:auto}
-        @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
-      </style></head><body>${printRef.current.innerHTML}</body></html>
-    `);
+
+    // Copy all <style> and <link rel="stylesheet"> tags from the current doc
+    // so Tailwind utility classes (flex, grid, borders, etc.) render in the
+    // print window exactly like the live preview.
+    const headStyles = Array.from(
+      document.querySelectorAll('style, link[rel="stylesheet"]')
+    )
+      .map((n) => n.outerHTML)
+      .join("\n");
+
+    win.document.open();
+    win.document.write(`<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Report Cards</title>
+    ${headStyles}
+    <style>
+      @page { size: A4; margin: 0; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #fff;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      /* Each report card is exactly one A4 page */
+      .report-card {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        page-break-after: always;
+        break-after: page;
+        overflow: hidden;
+      }
+      .report-card:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
+      img { max-width: 100%; }
+    </style>
+  </head>
+  <body>${printRef.current.innerHTML}</body>
+</html>`);
     win.document.close();
-    setTimeout(() => win.print(), 500);
+
+    // Wait for stylesheets + images in the new window to load before printing,
+    // otherwise Chrome prints an unstyled / image-less page.
+    const triggerPrint = () => {
+      const imgs = Array.from(win.document.images);
+      if (imgs.length === 0) {
+        win.focus();
+        win.print();
+        return;
+      }
+      let remaining = imgs.length;
+      const done = () => {
+        remaining -= 1;
+        if (remaining <= 0) {
+          win.focus();
+          win.print();
+        }
+      };
+      imgs.forEach((img) => {
+        if (img.complete) {
+          done();
+        } else {
+          img.addEventListener("load", done);
+          img.addEventListener("error", done);
+        }
+      });
+    };
+
+    if (win.document.readyState === "complete") {
+      setTimeout(triggerPrint, 100);
+    } else {
+      win.addEventListener("load", () => setTimeout(triggerPrint, 100));
+    }
   };
 
   const previewLearner = previewLearnerId
@@ -419,7 +485,7 @@ const Reports = () => {
           const learner = classLearners.find((l) => l.id === id);
           if (!learner) return null;
           return (
-            <div key={id} data-learner={learner.full_name.replace(/\s+/g, "_")}>
+            <div key={id} className="report-card" data-learner={learner.full_name.replace(/\s+/g, "_")}>
               <ReportCard
                 learner={learner}
                 results={getLearnerResults(id)}
