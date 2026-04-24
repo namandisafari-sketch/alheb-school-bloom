@@ -673,7 +673,20 @@ export const ReportCardIslamic = ({
           <div style={{ marginBottom: "4px" }}>
             <strong>{t("nextTerm")}:</strong> _____________________
           </div>
-          <div style={{ color: "#64748b", fontSize: "8pt", marginTop: "4px" }}>
+          {/* Sheikh / Islamic Head Teacher signatory */}
+          <div style={{ marginTop: "10px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <div style={{ borderTop: "1px solid #15803d", paddingTop: "4px", fontSize: "9pt" }}>
+              <strong style={{ color: "#15803d" }}>
+                {language === "ar" ? "الشيخ / معلم الدراسات الإسلامية" : "Sheikh / Islamic Studies Head"}
+              </strong>
+              <div style={{ color: "#64748b", fontSize: "8pt" }}>_____________________</div>
+            </div>
+            <div style={{ borderTop: "1px solid #0f172a", paddingTop: "4px", fontSize: "9pt" }}>
+              <strong>{t("headTeacher")}:</strong>{" "}
+              <span>{settings?.head_teacher_name || "_____________"}</span>
+            </div>
+          </div>
+          <div style={{ color: "#64748b", fontSize: "8pt", marginTop: "6px" }}>
             <strong>{t("requirements")}:</strong> Broom, Ream, Uniform, Box file...
           </div>
         </div>
