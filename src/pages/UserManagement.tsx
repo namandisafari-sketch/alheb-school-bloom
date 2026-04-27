@@ -52,6 +52,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLearners } from "@/hooks/useLearners";
+import { UserActions } from "@/components/users/UserActions";
+import { cn } from "@/lib/utils";
 
 type AppRole = "admin" | "teacher" | "parent" | "staff";
 
@@ -64,9 +66,9 @@ const roleConfig: Record<AppRole, { icon: typeof Shield; label: string; color: s
 
 const createUserSchema = z.object({
   fullName: z.string().min(2, "Name required").max(100),
-  email: z.string().email("Valid email required"),
+  email: z.string().email("Valid email required").optional().or(z.literal("")),
   phone: z.string().min(10, "Phone required").max(20),
-  password: z.string().min(6, "Min 6 characters"),
+  password: z.string().min(6, "Min 6 characters").optional().or(z.literal("")),
   role: z.enum(["admin", "teacher", "staff"]),
 });
 
@@ -131,7 +133,7 @@ const UserManagement = () => {
       fullName: "",
       email: "",
       phone: "",
-      password: "",
+      password: "1234school.com",
       role: "teacher",
     },
   });
@@ -141,7 +143,7 @@ const UserManagement = () => {
     mutationFn: async (values: CreateUserFormValues) => {
       // Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: values.email,
+        email: values.email || "",
         password: values.password,
         options: {
           data: {
@@ -218,7 +220,17 @@ const UserManagement = () => {
   };
 
   const onCreateSubmit = (values: CreateUserFormValues) => {
-    createUserMutation.mutate(values);
+    // Standardize email format: {names@alheib.(role)}
+    // Example: "John Doe" -> "john.doe@alheib.teacher"
+    const names = values.fullName.trim().toLowerCase().split(/\s+/).join(".");
+    const domain = `alheib.${values.role}`;
+    const generatedEmail = `${names}@${domain}`;
+    
+    createUserMutation.mutate({
+      ...values,
+      email: generatedEmail,
+      password: values.password || "1234school.com",
+    });
   };
 
   return (
@@ -285,19 +297,11 @@ const UserManagement = () => {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email *</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="email@school.edu" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="rounded-lg bg-muted/50 p-3 space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Account Credentials</p>
+                  <p className="text-sm">Email will be: <span className="font-mono text-primary italic">names@alheib.role</span></p>
+                  <p className="text-sm">Default Password: <span className="font-mono font-bold">1234school.com</span></p>
+                </div>
                 <FormField
                   control={form.control}
                   name="phone"
@@ -316,9 +320,9 @@ const UserManagement = () => {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password *</FormLabel>
+                      <FormLabel>Custom Password (Optional)</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Min 6 characters" {...field} />
+                        <Input type="password" placeholder="Leave blank for 1234school.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -361,87 +365,92 @@ const UserManagement = () => {
         </Dialog>
       </div>
 
-      {/* Users Table */}
-      <div className="mt-6 rounded-xl border border-border bg-card">
+      {/* Users Grid */}
+      <div className="mt-6">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Linked Learners</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.map((user) => {
-                const config = user.role ? roleConfig[user.role] : null;
-                const linkedLearners = user.role === "parent" ? getLinkedLearners(user.id) : [];
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredUsers.map((user) => {
+              const config = user.role ? roleConfig[user.role] : null;
+              const linkedLearners = user.role === "parent" ? getLinkedLearners(user.id) : [];
 
-                return (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className={`flex h-9 w-9 items-center justify-center rounded-full ${config?.color || "bg-muted"}`}>
-                          {user.full_name?.split(" ").map((n) => n[0]).join("").slice(0, 2) || "?"}
-                        </div>
-                        <div>
-                          <p className="font-medium">{user.full_name}</p>
-                          <p className="text-xs text-muted-foreground">{user.email}</p>
-                        </div>
+              return (
+                <div 
+                  key={user.id} 
+                  className="group relative rounded-xl border border-border bg-card p-4 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-bold ${config?.color || "bg-muted"}`}>
+                        {user.full_name?.split(" ").map((n) => n[0]).join("").slice(0, 2) || "?"}
                       </div>
-                    </TableCell>
-                    <TableCell>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-sm truncate pr-6">{user.full_name}</h3>
+                        <p className="text-[10px] text-muted-foreground truncate italic">{user.email}</p>
+                      </div>
+                    </div>
+                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <UserActions user={user} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 mb-4">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Access Role:</span>
                       {config && (
-                        <Badge className={config.color}>{config.label}</Badge>
+                        <Badge className={cn("text-[10px] h-5", config.color)}>{config.label}</Badge>
                       )}
-                    </TableCell>
-                    <TableCell>{user.phone || "—"}</TableCell>
-                    <TableCell>
-                      {user.role === "parent" ? (
-                        linkedLearners.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {linkedLearners.map((name, i) => (
-                              <Badge key={i} variant="outline" className="text-xs">
-                                {name}
-                              </Badge>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">No learners linked</span>
-                        )
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Contact:</span>
+                      <span className="font-medium">{user.phone || "—"}</span>
+                    </div>
+                  </div>
+
+                  {user.role === "parent" && (
+                    <div className="mt-4 pt-4 border-t space-y-2">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Linked Learners</p>
+                      {linkedLearners.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {linkedLearners.map((name, i) => (
+                            <Badge key={i} variant="outline" className="text-[9px] h-4 px-1.5 border-primary/20 bg-primary/5 text-primary">
+                              {name}
+                            </Badge>
+                          ))}
+                        </div>
                       ) : (
-                        "—"
+                        <p className="text-xs text-muted-foreground italic">No learners linked</p>
                       )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {user.role === "parent" && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedParentId(user.id);
-                            setLinkDialogOpen(true);
-                          }}
-                        >
-                          <LinkIcon className="mr-1 h-4 w-4" />
-                          Link Learner
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full h-7 mt-2 text-[10px] border-dashed"
+                        onClick={() => {
+                          setSelectedParentId(user.id);
+                          setLinkDialogOpen(true);
+                        }}
+                      >
+                        <LinkIcon className="mr-1 h-3 w-3" />
+                        Link Learner
                       </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                    </div>
+                  )}
+
+                  {user.role !== "parent" && (
+                    <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                      <span className="text-[10px] text-muted-foreground">
+                        Account Active
+                      </span>
+                      <div className="flex h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 

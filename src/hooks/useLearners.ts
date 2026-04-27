@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Learner {
@@ -47,6 +47,39 @@ export const useLearners = () => {
         guardian_name: learner.guardian_id ? guardianMap.get(learner.guardian_id)?.name : null,
         guardian_phone: learner.guardian_id ? guardianMap.get(learner.guardian_id)?.phone : null,
       })) as Learner[];
+    },
+  });
+};
+
+export const useUpdateLearner = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Learner> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("learners")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["learners"] });
+    },
+  });
+};
+
+export const useDeleteLearner = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("learners").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["learners"] });
     },
   });
 };

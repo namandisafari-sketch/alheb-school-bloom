@@ -33,7 +33,9 @@ import {
 } from "lucide-react";
 import { useAllStaff, STAFF_ROLES, StaffRole } from "@/hooks/useStaff";
 import { AddStaffDialog } from "@/components/staff/AddStaffDialog";
+import { StaffActions } from "@/components/staff/StaffActions";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const roleIcons: Record<string, React.ReactNode> = {
   admin: <Shield className="h-4 w-4" />,
@@ -136,8 +138,8 @@ const Staff = () => {
         </AddStaffDialog>
       </div>
 
-      {/* Staff Table */}
-      <div className="mt-4 sm:mt-6 rounded-xl border border-border bg-card animate-slide-up overflow-x-auto">
+      {/* Staff Grid */}
+      <div className="mt-4 sm:mt-6 animate-slide-up">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -147,85 +149,70 @@ const Staff = () => {
             Failed to load staff. Please try again.
           </div>
         ) : filteredStaff.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border border-dashed rounded-xl">
             <Users className="h-12 w-12 mb-4 opacity-50" />
             <p>No staff members found</p>
             <p className="text-sm">Add your first staff member to get started</p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="hidden sm:table-cell">Role</TableHead>
-                <TableHead className="hidden md:table-cell">Contact</TableHead>
-                <TableHead className="hidden lg:table-cell">Qualification</TableHead>
-                <TableHead className="hidden sm:table-cell">Joined</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredStaff.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div className={`flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full text-xs sm:text-sm font-medium ${roleColors[member.role || ""] || "bg-primary/10 text-primary"}`}>
-                        {member.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                      </div>
-                      <div className="min-w-0">
-                        <span className="font-medium text-sm block truncate">{member.full_name}</span>
-                        {member.email && (
-                          <p className="text-xs text-muted-foreground truncate">{member.email}</p>
-                        )}
-                        <Badge variant="outline" className={`${roleColors[member.role || ""]} text-xs sm:hidden mt-1`}>
-                          {getRoleLabel(member.role)}
-                        </Badge>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredStaff.map((member) => (
+              <div 
+                key={member.id} 
+                className="group relative rounded-xl border border-border bg-card p-4 hover:shadow-md hover:border-primary/20 transition-all"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full font-bold ${roleColors[member.role || ""] || "bg-primary/10 text-primary"}`}>
+                      {member.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-sm truncate pr-6">{member.full_name}</h3>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className={cn("p-1 rounded-full", roleColors[member.role || ""])}>
+                          {roleIcons[member.role || ""] || <Users className="h-3 w-3" />}
+                        </span>
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase">{getRoleLabel(member.role)}</span>
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    <Badge variant="outline" className={roleColors[member.role || ""]}>
-                      {getRoleLabel(member.role)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="flex items-center gap-1">
-                      {member.phone && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <Phone className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                      {member.email && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <Mail className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                      {!member.phone && !member.email && (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    <span className="text-sm text-muted-foreground">
-                      {member.qualification || "—"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    <span className="text-sm text-muted-foreground">
-                      {member.created_at
-                        ? format(new Date(member.created_at), "MMM yyyy")
-                        : "—"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="h-7 w-7">
-                      <MoreHorizontal className="h-4 w-4" />
+                  </div>
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <StaffActions member={member} />
+                  </div>
+                </div>
+
+                <div className="space-y-2 mb-4">
+                  {member.qualification && (
+                    <p className="text-xs text-muted-foreground line-clamp-1 italic">
+                      {member.qualification}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Mail className="h-3.5 w-3.5" />
+                    <span className="truncate">{member.email || "No email"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Phone className="h-3.5 w-3.5" />
+                    <span>{member.phone || "No phone"}</span>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-4 border-t flex items-center justify-between">
+                  <span className="text-[10px] text-muted-foreground">
+                    Joined {member.created_at ? format(new Date(member.created_at), "MMM yyyy") : "—"}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled={!member.phone}>
+                      <Phone className="h-3 w-3" />
                     </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled={!member.email}>
+                      <Mail className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 

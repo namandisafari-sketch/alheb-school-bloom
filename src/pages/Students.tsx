@@ -2,18 +2,12 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+
 import { Badge } from "@/components/ui/badge";
 import { Search, UserPlus, Filter, MoreHorizontal, Mail, Phone, Loader2 } from "lucide-react";
 import { useLearners } from "@/hooks/useLearners";
 import { RegisterLearnerDialog } from "@/components/students/RegisterLearnerDialog";
+import { LearnerActions } from "@/components/students/LearnerActions";
 
 const Students = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -60,8 +54,8 @@ const Students = () => {
         </div>
       </div>
 
-      {/* Students Table */}
-      <div className="mt-4 sm:mt-6 rounded-xl border border-border bg-card animate-slide-up overflow-x-auto">
+      {/* Students Grid */}
+      <div className="mt-4 sm:mt-6 animate-slide-up">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -71,70 +65,63 @@ const Students = () => {
             Failed to load learners. Please try again.
           </div>
         ) : filteredStudents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border border-dashed rounded-xl">
             <p>No learners found</p>
             <p className="text-sm">Register your first learner to get started</p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Learner</TableHead>
-                <TableHead className="hidden sm:table-cell">Class</TableHead>
-                <TableHead className="hidden md:table-cell">Gender</TableHead>
-                <TableHead className="hidden lg:table-cell">Guardian</TableHead>
-                <TableHead className="hidden xl:table-cell">District</TableHead>
-                <TableHead className="hidden md:table-cell">Contact</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredStudents.map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs sm:text-sm font-medium text-primary">
-                        {student.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                      </div>
-                      <div className="min-w-0">
-                        <span className="font-medium text-sm truncate block">{student.full_name}</span>
-                        <span className="text-xs text-muted-foreground sm:hidden">
-                          {student.class_name || "Unassigned"}
-                        </span>
-                      </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredStudents.map((student) => (
+              <div 
+                key={student.id} 
+                className="group relative rounded-xl border border-border bg-card p-4 hover:shadow-md hover:border-primary/20 transition-all"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
+                      {student.full_name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                     </div>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    <Badge variant="outline">{student.class_name || "Unassigned"}</Badge>
-                  </TableCell>
-                  <TableCell className="capitalize hidden md:table-cell">{student.gender}</TableCell>
-                  <TableCell className="hidden lg:table-cell">{student.guardian_name || "—"}</TableCell>
-                  <TableCell className="hidden xl:table-cell">{student.district || "—"}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" disabled={!student.guardian_phone}>
-                        <Phone className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" disabled>
-                        <Mail className="h-3.5 w-3.5" />
-                      </Button>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-sm truncate pr-6">{student.full_name}</h3>
+                      <p className="text-xs text-muted-foreground">{student.admission_number || 'No ADM'}</p>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={student.status === "active" ? "default" : "secondary"} className="text-xs">
-                      {student.status || "active"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" className="h-7 w-7">
-                      <MoreHorizontal className="h-4 w-4" />
+                  </div>
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <LearnerActions learner={student} />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Class:</span>
+                    <Badge variant="outline" className="font-medium">{student.class_name || "Unassigned"}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Guardian:</span>
+                    <span className="font-medium truncate max-w-[120px]">{student.guardian_name || "—"}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Gender:</span>
+                    <span className="capitalize">{student.gender}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                  <Badge variant={student.status === "active" ? "default" : "secondary"} className="text-[10px] h-5">
+                    {student.status || "active"}
+                  </Badge>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled={!student.guardian_phone}>
+                      <Phone className="h-3.5 w-3.5" />
                     </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" disabled>
+                      <Mail className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 

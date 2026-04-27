@@ -50,6 +50,8 @@ import {
   Download,
 } from "lucide-react";
 import { ReportCard } from "@/components/reports/ReportCard";
+import { TermlyCircular } from "@/components/reports/TermlyCircular";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AssetSizeControls } from "@/components/settings/AssetSizeControls";
 import { Database } from "@/integrations/supabase/types";
 import { computeAggregate } from "@/lib/grading";
@@ -83,6 +85,7 @@ const Reports = () => {
   const [academicYear, setAcademicYear] = useState<number>(
     parseInt(searchParams.get("year") || String(currentYear)),
   );
+  const [reportType, setReportType] = useState<"report-cards" | "circulars">("report-cards");
   const [selectedLearners, setSelectedLearners] = useState<string[]>([]);
   const [previewLearnerId, setPreviewLearnerId] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<null | "publish" | "unlock">(null);
@@ -200,7 +203,9 @@ const Reports = () => {
 
   // ─── PDF export ───────────────────────────────────────────────────────────
   const handleExportPDF = async () => {
-    const cards = printRef.current?.querySelectorAll<HTMLElement>(".report-card");
+    const cards = printRef.current?.querySelectorAll<HTMLElement>(
+      reportType === "report-cards" ? ".report-card" : ".circular-card"
+    );
     if (!cards || cards.length === 0) {
       toast({ title: "Select learners first", variant: "destructive" });
       return;
@@ -228,7 +233,9 @@ const Reports = () => {
   };
 
   const handleExportZIP = async () => {
-    const cards = printRef.current?.querySelectorAll<HTMLElement>(".report-card");
+    const cards = printRef.current?.querySelectorAll<HTMLElement>(
+      reportType === "report-cards" ? ".report-card" : ".circular-card"
+    );
     if (!cards || cards.length === 0) return;
     const zip = new JSZip();
     toast({ title: "Generating images…" });
@@ -344,7 +351,14 @@ const Reports = () => {
     : null;
 
   return (
-    <DashboardLayout title="Report Cards" subtitle="Generate, preview, publish & lock learner reports">
+    <DashboardLayout title="Reports & Documents" subtitle="Generate, preview, publish & export school documents">
+      <Tabs value={reportType} onValueChange={(v: any) => setReportType(v)} className="w-full mb-6">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="report-cards">Report Cards</TabsTrigger>
+          <TabsTrigger value="circulars">Termly Circulars</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Filters */}
       <Card>
         <CardHeader className="pb-3"><CardTitle className="text-base sm:text-lg">Generate</CardTitle></CardHeader>
@@ -436,7 +450,7 @@ const Reports = () => {
                 {classLearners.map((l) => {
                   const results = getLearnerResults(l.id);
                   const meta = getMeta(l.id);
-                  const has = results.length > 0;
+                  const has = reportType === "circulars" ? true : results.length > 0;
                   const isSel = selectedLearners.includes(l.id);
                   return (
                     <div
@@ -448,16 +462,18 @@ const Reports = () => {
                       <Checkbox
                         checked={isSel}
                         onCheckedChange={() => toggleLearner(l.id)}
-                        disabled={!has}
+                        disabled={reportType === "report-cards" && !has}
                         className="shrink-0"
                       />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{l.full_name}</p>
                         <div className="flex flex-wrap items-center gap-1 mt-0.5">
                           <span className="text-xs text-muted-foreground">
-                            {has ? `${results.length} subjects` : "No marks"}
+                            {reportType === "report-cards" 
+                              ? (has ? `${results.length} subjects` : "No marks")
+                              : "Document Ready"}
                           </span>
-                          {meta?.academic_position && (
+                          {reportType === "report-cards" && meta?.academic_position && (
                             <Badge variant="outline" className="text-[10px] h-4 px-1">
                               #{meta.academic_position}
                             </Badge>
@@ -493,18 +509,22 @@ const Reports = () => {
           const learner = classLearners.find((l) => l.id === id);
           if (!learner) return null;
           return (
-            <div key={id} className="report-card" data-learner={learner.full_name.replace(/\s+/g, "_")}>
-              <ReportCard
-                learner={learner}
-                results={getLearnerResults(id)}
-                subjects={subjects}
-                className={selectedClassData?.name || ""}
-                classLevel={selectedClassData?.level}
-                term={selectedTerm}
-                academicYear={academicYear}
-                teacherName={selectedClassData?.teacher_name || ""}
-                meta={getMeta(id)}
-              />
+            <div key={id} className={reportType === "report-cards" ? "report-card" : "circular-card"} data-learner={learner.full_name.replace(/\s+/g, "_")}>
+              {reportType === "report-cards" ? (
+                <ReportCard
+                  learner={learner}
+                  results={getLearnerResults(id)}
+                  subjects={subjects}
+                  className={selectedClassData?.name || ""}
+                  classLevel={selectedClassData?.level}
+                  term={selectedTerm}
+                  academicYear={academicYear}
+                  teacherName={selectedClassData?.teacher_name || ""}
+                  meta={getMeta(id)}
+                />
+              ) : (
+                <TermlyCircular learner={learner} term={termLabel[selectedTerm]} year={academicYear} />
+              )}
             </div>
           );
         })}
@@ -518,19 +538,23 @@ const Reports = () => {
           </DialogHeader>
           {previewLearner && (
             <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-              <div ref={previewRef} className="overflow-auto bg-muted/20 p-2 rounded-md">
-                <div style={{ transform: "scale(0.78)", transformOrigin: "top left", width: "210mm" }}>
-                  <ReportCard
-                    learner={previewLearner}
-                    results={getLearnerResults(previewLearner.id)}
-                    subjects={subjects}
-                    className={selectedClassData?.name || ""}
-                    classLevel={selectedClassData?.level}
-                    term={selectedTerm}
-                    academicYear={academicYear}
-                    teacherName={selectedClassData?.teacher_name || ""}
-                    meta={getMeta(previewLearner.id)}
-                  />
+              <div ref={previewRef} className="overflow-auto bg-muted/20 p-2 rounded-md flex justify-center">
+                <div style={{ transform: "scale(0.72)", transformOrigin: "top center", width: "210mm" }}>
+                  {reportType === "report-cards" ? (
+                    <ReportCard
+                      learner={previewLearner}
+                      results={getLearnerResults(previewLearner.id)}
+                      subjects={subjects}
+                      className={selectedClassData?.name || ""}
+                      classLevel={selectedClassData?.level}
+                      term={selectedTerm}
+                      academicYear={academicYear}
+                      teacherName={selectedClassData?.teacher_name || ""}
+                      meta={getMeta(previewLearner.id)}
+                    />
+                  ) : (
+                    <TermlyCircular learner={previewLearner} term={termLabel[selectedTerm]} year={academicYear} />
+                  )}
                 </div>
               </div>
               <div className="lg:sticky lg:top-0 self-start space-y-3">

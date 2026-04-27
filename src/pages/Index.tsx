@@ -12,6 +12,9 @@ import { useClasses } from "@/hooks/useClasses";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays } from "date-fns";
+import { useAuth } from "@/hooks/useAuth";
+import { SecurityDashboard } from "@/components/dashboard/SecurityDashboard";
+import { TeacherDashboard } from "@/components/dashboard/TeacherDashboard";
 
 const useAttendanceStats = () => {
   return useQuery({
@@ -40,6 +43,7 @@ const useAttendanceStats = () => {
 };
 
 const Index = () => {
+  const { role } = useAuth();
   const { data: learners } = useLearners();
   const { data: teachers } = useTeachers();
   const { data: classes } = useClasses();
@@ -53,6 +57,28 @@ const Index = () => {
     attStats?.todayRate != null && attStats?.lastWeekRate != null
       ? attStats.todayRate - attStats.lastWeekRate
       : null;
+
+  if (role === "security") {
+    return (
+      <DashboardLayout 
+        title="Gate Operations" 
+        subtitle="Security & Visitor Management - Alheb Islamic Primary School"
+      >
+        <SecurityDashboard />
+      </DashboardLayout>
+    );
+  }
+
+  if (role === "teacher") {
+    return (
+      <DashboardLayout 
+        title="Teacher Workspace" 
+        subtitle="Manage your classes and learner progress"
+      >
+        <TeacherDashboard />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout 

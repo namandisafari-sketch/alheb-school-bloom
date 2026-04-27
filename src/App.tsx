@@ -24,6 +24,10 @@ import IDCards from "./pages/IDCards";
 import FeeManagement from "./pages/FeeManagement";
 import Schedule from "./pages/Schedule";
 import Visitors from "./pages/Visitors";
+import Inventory from "./pages/Inventory";
+import Calendar from "./pages/Calendar";
+import HealthManagement from "./pages/HealthManagement";
+import AccountSettings from "./pages/AccountSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,7 +58,7 @@ const App = () => (
             <Route
               path="/"
               element={
-                <ProtectedRoute allowedRoles={["admin", "teacher", "staff"]}>
+                <ProtectedRoute allowedRoles={["admin", "teacher", "staff", "security"]}>
                   <Index />
                 </ProtectedRoute>
               }
@@ -166,7 +170,7 @@ const App = () => (
             <Route
               path="/schedule"
               element={
-                <ProtectedRoute allowedRoles={["admin", "teacher", "staff"]}>
+                <ProtectedRoute allowedRoles={["admin", "teacher", "staff", "security"]}>
                   <Schedule />
                 </ProtectedRoute>
               }
@@ -174,8 +178,40 @@ const App = () => (
             <Route
               path="/visitors"
               element={
-                <ProtectedRoute allowedRoles={["admin", "staff"]}>
+                <ProtectedRoute allowedRoles={["admin", "staff", "security"]}>
                   <Visitors />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "staff", "security"]}>
+                  <Inventory />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "teacher", "staff", "security", "parent"]}>
+                  <Calendar />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/health"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "teacher", "staff"]}>
+                  <HealthManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/account-settings"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "teacher", "staff", "security", "parent"]}>
+                  <AccountSettings />
                 </ProtectedRoute>
               }
             />

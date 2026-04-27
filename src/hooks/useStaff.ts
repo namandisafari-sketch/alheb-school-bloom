@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type StaffRole = "admin" | "teacher" | "support" | "driver" | "security" | "cook" | "cleaner" | "accountant";
@@ -56,6 +56,41 @@ export const useAllStaff = () => {
 
       if (error) throw error;
       return data as Staff[];
+    },
+  });
+};
+
+export const useUpdateStaff = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Staff> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff"] });
+      queryClient.invalidateQueries({ queryKey: ["all-staff"] });
+    },
+  });
+};
+
+export const useDeleteStaff = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("profiles").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff"] });
+      queryClient.invalidateQueries({ queryKey: ["all-staff"] });
     },
   });
 };

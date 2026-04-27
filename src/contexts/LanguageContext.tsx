@@ -19,6 +19,8 @@ const keyedTranslations: Record<string, { en: string; ar: string }> = {
   idCards: { en: "ID Cards", ar: "البطاقات الشخصية" },
   feeManagement: { en: "Fee Management", ar: "إدارة الرسوم" },
   visitors: { en: "Visitors", ar: "الزوار" },
+  inventory: { en: "Inventory & Stock", ar: "المخزون" },
+  assets: { en: "Assets Tracking", ar: "تتبع الأصول" },
 
   add: { en: "Add", ar: "إضافة" },
   edit: { en: "Edit", ar: "تعديل" },
