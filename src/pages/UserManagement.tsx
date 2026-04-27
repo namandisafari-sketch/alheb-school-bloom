@@ -55,13 +55,16 @@ import { useLearners } from "@/hooks/useLearners";
 import { UserActions } from "@/components/users/UserActions";
 import { cn } from "@/lib/utils";
 
-type AppRole = "admin" | "teacher" | "parent" | "staff";
+type AppRole = "admin" | "teacher" | "parent" | "staff" | "security" | "accountant" | "head_teacher";
 
 const roleConfig: Record<AppRole, { icon: typeof Shield; label: string; color: string }> = {
   admin: { icon: Shield, label: "Administrator", color: "bg-purple-500/10 text-purple-600" },
   teacher: { icon: GraduationCap, label: "Teacher", color: "bg-blue-500/10 text-blue-600" },
   parent: { icon: Users, label: "Parent", color: "bg-green-500/10 text-green-600" },
-  staff: { icon: HardHat, label: "Staff", color: "bg-orange-500/10 text-orange-600" },
+  staff: { icon: HardHat, label: "Support Staff", color: "bg-orange-500/10 text-orange-600" },
+  security: { icon: Shield, label: "Security", color: "bg-slate-500/10 text-slate-600" },
+  accountant: { icon: Shield, label: "Accountant", color: "bg-emerald-500/10 text-emerald-600" },
+  head_teacher: { icon: Shield, label: "Head Teacher", color: "bg-red-500/10 text-red-600" },
 };
 
 const createUserSchema = z.object({
@@ -69,7 +72,7 @@ const createUserSchema = z.object({
   email: z.string().email("Valid email required").optional().or(z.literal("")),
   phone: z.string().min(10, "Phone required").max(20),
   password: z.string().min(6, "Min 6 characters").optional().or(z.literal("")),
-  role: z.enum(["admin", "teacher", "staff"]),
+  role: z.enum(["admin", "teacher", "staff", "security", "accountant", "head_teacher"]),
 });
 
 type CreateUserFormValues = z.infer<typeof createUserSchema>;
@@ -221,8 +224,8 @@ const UserManagement = () => {
 
   const onCreateSubmit = (values: CreateUserFormValues) => {
     // Standardize email format: {names@alheib.(role)}
-    // Example: "John Doe" -> "john.doe@alheib.teacher"
-    const names = values.fullName.trim().toLowerCase().split(/\s+/).join(".");
+    // Simplified: "Hanad Mohammed" -> "hanadmohammed@alheib.accountant"
+    const names = values.fullName.trim().toLowerCase().replace(/\s+/g, "");
     const domain = `alheib.${values.role}`;
     const generatedEmail = `${names}@${domain}`;
     
@@ -343,7 +346,10 @@ const UserManagement = () => {
                         <SelectContent>
                           <SelectItem value="admin">Administrator</SelectItem>
                           <SelectItem value="teacher">Teacher</SelectItem>
-                          <SelectItem value="staff">Staff</SelectItem>
+                          <SelectItem value="accountant">Accountant</SelectItem>
+                          <SelectItem value="head_teacher">Head Teacher</SelectItem>
+                          <SelectItem value="security">Security Guard</SelectItem>
+                          <SelectItem value="staff">Other Support Staff</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

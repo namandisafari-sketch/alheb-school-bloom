@@ -36,23 +36,23 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { icon: LayoutDashboard, labelKey: "dashboard", path: "/", roles: ["admin", "teacher", "staff", "security"] },
-  { icon: Users, labelKey: "learners", path: "/students", roles: ["admin", "teacher"] },
-  { icon: GraduationCap, labelKey: "teachers", path: "/teachers", roles: ["admin"] },
-  { icon: HardHat, labelKey: "staffWorkers", path: "/staff", roles: ["admin"] },
-  { icon: BookOpen, labelKey: "classes", path: "/classes", roles: ["admin", "teacher"] },
-  { icon: PenLine, labelKey: "marksEntry", path: "/marks", roles: ["admin", "teacher"] },
-  { icon: FileText, labelKey: "reports", path: "/reports", roles: ["admin", "teacher"] },
-  { icon: Calendar, labelKey: "program", path: "/calendar", roles: ["admin", "teacher", "staff", "security", "parent"] },
-  { icon: Clock, labelKey: "schedule", path: "/schedule", roles: ["admin", "teacher", "staff", "security"] },
-  { icon: UserCheck, labelKey: "visitors", path: "/visitors", roles: ["admin", "staff", "security"] },
-  { icon: Box, labelKey: "inventory", path: "/inventory", roles: ["admin", "staff", "security"] },
-  { icon: Stethoscope, labelKey: "health", path: "/health", roles: ["admin", "teacher", "staff"] },
-  { icon: ClipboardCheck, labelKey: "attendance", path: "/attendance", roles: ["admin", "teacher"] },
-  { icon: Receipt, labelKey: "feeManagement", path: "/fees", roles: ["admin", "staff"] },
-  { icon: Wallet, labelKey: "salary", path: "/salary", roles: ["admin"] },
-  { icon: CreditCard, labelKey: "idCards", path: "/id-cards", roles: ["admin"] },
-  { icon: UserCog, labelKey: "userManagement", path: "/users", roles: ["admin"] },
+  { icon: LayoutDashboard, labelKey: "dashboard", path: "/", roles: ["admin", "teacher", "staff", "security", "head_teacher", "accountant"] },
+  { icon: Users, labelKey: "learners", path: "/students", roles: ["admin", "teacher", "head_teacher"] },
+  { icon: GraduationCap, labelKey: "teachers", path: "/teachers", roles: ["admin", "head_teacher"] },
+  { icon: HardHat, labelKey: "staffWorkers", path: "/staff", roles: ["admin", "head_teacher"] },
+  { icon: BookOpen, labelKey: "classes", path: "/classes", roles: ["admin", "teacher", "head_teacher"] },
+  { icon: PenLine, labelKey: "marksEntry", path: "/marks", roles: ["admin", "teacher", "head_teacher"] },
+  { icon: FileText, labelKey: "reports", path: "/reports", roles: ["admin", "teacher", "head_teacher"] },
+  { icon: Calendar, labelKey: "program", path: "/calendar", roles: ["admin", "teacher", "staff", "security", "parent", "head_teacher", "accountant"] },
+  { icon: Clock, labelKey: "schedule", path: "/schedule", roles: ["admin", "teacher", "staff", "security", "head_teacher"] },
+  { icon: UserCheck, labelKey: "visitors", path: "/visitors", roles: ["admin", "staff", "security", "head_teacher"] },
+  { icon: Box, labelKey: "inventory", path: "/inventory", roles: ["admin", "staff", "security", "head_teacher"] },
+  { icon: Stethoscope, labelKey: "health", path: "/health", roles: ["admin", "teacher", "staff", "head_teacher"] },
+  { icon: ClipboardCheck, labelKey: "attendance", path: "/attendance", roles: ["admin", "teacher", "head_teacher"] },
+  { icon: Receipt, labelKey: "feeManagement", path: "/fees", roles: ["admin", "staff", "accountant", "head_teacher"] },
+  { icon: Wallet, labelKey: "salary", path: "/salary", roles: ["admin", "accountant", "head_teacher"] },
+  { icon: CreditCard, labelKey: "idCards", path: "/id-cards", roles: ["admin", "head_teacher"] },
+  { icon: UserCog, labelKey: "userManagement", path: "/users", roles: ["admin", "head_teacher"] },
 ];
 
 const bottomNavItems: NavItem[] = [
@@ -87,6 +87,10 @@ export const Sidebar = ({ isOpen = false, onClose, collapsed = false }: SidebarP
   const roleLabel = role
     ? role === "admin"
       ? t("administrator")
+      : role === "head_teacher"
+      ? "Head Teacher"
+      : role === "accountant"
+      ? "Accountant"
       : role === "teacher"
       ? t("teacher")
       : role === "parent"

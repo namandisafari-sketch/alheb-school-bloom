@@ -54,7 +54,7 @@ INSERT INTO public.profiles (id, full_name, role, designation, gender, phone, em
 (gen_random_uuid(), 'YASIN HARUNA', 'driver', 'DRIVER', 'male', '708181083', NULL),
 (gen_random_uuid(), 'NABALA RASHID', 'security', 'WATCHMAN', 'male', '752310154', NULL),
 (gen_random_uuid(), 'HIGENYI ISMAIL', 'security', 'WATCHMAN', 'male', '754008064', NULL),
-(gen_random_uuid(), 'HANAD MOHAMMED', 'accountant', 'ACCOUNTANT', 'male', '707817492', NULL),
+(gen_random_uuid(), 'HANAD MOHAMMED', 'accountant', 'ACCOUNTANT', 'male', '707817492', 'hanadmohammed@alheib.teacher'),
 (gen_random_uuid(), 'SAMIIRAH HAMIDU', 'teacher', 'TEACHER THEOLOGY', 'female', NULL, NULL),
 (gen_random_uuid(), 'MUGOYA ROGERS', 'security', 'WATCHMAN', 'male', '740496827', NULL),
 (gen_random_uuid(), 'RUTAKOME EMMANUEL', 'cleaner', 'CLEANER', 'male', NULL, NULL),

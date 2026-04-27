@@ -36,11 +36,13 @@ const Auth = () => {
     if (user) {
       if (role === "parent") {
         navigate("/parent", { replace: true });
+      } else if (role === "admin" || role === "head_teacher" || role === "accountant") {
+        navigate("/", { replace: true });
       } else if (role) {
         navigate(from, { replace: true });
       } else {
-        // Logged in but no role assigned yet — send to home, ProtectedRoute will handle.
-        navigate(from === "/auth" ? "/" : from, { replace: true });
+        // Logged in but no role assigned yet
+        navigate("/", { replace: true });
       }
     }
   }, [user, role, navigate, from]);
@@ -59,7 +61,7 @@ const Auth = () => {
       toast({
         title: "Login Failed",
         description: error.message === "Invalid login credentials" 
-          ? "Invalid email or password. Please try again."
+          ? "Invalid email or password. Please ensure your account has been created by administration using the standard format (name@alheib.role)."
           : error.message,
         variant: "destructive",
       });
