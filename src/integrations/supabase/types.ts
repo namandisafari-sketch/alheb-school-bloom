@@ -89,6 +89,69 @@ export type Database = {
           },
         ]
       }
+      assets: {
+        Row: {
+          assigned_to_staff: string | null
+          category_id: string | null
+          condition: string | null
+          created_at: string | null
+          id: string
+          location: string | null
+          name: string
+          notes: string | null
+          purchase_cost: number | null
+          purchase_date: string | null
+          serial_number: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to_staff?: string | null
+          category_id?: string | null
+          condition?: string | null
+          created_at?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          notes?: string | null
+          purchase_cost?: number | null
+          purchase_date?: string | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to_staff?: string | null
+          category_id?: string | null
+          condition?: string | null
+          created_at?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          notes?: string | null
+          purchase_cost?: number | null
+          purchase_date?: string | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assets_assigned_to_staff_fkey"
+            columns: ["assigned_to_staff"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance: {
         Row: {
           check_in_time: string | null
@@ -565,6 +628,82 @@ export type Database = {
         }
         Relationships: []
       }
+      health_visits: {
+        Row: {
+          action_taken: string | null
+          created_at: string | null
+          diagnosis: string | null
+          id: string
+          learner_id: string | null
+          priority: Database["public"]["Enums"]["health_priority"] | null
+          recorded_by: string | null
+          staff_id: string | null
+          status: string | null
+          symptoms: string | null
+          temperature: number | null
+          treatment_plan: string | null
+          updated_at: string | null
+          visit_date: string | null
+          visit_type: Database["public"]["Enums"]["health_visit_type"] | null
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string | null
+          diagnosis?: string | null
+          id?: string
+          learner_id?: string | null
+          priority?: Database["public"]["Enums"]["health_priority"] | null
+          recorded_by?: string | null
+          staff_id?: string | null
+          status?: string | null
+          symptoms?: string | null
+          temperature?: number | null
+          treatment_plan?: string | null
+          updated_at?: string | null
+          visit_date?: string | null
+          visit_type?: Database["public"]["Enums"]["health_visit_type"] | null
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string | null
+          diagnosis?: string | null
+          id?: string
+          learner_id?: string | null
+          priority?: Database["public"]["Enums"]["health_priority"] | null
+          recorded_by?: string | null
+          staff_id?: string | null
+          status?: string | null
+          symptoms?: string | null
+          temperature?: number | null
+          treatment_plan?: string | null
+          updated_at?: string | null
+          visit_date?: string | null
+          visit_type?: Database["public"]["Enums"]["health_visit_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_visits_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "health_visits_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "health_visits_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       in_app_notifications: {
         Row: {
           created_at: string
@@ -603,6 +742,239 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      inventory_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      inventory_gate_passes: {
+        Row: {
+          checked_at: string | null
+          created_at: string | null
+          id: string
+          pass_number: string
+          security_checked_by: string | null
+          status: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          checked_at?: string | null
+          created_at?: string | null
+          id?: string
+          pass_number: string
+          security_checked_by?: string | null
+          status?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          checked_at?: string | null
+          created_at?: string | null
+          id?: string
+          pass_number?: string
+          security_checked_by?: string | null
+          status?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_gate_passes_security_checked_by_fkey"
+            columns: ["security_checked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_gate_passes_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_items: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          custodian_id: string | null
+          description: string | null
+          id: string
+          min_stock_level: number | null
+          name: string
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          custodian_id?: string | null
+          description?: string | null
+          id?: string
+          min_stock_level?: number | null
+          name: string
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          custodian_id?: string | null
+          description?: string | null
+          id?: string
+          min_stock_level?: number | null
+          name?: string
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_custodian_id_fkey"
+            columns: ["custodian_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_stock: {
+        Row: {
+          id: string
+          item_id: string | null
+          last_updated: string | null
+          quantity: number
+        }
+        Insert: {
+          id?: string
+          item_id?: string | null
+          last_updated?: string | null
+          quantity?: number
+        }
+        Update: {
+          id?: string
+          item_id?: string | null
+          last_updated?: string | null
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_stock_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_transactions: {
+        Row: {
+          approval_date: string | null
+          approved_by: string | null
+          gate_pass_id: string | null
+          id: string
+          issued_by: string | null
+          item_id: string | null
+          learner_id: string | null
+          notes: string | null
+          quantity: number
+          staff_id: string | null
+          status: string | null
+          tracking_number: string | null
+          transaction_date: string | null
+          type: Database["public"]["Enums"]["inventory_transaction_type"]
+        }
+        Insert: {
+          approval_date?: string | null
+          approved_by?: string | null
+          gate_pass_id?: string | null
+          id?: string
+          issued_by?: string | null
+          item_id?: string | null
+          learner_id?: string | null
+          notes?: string | null
+          quantity: number
+          staff_id?: string | null
+          status?: string | null
+          tracking_number?: string | null
+          transaction_date?: string | null
+          type: Database["public"]["Enums"]["inventory_transaction_type"]
+        }
+        Update: {
+          approval_date?: string | null
+          approved_by?: string | null
+          gate_pass_id?: string | null
+          id?: string
+          issued_by?: string | null
+          item_id?: string | null
+          learner_id?: string | null
+          notes?: string | null
+          quantity?: number
+          staff_id?: string | null
+          status?: string | null
+          tracking_number?: string | null
+          transaction_date?: string | null
+          type?: Database["public"]["Enums"]["inventory_transaction_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_issued_by_fkey"
+            columns: ["issued_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_transactions_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       learner_documents: {
         Row: {
@@ -657,54 +1029,301 @@ export type Database = {
           },
         ]
       }
+      learner_medical: {
+        Row: {
+          allergies: string | null
+          asthma: string | null
+          congenital_heart: string | null
+          created_at: string
+          current_medication: string | null
+          diabetes: string | null
+          doctor_contact: string | null
+          doctor_name: string | null
+          doctor_stamp_url: string | null
+          epilepsy: string | null
+          examined_at: string | null
+          hearing_impairment: string | null
+          heart_condition: string | null
+          hospital_admission_history: string | null
+          hospital_name: string | null
+          id: string
+          learner_id: string
+          medication_dosage: string | null
+          other_chronic: string | null
+          other_conditions: string | null
+          requires_treatment: boolean | null
+          sickle_cell: string | null
+          treatment_details: string | null
+          updated_at: string
+          visual_impairment: string | null
+        }
+        Insert: {
+          allergies?: string | null
+          asthma?: string | null
+          congenital_heart?: string | null
+          created_at?: string
+          current_medication?: string | null
+          diabetes?: string | null
+          doctor_contact?: string | null
+          doctor_name?: string | null
+          doctor_stamp_url?: string | null
+          epilepsy?: string | null
+          examined_at?: string | null
+          hearing_impairment?: string | null
+          heart_condition?: string | null
+          hospital_admission_history?: string | null
+          hospital_name?: string | null
+          id?: string
+          learner_id: string
+          medication_dosage?: string | null
+          other_chronic?: string | null
+          other_conditions?: string | null
+          requires_treatment?: boolean | null
+          sickle_cell?: string | null
+          treatment_details?: string | null
+          updated_at?: string
+          visual_impairment?: string | null
+        }
+        Update: {
+          allergies?: string | null
+          asthma?: string | null
+          congenital_heart?: string | null
+          created_at?: string
+          current_medication?: string | null
+          diabetes?: string | null
+          doctor_contact?: string | null
+          doctor_name?: string | null
+          doctor_stamp_url?: string | null
+          epilepsy?: string | null
+          examined_at?: string | null
+          hearing_impairment?: string | null
+          heart_condition?: string | null
+          hospital_admission_history?: string | null
+          hospital_name?: string | null
+          id?: string
+          learner_id?: string
+          medication_dosage?: string | null
+          other_chronic?: string | null
+          other_conditions?: string | null
+          requires_treatment?: boolean | null
+          sickle_cell?: string | null
+          treatment_details?: string | null
+          updated_at?: string
+          visual_impairment?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learner_medical_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: true
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learner_parents: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          is_primary_contact: boolean
+          learner_id: string
+          phone: string | null
+          place_of_work: string | null
+          relationship: Database["public"]["Enums"]["parent_relationship"]
+          street_road: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          is_primary_contact?: boolean
+          learner_id: string
+          phone?: string | null
+          place_of_work?: string | null
+          relationship: Database["public"]["Enums"]["parent_relationship"]
+          street_road?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_primary_contact?: boolean
+          learner_id?: string
+          phone?: string | null
+          place_of_work?: string | null
+          relationship?: Database["public"]["Enums"]["parent_relationship"]
+          street_road?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learner_parents_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learner_siblings: {
+        Row: {
+          created_at: string
+          id: string
+          learner_id: string
+          sibling_class: string | null
+          sibling_learner_id: string | null
+          sibling_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          learner_id: string
+          sibling_class?: string | null
+          sibling_learner_id?: string | null
+          sibling_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          learner_id?: string
+          sibling_class?: string | null
+          sibling_learner_id?: string | null
+          sibling_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learner_siblings_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learner_siblings_sibling_learner_id_fkey"
+            columns: ["sibling_learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learners: {
         Row: {
           admission_number: string | null
+          application_date: string | null
+          arabic_name: string | null
+          authorized_pickup_contact: string | null
+          authorized_pickup_name: string | null
           class_id: string | null
           created_at: string | null
+          current_residence: string | null
           date_of_birth: string | null
           district: string | null
+          dormitory: string | null
           enrollment_date: string | null
+          former_class: string | null
+          former_school: string | null
+          former_year: number | null
           full_name: string
           gender: Database["public"]["Enums"]["gender_type"]
           guardian_id: string | null
+          house: Database["public"]["Enums"]["school_house"] | null
           id: string
+          lin_number: string | null
+          nationality: string | null
+          nira_certificate_status: string | null
+          parish: string | null
           photo_url: string | null
+          pupil_status: Database["public"]["Enums"]["pupil_status"] | null
           religion: string | null
+          reporting_date: string | null
           status: string | null
+          street_road: string | null
+          subcounty: string | null
+          town_city: string | null
           updated_at: string | null
+          village: string | null
         }
         Insert: {
           admission_number?: string | null
+          application_date?: string | null
+          arabic_name?: string | null
+          authorized_pickup_contact?: string | null
+          authorized_pickup_name?: string | null
           class_id?: string | null
           created_at?: string | null
+          current_residence?: string | null
           date_of_birth?: string | null
           district?: string | null
+          dormitory?: string | null
           enrollment_date?: string | null
+          former_class?: string | null
+          former_school?: string | null
+          former_year?: number | null
           full_name: string
           gender: Database["public"]["Enums"]["gender_type"]
           guardian_id?: string | null
+          house?: Database["public"]["Enums"]["school_house"] | null
           id?: string
+          lin_number?: string | null
+          nationality?: string | null
+          nira_certificate_status?: string | null
+          parish?: string | null
           photo_url?: string | null
+          pupil_status?: Database["public"]["Enums"]["pupil_status"] | null
           religion?: string | null
+          reporting_date?: string | null
           status?: string | null
+          street_road?: string | null
+          subcounty?: string | null
+          town_city?: string | null
           updated_at?: string | null
+          village?: string | null
         }
         Update: {
           admission_number?: string | null
+          application_date?: string | null
+          arabic_name?: string | null
+          authorized_pickup_contact?: string | null
+          authorized_pickup_name?: string | null
           class_id?: string | null
           created_at?: string | null
+          current_residence?: string | null
           date_of_birth?: string | null
           district?: string | null
+          dormitory?: string | null
           enrollment_date?: string | null
+          former_class?: string | null
+          former_school?: string | null
+          former_year?: number | null
           full_name?: string
           gender?: Database["public"]["Enums"]["gender_type"]
           guardian_id?: string | null
+          house?: Database["public"]["Enums"]["school_house"] | null
           id?: string
+          lin_number?: string | null
+          nationality?: string | null
+          nira_certificate_status?: string | null
+          parish?: string | null
           photo_url?: string | null
+          pupil_status?: Database["public"]["Enums"]["pupil_status"] | null
           religion?: string | null
+          reporting_date?: string | null
           status?: string | null
+          street_road?: string | null
+          subcounty?: string | null
+          town_city?: string | null
           updated_at?: string | null
+          village?: string | null
         }
         Relationships: [
           {
@@ -719,6 +1338,58 @@ export type Database = {
             columns: ["guardian_id"]
             isOneToOne: false
             referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medication_logs: {
+        Row: {
+          dispensed_at: string | null
+          dispensed_by: string | null
+          dosage_instructions: string | null
+          id: string
+          item_id: string | null
+          quantity: number
+          visit_id: string | null
+        }
+        Insert: {
+          dispensed_at?: string | null
+          dispensed_by?: string | null
+          dosage_instructions?: string | null
+          id?: string
+          item_id?: string | null
+          quantity: number
+          visit_id?: string | null
+        }
+        Update: {
+          dispensed_at?: string | null
+          dispensed_by?: string | null
+          dosage_instructions?: string | null
+          id?: string
+          item_id?: string | null
+          quantity?: number
+          visit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_logs_dispensed_by_fkey"
+            columns: ["dispensed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medication_logs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "pharmacy_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medication_logs_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "health_visits"
             referencedColumns: ["id"]
           },
         ]
@@ -864,6 +1535,48 @@ export type Database = {
           },
         ]
       }
+      pharmacy_items: {
+        Row: {
+          batch_number: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          expiry_date: string | null
+          id: string
+          min_stock_level: number | null
+          name: string
+          quantity: number | null
+          unit: string
+          updated_at: string | null
+        }
+        Insert: {
+          batch_number?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          expiry_date?: string | null
+          id?: string
+          min_stock_level?: number | null
+          name: string
+          quantity?: number | null
+          unit: string
+          updated_at?: string | null
+        }
+        Update: {
+          batch_number?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          expiry_date?: string | null
+          id?: string
+          min_stock_level?: number | null
+          name?: string
+          quantity?: number | null
+          unit?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ple_mock_tests: {
         Row: {
           created_at: string | null
@@ -960,37 +1673,60 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
+          designation: string | null
+          district_id: string | null
           email: string | null
           full_name: string
+          gender: Database["public"]["Enums"]["gender_type"] | null
           id: string
           phone: string | null
           qualification: string | null
           role: string | null
+          school_id: string | null
+          scope: string | null
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
+          designation?: string | null
+          district_id?: string | null
           email?: string | null
           full_name: string
-          id: string
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          id?: string
           phone?: string | null
           qualification?: string | null
           role?: string | null
+          school_id?: string | null
+          scope?: string | null
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
+          designation?: string | null
+          district_id?: string | null
           email?: string | null
           full_name?: string
+          gender?: Database["public"]["Enums"]["gender_type"] | null
           id?: string
           phone?: string | null
           qualification?: string | null
           role?: string | null
+          school_id?: string | null
+          scope?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       report_cards: {
         Row: {
@@ -1268,6 +2004,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      school_calendar: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          end_date: string
+          event_type: string
+          id: string
+          is_public: boolean | null
+          start_date: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_date: string
+          event_type: string
+          id?: string
+          is_public?: boolean | null
+          start_date: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_date?: string
+          event_type?: string
+          id?: string
+          is_public?: boolean | null
+          start_date?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      schools: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          district_id: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          district_id?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          district_id?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       site_settings: {
         Row: {
@@ -1576,14 +2378,39 @@ export type Database = {
         }
         Returns: boolean
       }
+      sync_inventory_stock: { Args: never; Returns: undefined }
     }
     Enums: {
-      app_role: "admin" | "teacher" | "parent" | "staff"
+      app_role:
+        | "admin"
+        | "teacher"
+        | "parent"
+        | "staff"
+        | "head_teacher"
+        | "accountant"
+        | "security"
       attendance_status: "present" | "absent" | "late" | "excused"
       competency_level: "exceeding" | "meeting" | "approaching" | "beginning"
       gender_type: "male" | "female"
       grading_type: "numeric" | "letter" | "descriptive"
+      health_priority: "low" | "medium" | "high" | "critical"
+      health_visit_type: "illness" | "injury" | "routine_checkup" | "emergency"
+      inventory_transaction_type:
+        | "restock"
+        | "issuance"
+        | "return"
+        | "adjustment"
+        | "damage"
+      parent_relationship:
+        | "father"
+        | "mother"
+        | "guardian"
+        | "next_of_kin"
+        | "authorized_pickup"
+        | "other"
+      pupil_status: "bait_zakat" | "iico" | "paying" | "community"
       report_status: "draft" | "published" | "locked"
+      school_house: "lion" | "tiger" | "elephant" | "cheetah"
       subject_category: "academic" | "islamic" | "behavior"
       term_type: "term_1" | "term_2" | "term_3"
     }
@@ -1713,12 +2540,39 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "teacher", "parent", "staff"],
+      app_role: [
+        "admin",
+        "teacher",
+        "parent",
+        "staff",
+        "head_teacher",
+        "accountant",
+        "security",
+      ],
       attendance_status: ["present", "absent", "late", "excused"],
       competency_level: ["exceeding", "meeting", "approaching", "beginning"],
       gender_type: ["male", "female"],
       grading_type: ["numeric", "letter", "descriptive"],
+      health_priority: ["low", "medium", "high", "critical"],
+      health_visit_type: ["illness", "injury", "routine_checkup", "emergency"],
+      inventory_transaction_type: [
+        "restock",
+        "issuance",
+        "return",
+        "adjustment",
+        "damage",
+      ],
+      parent_relationship: [
+        "father",
+        "mother",
+        "guardian",
+        "next_of_kin",
+        "authorized_pickup",
+        "other",
+      ],
+      pupil_status: ["bait_zakat", "iico", "paying", "community"],
       report_status: ["draft", "published", "locked"],
+      school_house: ["lion", "tiger", "elephant", "cheetah"],
       subject_category: ["academic", "islamic", "behavior"],
       term_type: ["term_1", "term_2", "term_3"],
     },
