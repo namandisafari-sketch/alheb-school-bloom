@@ -92,7 +92,7 @@ export const useDormitoryResidents = (dormitoryId?: string) => {
       if (dormitoryId) q = q.eq("dormitory_id", dormitoryId);
       const { data, error } = await q;
       if (error) throw error;
-      return data as DormitoryResident[];
+      return data as unknown as DormitoryResident[];
     },
   });
   const assign = useMutation({
@@ -135,7 +135,7 @@ export const useLearnerEssentials = (learnerId?: string) => {
       if (learnerId) q = q.eq("learner_id", learnerId);
       const { data, error } = await q;
       if (error) throw error;
-      return data as LearnerEssential[];
+      return data as unknown as LearnerEssential[];
     },
   });
   const issue = useMutation({
