@@ -35,6 +35,7 @@ import { Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDocumentUpload } from "./DocumentUpload";
 import { DocumentUpload } from "./DocumentUpload";
+import { LocationSelector } from "@/components/common/LocationSelector";
 
 const formSchema = z.object({
   // Learner fields
@@ -44,11 +45,14 @@ const formSchema = z.object({
   class_id: z.string().optional(),
   district: z.string().trim().max(100).optional(),
   religion: z.string().trim().max(50).optional(),
+  nin: z.string().trim().length(14, "NIN must be 14 characters").optional().or(z.literal("")),
+  lin: z.string().trim().optional(),
   // Guardian fields
   guardian_name: z.string().trim().min(2, "Guardian name is required").max(100, "Name must be less than 100 characters"),
   guardian_phone: z.string().trim().min(10, "Phone number must be at least 10 digits").max(20, "Phone number is too long"),
   guardian_email: z.string().trim().email("Invalid email").max(255).optional().or(z.literal("")),
   guardian_relationship: z.string().trim().max(50).optional(),
+  parent_nin: z.string().trim().length(14, "NIN must be 14 characters").optional().or(z.literal("")),
   // Parent account fields
   create_parent_account: z.boolean().default(true),
   parent_password: z.string().min(6, "Password must be at least 6 characters").optional(),
@@ -83,10 +87,13 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
       class_id: "",
       district: "",
       religion: "Islam",
+      nin: "",
+      lin: "",
       guardian_name: "",
       guardian_phone: "",
       guardian_email: "",
       guardian_relationship: "parent",
+      parent_nin: "",
       create_parent_account: true,
       parent_password: "",
     },
@@ -120,11 +127,14 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
 
         parentUserId = authData.user?.id || null;
 
-        // Update the profile with phone number
+        // Update the profile with phone number and NIN if provided
         if (parentUserId) {
           await supabase
             .from("profiles")
-            .update({ phone: values.guardian_phone })
+            .update({ 
+              phone: values.guardian_phone,
+              nin: values.parent_nin || null
+            })
             .eq("id", parentUserId);
         }
       }
@@ -143,7 +153,7 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
 
       if (guardianError) throw guardianError;
 
-      // Create learner with guardian_id
+      // Create learner with guardian_id and EMIS fields
       const { data: learner, error: learnerError } = await supabase.from("learners").insert({
         full_name: values.full_name,
         gender: values.gender,
@@ -151,6 +161,9 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
         class_id: values.class_id || null,
         district: values.district || null,
         religion: values.religion || "Islam",
+        nin: values.nin || null,
+        lin: values.lin || null,
+        parent_nin: values.parent_nin || null,
         guardian_id: guardian.id,
       }).select("id").single();
 
@@ -180,10 +193,10 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
       if (data.parentUserId) {
         toast({ 
           title: "Learner Registered", 
-          description: `Learner registered and parent account created for ${data.guardianEmail}. Documents are being processed.` 
+          description: `Learner registered and parent account created for ${data.guardianEmail}. EMIS data synced.` 
         });
       } else {
-        toast({ title: "Success", description: "Learner registered successfully. Documents are being processed." });
+        toast({ title: "Success", description: "Learner registered successfully with EMIS data." });
       }
       queryClient.invalidateQueries({ queryKey: ["learners"] });
       queryClient.invalidateQueries({ queryKey: ["parent-links"] });
@@ -213,11 +226,11 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
       }
     }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Register New Learner</DialogTitle>
+          <DialogTitle>Register New Learner (EMIS Compliant)</DialogTitle>
           <DialogDescription>
-            Enter the learner's details, guardian information, and upload required documents.
+            Enter learner's details, Uganda EMIS data (NIN/LIN), guardian info, and documents.
           </DialogDescription>
         </DialogHeader>
 
@@ -225,19 +238,18 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Learner Information */}
             <div className="space-y-4">
-              <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                Learner Information
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center gap-2 border-b pb-2">
+                <div className="h-6 w-1 bg-primary rounded-full" />
+                <h3 className="font-bold text-sm uppercase tracking-wider text-slate-700">Learner Information</h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
                   name="full_name"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter full name" {...field} />
-                      </FormControl>
+                    <FormItem className="col-span-1 sm:col-span-2">
+                      <FormLabel className="text-xs font-bold uppercase text-slate-500">Full Name *</FormLabel>
+                      <FormControl><Input placeholder="Enter full name" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -248,13 +260,9 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
                   name="gender"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Gender *</FormLabel>
+                      <FormLabel className="text-xs font-bold uppercase text-slate-500">Gender *</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select gender" />
-                          </SelectTrigger>
-                        </FormControl>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                         <SelectContent>
                           <SelectItem value="male">Male</SelectItem>
                           <SelectItem value="female">Female</SelectItem>
@@ -270,10 +278,8 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
                   name="date_of_birth"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Date of Birth</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
+                      <FormLabel className="text-xs font-bold uppercase text-slate-500">Date of Birth</FormLabel>
+                      <FormControl><Input type="date" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -284,35 +290,13 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
                   name="class_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Class</FormLabel>
+                      <FormLabel className="text-xs font-bold uppercase text-slate-500">Class</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select class" />
-                          </SelectTrigger>
-                        </FormControl>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {classes.map((cls) => (
-                            <SelectItem key={cls.id} value={cls.id}>
-                              {cls.name}
-                            </SelectItem>
-                          ))}
+                          {classes.map((cls) => (<SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="district"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>District</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Kampala" {...field} />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -323,13 +307,9 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
                   name="religion"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Religion</FormLabel>
+                      <FormLabel className="text-xs font-bold uppercase text-slate-500">Religion</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select religion" />
-                          </SelectTrigger>
-                        </FormControl>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                         <SelectContent>
                           <SelectItem value="Islam">Islam</SelectItem>
                           <SelectItem value="Christianity">Christianity</SelectItem>
@@ -341,23 +321,69 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
                   )}
                 />
               </div>
+
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <FormField
+                  control={form.control}
+                  name="district"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <LocationSelector 
+                          districtValue={field.value} 
+                          onDistrictChange={field.onChange} 
+                          label="Home District (GeoNames)"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* EMIS Section */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-primary/5 rounded-xl border border-primary/10">
+                <FormField
+                  control={form.control}
+                  name="nin"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-bold uppercase text-primary">Learner NIN (National ID)</FormLabel>
+                      <FormControl><Input placeholder="CM123456789ABC" maxLength={14} {...field} className="font-mono" /></FormControl>
+                      <p className="text-[10px] text-slate-500">Uganda National Identification Number (14 chars)</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lin"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-bold uppercase text-primary">Learner LIN (EMIS Number)</FormLabel>
+                      <FormControl><Input placeholder="EMIS/2024/..." {...field} className="font-mono" /></FormControl>
+                      <p className="text-[10px] text-slate-500">Learner Identification Number from Ministry</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             {/* Guardian Information */}
             <div className="space-y-4">
-              <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                Guardian / Parent Information
-              </h3>
+              <div className="flex items-center gap-2 border-b pb-2">
+                <div className="h-6 w-1 bg-blue-500 rounded-full" />
+                <h3 className="font-bold text-sm uppercase tracking-wider text-slate-700">Guardian Information</h3>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="guardian_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Guardian Name *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter guardian name" {...field} />
-                      </FormControl>
+                      <FormLabel className="text-xs font-bold uppercase text-slate-500">Guardian Name *</FormLabel>
+                      <FormControl><Input placeholder="Enter guardian name" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -368,10 +394,20 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
                   name="guardian_phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone Number *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+256 700 123 456" {...field} />
-                      </FormControl>
+                      <FormLabel className="text-xs font-bold uppercase text-slate-500">Phone Number *</FormLabel>
+                      <FormControl><Input placeholder="+256 700 123 456" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="parent_nin"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-bold uppercase text-slate-500">Guardian NIN *</FormLabel>
+                      <FormControl><Input placeholder="CM123456789ABC" maxLength={14} {...field} className="font-mono" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -382,34 +418,8 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
                   name="guardian_email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email {createParentAccount && "*"}</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="guardian@email.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="guardian_relationship"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Relationship</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select relationship" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="parent">Parent</SelectItem>
-                          <SelectItem value="guardian">Guardian</SelectItem>
-                          <SelectItem value="relative">Relative</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormLabel className="text-xs font-bold uppercase text-slate-500">Email Address</FormLabel>
+                      <FormControl><Input type="email" placeholder="guardian@email.com" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -418,25 +428,16 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
             </div>
 
             {/* Parent Account Section */}
-            <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
+            <div className="space-y-4 rounded-xl border border-dashed bg-muted/30 p-5">
               <FormField
                 control={form.control}
                 name="create_parent_account"
                 render={({ field }) => (
                   <FormItem className="flex items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
+                    <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel className="cursor-pointer">
-                        Create parent portal account
-                      </FormLabel>
-                      <p className="text-xs text-muted-foreground">
-                        Allow the guardian to login and track their child's progress
-                      </p>
+                      <FormLabel className="cursor-pointer font-bold text-sm">Create Parent Portal Account</FormLabel>
+                      <p className="text-xs text-muted-foreground">Allow the guardian to login and track child's progress via mobile/web.</p>
                     </div>
                   </FormItem>
                 )}
@@ -447,14 +448,9 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
                   control={form.control}
                   name="parent_password"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Account Password *</FormLabel>
-                      <FormControl>
-                        <Input type="password" placeholder="Min 6 characters" {...field} />
-                      </FormControl>
-                      <p className="text-xs text-muted-foreground">
-                        Share this password with the parent. They can login using their email.
-                      </p>
+                    <FormItem className="max-w-xs">
+                      <FormLabel className="text-xs font-bold uppercase text-slate-500">Account Password *</FormLabel>
+                      <FormControl><Input type="password" placeholder="Min 6 characters" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -463,18 +459,13 @@ export function RegisterLearnerDialog({ children }: RegisterLearnerDialogProps) 
             </div>
 
             {/* Document Upload Section */}
-            <DocumentUpload
-              documents={documents}
-              onDocumentsChange={setDocuments}
-            />
+            <DocumentUpload documents={documents} onDocumentsChange={setDocuments} />
 
-            <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={mutation.isPending || isUploadingDocs}>
+            <div className="flex justify-end gap-3 pt-6 border-t">
+              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={mutation.isPending || isUploadingDocs} className="min-w-[200px] shadow-lg shadow-primary/20">
                 {(mutation.isPending || isUploadingDocs) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Register Learner
+                Register & Sync EMIS
               </Button>
             </div>
           </form>

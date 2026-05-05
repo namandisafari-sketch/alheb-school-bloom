@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { LocationSelector } from "@/components/common/LocationSelector";
 
 const formSchema = z.object({
   full_name: z.string().min(2, "Name required").max(100),
@@ -139,6 +140,24 @@ export function EditLearnerDialog({ learner, open, onOpenChange }: EditLearnerDi
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-lg border">
+              <FormField
+                control={form.control}
+                name="district"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <LocationSelector 
+                        districtValue={field.value} 
+                        onDistrictChange={field.onChange} 
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

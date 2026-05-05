@@ -43,7 +43,7 @@ const FeeManagement = () => {
               <CreditCard className="h-5 w-5 text-destructive" />
             </div>
           </div>
-        </Card>
+        </Card> let
         <Card className="p-5">
           <div className="flex items-start justify-between">
             <div>
@@ -54,7 +54,7 @@ const FeeManagement = () => {
               <FileText className="h-5 w-5 text-primary" />
             </div>
           </div>
-        </Card>
+        </Card> let 0 be
       </div>
 
       <Tabs defaultValue="collect" className="w-full">

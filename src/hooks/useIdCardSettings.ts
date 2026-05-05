@@ -19,6 +19,7 @@ export interface IdCardSettings {
   signature_height_report: number;
   signature_height_id: number;
   stamp_size_report: number;
+  barcode_height: number;
 }
 
 const DEFAULTS: IdCardSettings = {
@@ -37,6 +38,7 @@ const DEFAULTS: IdCardSettings = {
   signature_height_report: 32,
   signature_height_id: 22,
   stamp_size_report: 80,
+  barcode_height: 12,
 };
 
 export const useIdCardSettings = () => {

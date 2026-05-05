@@ -79,7 +79,7 @@ const Auth = () => {
             </div>
           </div>
           <h1 className="font-display text-4xl font-bold text-foreground mb-4">
-            Alheb Islamic Primary School
+            Alheib Mixed Day & Boarding School
           </h1>
           <p className="text-muted-foreground text-lg">
             School Management System - Uganda New Curriculum

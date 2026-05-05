@@ -219,6 +219,13 @@ const Inventory = () => {
               />
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
+              <Button 
+                variant="outline" 
+                className="flex-1 sm:flex-none border-primary/20 hover:bg-primary/5"
+                onClick={() => window.location.href = '/inventory/tracking'}
+              >
+                <History className="mr-2 h-4 w-4" /> Audit Trail
+              </Button>
               <BulkIssueDialog>
                 <Button variant="outline" className="flex-1 sm:flex-none border-primary/20 hover:bg-primary/5">
                   <Users className="mr-2 h-4 w-4" /> Bulk Issue

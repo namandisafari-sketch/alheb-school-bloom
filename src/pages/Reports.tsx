@@ -108,7 +108,7 @@ const Reports = () => {
   const setStatus = useSetReportStatus();
 
   const classLearners = useMemo(
-    () => allLearners.filter((l) => l.class_id === selectedClass),
+    () => selectedClass === "all" ? allLearners : allLearners.filter((l) => l.class_id === selectedClass),
     [allLearners, selectedClass],
   );
 
@@ -183,6 +183,53 @@ const Reports = () => {
         : reportCards.map((r) => r.id);
     if (ids.length === 0) {
       toast({ title: "Nothing to publish", description: "No reports found for selection." });
+      return;
+    }
+    if (reportType === "emis") {
+      const { data, error } = await supabase
+        .from("learners")
+        .select(`
+          admission_number,
+          full_name,
+          gender,
+          date_of_birth,
+          nin,
+          lin,
+          parent_nin,
+          religion,
+          class:classes(name)
+        `)
+        .eq(selectedClass === "all" ? "" : "class_id", selectedClass === "all" ? undefined : selectedClass);
+      
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+        return;
+      }
+
+      // Generate CSV
+      const headers = ["ADM", "Name", "Gender", "DOB", "NIN", "LIN", "Parent NIN", "Religion", "Class"];
+      const rows = data.map(l => [
+        l.admission_number,
+        l.full_name,
+        l.gender,
+        l.date_of_birth,
+        l.nin || "N/A",
+        l.lin || "N/A",
+        l.parent_nin || "N/A",
+        l.religion || "Islam",
+        l.class?.name || "Unassigned"
+      ]);
+      
+      const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", `EMIS_Export_${format(new Date(), "yyyy_MM_dd")}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({ title: "EMIS Data Exported", description: "CSV file generated for Ministry submission." });
       return;
     }
     await setStatus.mutateAsync({ ids, status: "locked" });
@@ -353,9 +400,10 @@ const Reports = () => {
   return (
     <DashboardLayout title="Reports & Documents" subtitle="Generate, preview, publish & export school documents">
       <Tabs value={reportType} onValueChange={(v: any) => setReportType(v)} className="w-full mb-6">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className="grid w-full grid-cols-3 max-w-lg">
           <TabsTrigger value="report-cards">Report Cards</TabsTrigger>
           <TabsTrigger value="circulars">Termly Circulars</TabsTrigger>
+          <TabsTrigger value="emis">EMIS Data</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -369,6 +417,7 @@ const Reports = () => {
               <Select value={selectedClass} onValueChange={setSelectedClass}>
                 <SelectTrigger className="h-9"><SelectValue placeholder="Select class" /></SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">Entire School (All Classes)</SelectItem>
                   {classes.map((c) => (<SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>))}
                 </SelectContent>
               </Select>

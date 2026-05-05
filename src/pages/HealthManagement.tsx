@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,11 +18,13 @@ import {
   User,
   HeartPulse,
   TrendingUp,
-  FileText
+  FileText,
+  BarChart3,
+  Calendar as CalendarIcon
 } from "lucide-react";
 import { usePharmacy, useHealthVisits, useCreateHealthVisit } from "@/hooks/useHealth";
 import { useLearners } from "@/hooks/useLearners";
-import { format } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, subDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -45,6 +47,20 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "@/hooks/use-toast";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
 
 const visitSchema = z.object({
   learner_id: z.string().optional(),
@@ -56,6 +72,8 @@ const visitSchema = z.object({
   treatment_plan: z.string().optional(),
   action_taken: z.string().optional(),
 });
+
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
 const HealthManagement = () => {
   const { data: pharmacy = [], isLoading: loadingPharmacy } = usePharmacy();
@@ -90,11 +108,30 @@ const HealthManagement = () => {
     }
   };
 
+  // Analytics Data
+  const last7Days = eachDayOfInterval({
+    start: subDays(new Date(), 6),
+    end: new Date(),
+  });
+
+  const visitTrend = last7Days.map(date => {
+    const dayStr = format(date, "MMM dd");
+    const count = visits.filter(v => format(new Date(v.visit_date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd")).length;
+    return { name: dayStr, visits: count };
+  });
+
+  const categoryData = [
+    { name: 'Illness', value: visits.filter(v => v.visit_type === 'illness').length },
+    { name: 'Injury', value: visits.filter(v => v.visit_type === 'injury').length },
+    { name: 'Routine', value: visits.filter(v => v.visit_type === 'routine_checkup').length },
+    { name: 'Emergency', value: visits.filter(v => v.visit_type === 'emergency').length },
+  ].filter(d => d.value > 0);
+
   const stats = [
     { label: "Visits Today", value: visits.filter(v => format(new Date(v.visit_date), "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd")).length, icon: Activity, color: "text-blue-600", bg: "bg-blue-50" },
     { label: "Critical Cases", value: visits.filter(v => v.priority === 'critical' && v.status === 'active').length, icon: AlertCircle, color: "text-red-600", bg: "bg-red-50" },
     { label: "Medicine Alerts", value: pharmacy.filter(p => p.quantity <= p.min_stock_level).length, icon: Pill, color: "text-amber-600", bg: "bg-amber-50" },
-    { label: "Recovered", value: visits.filter(v => v.status === 'completed').length, icon: HeartPulse, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { label: "Total Records", value: visits.length, icon: History, color: "text-emerald-600", bg: "bg-emerald-50" },
   ];
 
   return (
@@ -294,7 +331,7 @@ const HealthManagement = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {visits.filter(v => v.learner?.full_name.toLowerCase().includes(searchTerm.toLowerCase()) || v.symptoms.toLowerCase().includes(searchTerm.toLowerCase())).map((visit) => (
+                      {visits.filter(v => (v.learner?.full_name || "").toLowerCase().includes(searchTerm.toLowerCase()) || v.symptoms.toLowerCase().includes(searchTerm.toLowerCase())).map((visit) => (
                         <tr key={visit.id} className="hover:bg-muted/5 transition-colors group">
                           <td className="p-4">
                             <div className="flex items-center gap-3">
@@ -380,6 +417,67 @@ const HealthManagement = () => {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="mt-0">
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card className="border-none shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-blue-500" /> Visit Trends
+                  </CardTitle>
+                  <CardDescription>Patient visits over the last 7 days</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={visitTrend}>
+                      <defs>
+                        <linearGradient id="colorVisits" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} />
+                      <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                      <Area type="monotone" dataKey="visits" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorVisits)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card className="border-none shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-emerald-500" /> Illness Breakdown
+                  </CardTitle>
+                  <CardDescription>Most common visit reasons</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[300px] flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={categoryData}
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {categoryData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute flex flex-col items-center">
+                    <p className="text-[10px] text-muted-foreground uppercase font-black">Total</p>
+                    <p className="text-2xl font-black">{visits.length}</p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>

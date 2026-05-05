@@ -8,6 +8,11 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   role: AppRole | null;
+  profile: {
+    scope: "global" | "district" | "school";
+    district_id: string | null;
+    school_id: string | null;
+  } | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string, phone?: string) => Promise<{ error: Error | null }>;
@@ -28,6 +33,7 @@ export const useAuthState = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [profile, setProfile] = useState<AuthContextType["profile"]>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -72,6 +78,19 @@ export const useAuthState = () => {
     if (!error && data) {
       setRole(data.role as AppRole);
     }
+
+    // Fetch profile scoping
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("scope, district_id, school_id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profileData) {
+      setProfile(profileData as any);
+    } else {
+      setProfile({ scope: "school", district_id: null, school_id: null });
+    }
   };
 
   const signIn = async (email: string, password: string) => {
@@ -110,6 +129,7 @@ export const useAuthState = () => {
     user,
     session,
     role,
+    profile,
     loading,
     signIn,
     signUp,

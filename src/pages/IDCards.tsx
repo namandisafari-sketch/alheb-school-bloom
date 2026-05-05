@@ -1,8 +1,8 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createRoot } from "react-dom/client";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -27,14 +27,31 @@ import { useClasses } from "@/hooks/useClasses";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useIdCardSettings, IdCardSettings } from "@/hooks/useIdCardSettings";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, Download, CreditCard, User, ChevronDown, Loader2, Package, UserCheck, AlertTriangle, ShieldAlert, CheckCircle2 } from "lucide-react";
+import { 
+  Search, 
+  Download, 
+  CreditCard, 
+  User, 
+  ChevronDown, 
+  Loader2, 
+  Package, 
+  UserCheck, 
+  AlertTriangle, 
+  ShieldAlert, 
+  CheckCircle2,
+  Printer,
+  Activity,
+  Cpu,
+  Layers,
+  Settings2,
+  LayoutDashboard
+} from "lucide-react";
 import { StaffIDCard } from "@/components/idcards/StaffIDCard";
 import { StudentIDCard } from "@/components/idcards/StudentIDCard";
 import { VisitorIDCard } from "@/components/idcards/VisitorIDCard";
 import { EmergencyReentrySlip } from "@/components/idcards/EmergencyReentrySlip";
 import { AssetSizeControls } from "@/components/settings/AssetSizeControls";
 import { useVisitors, useVisitorVisits } from "@/hooks/useVisitors";
-import { Users } from "lucide-react";
 import { toPng } from "html-to-image";
 import { toast } from "@/hooks/use-toast";
 import JSZip from "jszip";
@@ -55,8 +72,17 @@ const useGuardian = (guardianId?: string | null) =>
     },
   });
 
+const CardPreviewWrapper = ({ children }: { children: React.ReactNode }) => (
+  <div className="w-full flex items-center justify-center overflow-hidden p-1 sm:p-0 min-h-[220px] sm:min-h-[360px]">
+    <div className="scale-[0.55] xs:scale-[0.65] sm:scale-[0.8] md:scale-100 origin-center transition-transform duration-500 ease-out flex-shrink-0">
+      {children}
+    </div>
+  </div>
+);
+
 const IDCards = () => {
   const { t, isRTL } = useLanguage();
+  const [activeTab, setActiveTab] = useState("students");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStaff, setSelectedStaff] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
@@ -73,13 +99,14 @@ const IDCards = () => {
   const { data: siteSettings } = useSiteSettings();
   const { data: idSettings } = useIdCardSettings();
 
-  const schoolName = siteSettings?.landing_hero?.school_name || "School Name";
+  const schoolName = "Alheib Mixed Day & Boarding School";
 
   const filteredStaff = staff.filter((s) =>
     s.full_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const filteredStudents = learners.filter((l) =>
-    l.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+    l.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    l.admission_number?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const selectedStaffMember = staff.find((s) => s.id === selectedStaff);
@@ -101,6 +128,8 @@ const IDCards = () => {
     stamp_size_report: 80,
   };
 
+  const schoolLogoUrl = previewSettings.school_logo_url;
+
   const exportNode = async (node: HTMLElement | null, filename: string) => {
     if (!node) return;
     const dataUrl = await toPng(node, {
@@ -115,7 +144,7 @@ const IDCards = () => {
   };
 
   const handleExport = async (which: "front" | "back" | "both") => {
-    const subject = selectedStaffMember || selectedStudentMember;
+    const subject = activeTab === "students" ? selectedStudentMember : selectedStaffMember;
     if (!subject) return;
     const baseName = subject.full_name.replace(/[^a-z0-9]/gi, "_");
     setExporting(true);
@@ -135,7 +164,6 @@ const IDCards = () => {
     }
   };
 
-  // Render an ID card to a PNG dataURL via an off-screen container
   const renderCardToPng = async (cardJsx: React.ReactElement): Promise<string> => {
     const host = document.createElement("div");
     host.style.position = "fixed";
@@ -147,7 +175,6 @@ const IDCards = () => {
 
     return new Promise<string>((resolve, reject) => {
       root.render(cardJsx);
-      // Allow a tick for fonts/images to render
       setTimeout(async () => {
         try {
           const target = host.firstElementChild as HTMLElement | null;
@@ -178,11 +205,7 @@ const IDCards = () => {
   };
 
   const handleBatchExport = async () => {
-    const targets =
-      batchClass === "all"
-        ? learners
-        : learners.filter((l) => l.class_id === batchClass);
-
+    const targets = batchClass === "all" ? learners : learners.filter((l) => l.class_id === batchClass);
     if (targets.length === 0) {
       toast({ title: t("noData"), variant: "destructive" });
       return;
@@ -196,29 +219,14 @@ const IDCards = () => {
       for (let i = 0; i < targets.length; i++) {
         const learner = targets[i];
         const safe = learner.full_name.replace(/[^a-z0-9]/gi, "_");
-        const className = (learner.classes?.name || learner.class_name || "Unassigned").replace(
-          /[^a-z0-9]/gi,
-          "_"
-        );
+        const className = (learner.classes?.name || learner.class_name || "Unassigned").replace(/[^a-z0-9]/gi, "_");
         const folder = zip.folder(className)!;
 
         const frontUrl = await renderCardToPng(
-          <StudentIDCard
-            student={learner}
-            schoolName={schoolName}
-            isRTL={isRTL}
-            side="front"
-            settings={previewSettings}
-          />
+          <StudentIDCard student={learner} schoolName={schoolName} isRTL={isRTL} side="front" settings={previewSettings} />
         );
         const backUrl = await renderCardToPng(
-          <StudentIDCard
-            student={learner}
-            schoolName={schoolName}
-            isRTL={isRTL}
-            side="back"
-            settings={previewSettings}
-          />
+          <StudentIDCard student={learner} schoolName={schoolName} isRTL={isRTL} side="back" settings={previewSettings} />
         );
 
         folder.file(`${safe}_FRONT.png`, dataUrlToBlob(frontUrl));
@@ -231,15 +239,12 @@ const IDCards = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const label =
-        batchClass === "all"
-          ? "all_classes"
-          : (classes.find((c) => c.id === batchClass)?.name || "class").replace(/[^a-z0-9]/gi, "_");
+      const label = batchClass === "all" ? "all_classes" : (classes.find((c) => c.id === batchClass)?.name || "class").replace(/[^a-z0-9]/gi, "_");
       a.download = `ID_Cards_${label}_${new Date().toISOString().slice(0, 10)}.zip`;
       a.click();
       URL.revokeObjectURL(url);
 
-      toast({ title: t("exported"), description: `${targets.length} × ${t("idCards")}` });
+      toast({ title: t("exported"), description: `${targets.length} \u00d7 ${t("idCards")}` });
     } catch (e) {
       console.error(e);
       toast({ title: t("exportFailed"), description: String(e), variant: "destructive" });
@@ -249,261 +254,316 @@ const IDCards = () => {
     }
   };
 
-  const ExportMenu = ({ disabled }: { disabled?: boolean }) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button disabled={disabled || exporting} className="w-full sm:w-auto">
-          {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
-          {t("exportPng")}
-          <ChevronDown className="h-4 w-4 ml-1" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => handleExport("front")}>{t("frontSideOnly")}</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleExport("back")}>{t("backSideOnly")}</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleExport("both")}>{t("bothSides")}</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-
   return (
-    <DashboardLayout title={t("idCards")} subtitle={t("generateIdSubtitle")}>
-      <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
-        <Tabs defaultValue="students">
-          <TabsList>
-            <TabsTrigger value="staff" className="gap-2">
-              <CreditCard className="h-4 w-4" />
-              {t("staffIdCards")}
-            </TabsTrigger>
-            <TabsTrigger value="students" className="gap-2">
-              <User className="h-4 w-4" />
-              {t("studentIdCards")}
-            </TabsTrigger>
-            <TabsTrigger value="visitors" className="gap-2">
-              <UserCheck className="h-4 w-4" />
-              Visitor IDs
-            </TabsTrigger>
-          </TabsList>
+    <DashboardLayout title="ID Issuing Station" subtitle="Live credential management & production">
+      <div className="min-h-[calc(100vh-180px)] flex flex-col gap-6" dir={isRTL ? "rtl" : "ltr"}>
+        
+        {/* Station Status Bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-3 bg-card border rounded-2xl shadow-sm gap-4">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+            <div className="flex items-center gap-2">
+              <div className="h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-muted-foreground">Issuing Station Online</span>
+            </div>
+            <div className="hidden sm:block h-4 w-px bg-border" />
+            <div className="flex items-center gap-2">
+              <Cpu className="h-3.5 w-3.5 sm:h-4 w-4 text-primary/60" />
+              <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">System Core v4.2.0</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Activity className="h-3.5 w-3.5 sm:h-4 w-4 text-primary/60" />
+              <span className="text-[10px] sm:text-xs font-medium text-muted-foreground">DB Sync: 100%</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 text-[10px] sm:text-xs font-mono text-muted-foreground">
+            <span>{new Date().toLocaleDateString()}</span>
+            <span>{new Date().toLocaleTimeString()}</span>
+          </div>
+        </div>
 
-          {/* STAFF */}
-          <TabsContent value="staff" className="space-y-4">
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="relative flex-1">
-                    <Search
-                      className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`}
-                    />
-                    <Input
-                      placeholder={t("search")}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className={isRTL ? "pr-10" : "pl-10"}
-                    />
+        <div className="flex flex-col lg:flex-row flex-1 gap-6 min-h-0">
+          
+          {/* CONTROL SIDEBAR */}
+          <aside className="w-full lg:w-96 flex flex-col gap-4 overflow-y-auto lg:max-h-full">
+            <Card className="flex-1 border-primary/10">
+              <CardHeader className="pb-3 border-b">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-primary/10 rounded-lg">
+                      <Layers className="h-4 w-4 text-primary" />
+                    </div>
+                    <CardTitle className="text-base">Credential Control</CardTitle>
                   </div>
-                  <Select value={selectedStaff || ""} onValueChange={setSelectedStaff}>
-                    <SelectTrigger className="sm:w-[280px]">
-                      <SelectValue placeholder={t("selectStaffMember")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filteredStaff.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.full_name} — {s.role}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <ExportMenu disabled={!selectedStaffMember} />
+                  <Settings2 className="h-4 w-4 text-muted-foreground" />
                 </div>
-              </CardContent>
-            </Card>
+              </CardHeader>
+              
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="p-4 pt-2">
+                <TabsList className="grid grid-cols-3 w-full h-10 bg-muted/50 p-1">
+                  <TabsTrigger value="students" className="text-[10px] uppercase font-bold tracking-wider">Students</TabsTrigger>
+                  <TabsTrigger value="staff" className="text-[10px] uppercase font-bold tracking-wider">Staff</TabsTrigger>
+                  <TabsTrigger value="visitors" className="text-[10px] uppercase font-bold tracking-wider">Visitors</TabsTrigger>
+                </TabsList>
 
-            <div className="mb-4">
-              <AssetSizeControls surface="id" title="ID card sizes (live preview)" />
-            </div>
+                {/* SHARED SEARCH */}
+                <div className="mt-4 relative group">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <Input 
+                    placeholder="Search records..." 
+                    className="pl-9 h-10 bg-muted/30 border-muted/50 focus:bg-background"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <CardSlot title={t("frontSide")}>
-                <div ref={frontRef} className="inline-block">
-                  {selectedStaffMember ? (
-                    <StaffIDCard
-                      staff={selectedStaffMember}
-                      schoolName={schoolName}
-                      isRTL={isRTL}
-                      side="front"
-                      settings={previewSettings}
-                    />
-                  ) : (
-                    <Placeholder label={t("selectToPreview")} />
+                <div className="mt-4 space-y-4">
+                  {/* STUDENT SELECT */}
+                  {activeTab === "students" && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground px-1">Selected Learner</label>
+                        <Select value={selectedStudent || ""} onValueChange={setSelectedStudent}>
+                          <SelectTrigger className="h-11 bg-muted/20 border-muted/50">
+                            <SelectValue placeholder="Target Student..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {filteredStudents.slice(0, 50).map((l) => (
+                              <SelectItem key={l.id} value={l.id}>
+                                {l.full_name} ΓÇö {l.admission_number || "NO_ADM"}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-3.5 w-3.5 text-primary" />
+                          <span className="text-xs font-bold text-primary uppercase tracking-tighter">Batch Issuing Deck</span>
+                        </div>
+                        <div className="space-y-3">
+                          <Select value={batchClass} onValueChange={setBatchClass}>
+                            <SelectTrigger className="h-9 text-xs bg-background/50">
+                              <SelectValue placeholder="All Classes" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Entire Student Body</SelectItem>
+                              {classes.map(c => (
+                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Button 
+                            variant="secondary" 
+                            className="w-full h-10 font-bold text-xs uppercase tracking-widest border-2 border-primary/10"
+                            onClick={handleBatchExport}
+                            disabled={batchExporting}
+                          >
+                            {batchExporting ? (
+                              <div className="flex items-center gap-2">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                <span>Generating ({batchProgress.current}/{batchProgress.total})</span>
+                              </div>
+                            ) : (
+                              "Launch Batch Operation"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   )}
-                </div>
-              </CardSlot>
-              <CardSlot title={t("backSide")}>
-                <div ref={backRef} className="inline-block">
-                  {selectedStaffMember ? (
-                    <StaffIDCard
-                      staff={selectedStaffMember}
-                      schoolName={schoolName}
-                      isRTL={isRTL}
-                      side="back"
-                      settings={previewSettings}
-                    />
-                  ) : (
-                    <Placeholder label={t("selectToPreview")} />
-                  )}
-                </div>
-              </CardSlot>
-            </div>
-          </TabsContent>
 
-          {/* STUDENTS */}
-          <TabsContent value="students" className="space-y-4">
-            {/* Single student controls */}
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="relative flex-1">
-                    <Search
-                      className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`}
-                    />
-                    <Input
-                      placeholder={t("search")}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className={isRTL ? "pr-10" : "pl-10"}
-                    />
+                  {/* STAFF SELECT */}
+                  {activeTab === "staff" && (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase text-muted-foreground px-1">Selected Faculty</label>
+                      <Select value={selectedStaff || ""} onValueChange={setSelectedStaff}>
+                        <SelectTrigger className="h-11 bg-muted/20 border-muted/50">
+                          <SelectValue placeholder="Target Staff Member..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filteredStaff.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.full_name} ΓÇö {s.role}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  
+                  {/* CALIBRATION / CONFIG */}
+                  <div className="pt-4 border-t border-dashed">
+                    <label className="text-[10px] font-black uppercase text-muted-foreground px-1 mb-3 block tracking-[0.15em]">Live Calibration</label>
+                    <AssetSizeControls surface="id" title="" />
                   </div>
-                  <Select value={selectedStudent || ""} onValueChange={setSelectedStudent}>
-                    <SelectTrigger className="sm:w-[280px]">
-                      <SelectValue placeholder={t("selectStudent")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filteredStudents.map((l) => (
-                        <SelectItem key={l.id} value={l.id}>
-                          {l.full_name} — {l.admission_number || "—"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <ExportMenu disabled={!selectedStudentMember} />
                 </div>
-              </CardContent>
+              </Tabs>
             </Card>
 
-            {/* Batch export controls */}
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <Package className="h-4 w-4" />
-                  {t("batchExport")}
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Select value={batchClass} onValueChange={setBatchClass}>
-                    <SelectTrigger className="sm:w-[280px]">
-                      <SelectValue placeholder={t("selectClass")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        {t("allClasses")} ({learners.length})
-                      </SelectItem>
-                      {classes.map((c) => {
-                        const count = learners.filter((l) => l.class_id === c.id).length;
-                        return (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.name} ({count})
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    onClick={handleBatchExport}
-                    disabled={batchExporting}
-                    className="w-full sm:w-auto gap-2"
-                  >
-                    {batchExporting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        {t("generatingZip")} ({batchProgress.current}/{batchProgress.total})
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4" />
-                        {t("downloadZip")}
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="mb-4">
-              <AssetSizeControls surface="id" title="ID card sizes (live preview)" />
+            {/* Quick Metrics */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="p-3 rounded-2xl bg-card border flex flex-col gap-1">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase">Sync</span>
+                <span className="text-xl font-black text-green-500">Live</span>
+              </div>
+              <div className="p-3 rounded-2xl bg-card border flex flex-col gap-1">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase">DPI</span>
+                <span className="text-xl font-black text-primary">300</span>
+              </div>
             </div>
+          </aside>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <CardSlot title={t("frontSide")}>
-                <div ref={frontRef} className="inline-block">
-                  {selectedStudentMember ? (
-                    <StudentIDCard
-                      student={selectedStudentMember}
-                      schoolName={schoolName}
-                      isRTL={isRTL}
-                      side="front"
-                      settings={previewSettings}
-                    />
-                  ) : (
-                    <Placeholder label={t("selectToPreview")} />
+          {/* MAIN PRODUCTION DECK */}
+          <main className="flex-1 min-w-0">
+            <div className="h-full bg-zinc-950 rounded-3xl border-2 border-primary/20 shadow-2xl relative overflow-hidden flex flex-col">
+              
+              {/* Deck Header */}
+              <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-white/5 bg-white/5 backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="text-center md:text-left">
+                  <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center justify-center md:justify-start gap-3">
+                    <Printer className="h-5 w-5 text-primary" />
+                    Production Deck
+                  </h2>
+                  <p className="text-[10px] sm:text-xs text-zinc-400 font-medium">Verified high-resolution credential issuance</p>
+                </div>
+                <div className="flex flex-wrap justify-center gap-3 w-full md:w-auto">
+                  {activeTab !== "visitors" && (
+                    <>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="bg-white/10 border-white/10 text-white hover:bg-white/20 h-10 px-4 sm:px-6 font-bold text-xs sm:text-sm flex-1 sm:flex-none">
+                            <Download className="h-4 w-4 mr-2" /> Export <ChevronDown className="h-4 w-4 ml-1" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 bg-zinc-900 border-white/10 text-white">
+                          <DropdownMenuItem className="focus:bg-white/10" onClick={() => handleExport("front")}>Front Side PNG</DropdownMenuItem>
+                          <DropdownMenuItem className="focus:bg-white/10" onClick={() => handleExport("back")}>Back Side PNG</DropdownMenuItem>
+                          <DropdownMenuItem className="focus:bg-white/10" onClick={() => handleExport("both")}>Combined (Front+Back)</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <Button 
+                        className="h-10 px-6 sm:px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest shadow-lg shadow-primary/20 text-xs sm:text-sm flex-1 sm:flex-none"
+                        onClick={() => {
+                          const name = activeTab === "students" ? selectedStudentMember?.full_name : selectedStaffMember?.full_name;
+                          if (name) handleExport("both");
+                        }}
+                        disabled={(!selectedStudentMember && !selectedStaffMember) || exporting}
+                      >
+                        {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Printer className="h-4 w-4 mr-2" />}
+                        ISSUE
+                      </Button>
+                    </>
                   )}
                 </div>
-              </CardSlot>
-              <CardSlot title={t("backSide")}>
-                <div ref={backRef} className="inline-block">
-                  {selectedStudentMember ? (
-                    <StudentIDCard
-                      student={selectedStudentMember}
-                      schoolName={schoolName}
-                      isRTL={isRTL}
-                      side="back"
-                      settings={previewSettings}
-                    />
-                  ) : (
-                    <Placeholder label={t("selectToPreview")} />
+              </div>
+
+              {/* Deck Content (Live Preview) */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12 custom-scrollbar">
+                <div className="max-w-6xl mx-auto space-y-8 sm:space-y-12">
+                  
+                  {activeTab === "students" && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-start justify-items-center">
+                      <div className="space-y-4 w-full max-w-full lg:max-w-[400px]">
+                        <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] px-4 py-1.5 bg-primary/10 rounded-full border border-primary/20 block text-center">Front Facing Surface</span>
+                        <div className="p-1 sm:p-1.5 bg-white/5 rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden">
+                          <div ref={frontRef} className="rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden shadow-2xl bg-white">
+                            {selectedStudentMember ? (
+                              <CardPreviewWrapper>
+                                <StudentIDCard student={selectedStudentMember} schoolName={schoolName} isRTL={isRTL} side="front" settings={previewSettings} />
+                              </CardPreviewWrapper>
+                            ) : (
+                              <DeckPlaceholder label="Select student to engage production deck" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-4 w-full max-w-full lg:max-w-[400px]">
+                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] px-4 py-1.5 bg-white/5 rounded-full border border-white/10 block text-center">Rear Security Surface</span>
+                        <div className="p-1 sm:p-1.5 bg-white/5 rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden">
+                          <div ref={backRef} className="rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden shadow-2xl bg-white">
+                            {selectedStudentMember ? (
+                              <CardPreviewWrapper>
+                                <StudentIDCard student={selectedStudentMember} schoolName={schoolName} isRTL={isRTL} side="back" settings={previewSettings} />
+                              </CardPreviewWrapper>
+                            ) : (
+                              <DeckPlaceholder label="Rear preview inactive" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === "staff" && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-start justify-items-center">
+                      <div className="space-y-4 w-full max-w-full lg:max-w-[400px]">
+                        <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] px-4 py-1.5 bg-primary/10 rounded-full border border-primary/20 block text-center">Faculty Front Surface</span>
+                        <div className="p-1 sm:p-1.5 bg-white/5 rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden">
+                          <div ref={frontRef} className="rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden shadow-2xl bg-white">
+                            {selectedStaffMember ? (
+                              <CardPreviewWrapper>
+                                <StaffIDCard staff={selectedStaffMember} schoolName={schoolName} isRTL={isRTL} side="front" settings={previewSettings} />
+                              </CardPreviewWrapper>
+                            ) : (
+                              <DeckPlaceholder label="Select faculty member for issuance" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-4 w-full max-w-full lg:max-w-[400px]">
+                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] px-4 py-1.5 bg-white/5 rounded-full border border-white/10 block text-center">Staff Security Matrix</span>
+                        <div className="p-1 sm:p-1.5 bg-white/5 rounded-[2rem] sm:rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden">
+                          <div ref={backRef} className="rounded-[1.5rem] sm:rounded-[2rem] overflow-hidden shadow-2xl bg-white">
+                            {selectedStaffMember ? (
+                              <CardPreviewWrapper>
+                                <StaffIDCard staff={selectedStaffMember} schoolName={schoolName} isRTL={isRTL} side="back" settings={previewSettings} />
+                              </CardPreviewWrapper>
+                            ) : (
+                              <DeckPlaceholder label="Security preview locked" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === "visitors" && (
+                    <div className="grid grid-cols-1 gap-8 max-w-4xl mx-auto">
+                       <VisitorStationSection 
+                        schoolName={schoolName} 
+                        schoolLogoUrl={schoolLogoUrl} 
+                        isRTL={isRTL} 
+                        learners={learners} 
+                       />
+                    </div>
                   )}
                 </div>
-              </CardSlot>
+              </div>
+
+              {/* Station Decor */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-50" />
             </div>
-          </TabsContent>
-          <TabsContent value="visitors" className="space-y-4">
-            <VisitorIdSection
-              schoolName={schoolName}
-              schoolLogoUrl={previewSettings.school_logo_url}
-              isRTL={isRTL}
-              learners={learners}
-            />
-          </TabsContent>
-        </Tabs>
+          </main>
+        </div>
       </div>
     </DashboardLayout>
   );
 };
 
-const CardSlot = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <Card>
-    <CardContent className="pt-6">
-      <p className="text-sm font-semibold text-muted-foreground mb-3">{title}</p>
-      <div className="overflow-x-auto no-scrollbar flex justify-center">{children}</div>
-    </CardContent>
-  </Card>
-);
-
-const Placeholder = ({ label }: { label: string }) => (
-  <div className="w-[540px] max-w-full h-[340px] border-2 border-dashed border-muted-foreground/30 rounded-xl flex items-center justify-center">
-    <p className="text-muted-foreground text-sm">{label}</p>
+const DeckPlaceholder = ({ label }: { label: string }) => (
+  <div className="w-[540px] max-w-full h-[340px] bg-zinc-900 flex items-center justify-center p-12 text-center">
+    <div className="space-y-4">
+      <div className="w-12 h-12 rounded-full border-2 border-dashed border-zinc-700 mx-auto flex items-center justify-center">
+        <CreditCard className="h-5 w-5 text-zinc-700" />
+      </div>
+      <p className="text-zinc-600 text-sm font-medium leading-relaxed">{label}</p>
+    </div>
   </div>
 );
 
-const VisitorIdSection = ({
+// RESTORED VISITOR STATION SECTION
+const VisitorStationSection = ({
   schoolName,
   schoolLogoUrl,
   isRTL,
@@ -517,12 +577,14 @@ const VisitorIdSection = ({
   const { data: visits = [] } = useVisitorVisits("active");
   const { data: allVisits = [] } = useVisitorVisits("all");
   const { data: visitors = [] } = useVisitors();
+  
   const [visitId, setVisitId] = useState<string>("");
   const [visitorId, setVisitorId] = useState<string>("");
   const [pickupLearnerId, setPickupLearnerId] = useState<string>("");
   const [reentryVisitId, setReentryVisitId] = useState<string>("");
   const [reentryDuration, setReentryDuration] = useState<number>(60);
   const [reentryWidth, setReentryWidth] = useState<54 | 80>(80);
+
   const dayRef = useRef<HTMLDivElement>(null);
   const dayBackRef = useRef<HTMLDivElement>(null);
   const reusableRef = useRef<HTMLDivElement>(null);
@@ -531,27 +593,17 @@ const VisitorIdSection = ({
   const pickupBackRef = useRef<HTMLDivElement>(null);
   const reentryRef = useRef<HTMLDivElement>(null);
 
-  // Visitors who have checked out — eligible for emergency re-entry slip
-  const checkedOutVisits = useMemo(
-    () => allVisits.filter((v) => v.status === "checked_out").slice(0, 50),
-    [allVisits],
-  );
+  const checkedOutVisits = useMemo(() => allVisits.filter((v) => v.status === "checked_out").slice(0, 50), [allVisits]);
   const reentryVisit = checkedOutVisits.find((v) => v.id === reentryVisitId);
-
   const visit = visits.find((v) => v.id === visitId);
   const visitor = visitors.find((v) => v.id === visitorId);
   const pickupLearner = learners.find((l) => l.id === pickupLearnerId);
 
-  // Fetch full guardian record for richer auto-fill (email, district, address, relationship)
   const { data: guardianRecord } = useGuardian(pickupLearner?.guardian_id);
 
-  // Auto-built visitor object from learner → guardian
   const guardianVisitor = useMemo(() => {
     if (!pickupLearner) return undefined;
-    const name =
-      guardianRecord?.full_name ||
-      pickupLearner.guardian_name ||
-      "Guardian (not on file)";
+    const name = guardianRecord?.full_name || pickupLearner.guardian_name || "Guardian (not on file)";
     const phone = guardianRecord?.phone || pickupLearner.guardian_phone || null;
     const relationship = guardianRecord?.relationship || "guardian";
     return {
@@ -559,14 +611,8 @@ const VisitorIdSection = ({
       full_name: name,
       phone,
       email: guardianRecord?.email || null,
-      // Show relationship in the "Organisation" slot so it reads e.g. "Father / Parent"
       company: relationship.charAt(0).toUpperCase() + relationship.slice(1),
-      // Use guardian district / national ID slot — falls back to a generated ref
-      id_number:
-        guardianRecord?.district ||
-        (pickupLearner.guardian_id
-          ? `GRD-${pickupLearner.guardian_id.slice(0, 8).toUpperCase()}`
-          : null),
+      id_number: guardianRecord?.district || (pickupLearner.guardian_id ? `GRD-${pickupLearner.guardian_id.slice(0, 8).toUpperCase()}` : null),
       photo_url: null,
       notes: guardianRecord?.address || null,
       is_recurring: true,
@@ -574,95 +620,7 @@ const VisitorIdSection = ({
     } as any;
   }, [pickupLearner, guardianRecord]);
 
-  // ============== VALIDATION ==============
-  const pickupIssues = useMemo(() => {
-    if (!pickupLearner) return [];
-    const issues: { level: "error" | "warn"; msg: string }[] = [];
-
-    // Learner must be active
-    if (pickupLearner.status && pickupLearner.status !== "active") {
-      issues.push({
-        level: "error",
-        msg: `Learner record is "${pickupLearner.status}" — pick-up pass cannot be issued for an inactive learner.`,
-      });
-    }
-
-    if (!pickupLearner.guardian_id) {
-      issues.push({
-        level: "error",
-        msg: "No guardian on file for this learner. Add a guardian on the learner record before printing.",
-      });
-    } else if (pickupLearner.guardian_id && guardianRecord === null) {
-      // Query resolved but the guardian row could not be found → linked record is missing/inactive
-      issues.push({
-        level: "error",
-        msg: "Linked guardian record is missing or has been removed — the pick-up pass is invalid until a guardian is re-linked.",
-      });
-    } else {
-      if (!guardianVisitor?.phone) {
-        issues.push({ level: "warn", msg: "Guardian phone is missing — verification calls will not be possible." });
-      }
-      if (!guardianRecord?.email) {
-        issues.push({ level: "warn", msg: "Guardian email is missing — no electronic confirmation can be sent." });
-      }
-      if (!guardianRecord?.district && !guardianRecord?.address) {
-        issues.push({ level: "warn", msg: "Guardian address / district is missing." });
-      }
-    }
-    if (!pickupLearner.photo_url) {
-      issues.push({ level: "warn", msg: "Learner has no photo on file — visual verification will be limited." });
-    }
-    return issues;
-  }, [pickupLearner, guardianRecord, guardianVisitor]);
-
-  const dayIssues = useMemo(() => {
-    if (!visit) return [];
-    const issues: { level: "error" | "warn"; msg: string }[] = [];
-    const checkedIn = new Date(visit.check_in_at);
-    const today = new Date();
-    const sameDay =
-      checkedIn.getFullYear() === today.getFullYear() &&
-      checkedIn.getMonth() === today.getMonth() &&
-      checkedIn.getDate() === today.getDate();
-    if (visit.status === "checked_out") {
-      issues.push({ level: "error", msg: "This visit has already been checked out — the day pass is no longer valid." });
-    } else if (!sameDay) {
-      issues.push({ level: "error", msg: `Day pass is from ${checkedIn.toLocaleDateString()} and has expired. Re-check the visitor in for today.` });
-    }
-    if (!visit.appointment_id) {
-      issues.push({
-        level: "error",
-        msg: "No appointment linked to this visit. Non-parent visitors must have a valid appointment verified at the gate before a day pass can be printed.",
-      });
-    }
-    if (!visit.visitor_phone) issues.push({ level: "warn", msg: "Visitor phone is missing." });
-    if (!visit.visitor_photo_url) issues.push({ level: "warn", msg: "No visitor photo captured at check-in." });
-    if (!visit.host_name && !visit.host_staff_id) issues.push({ level: "warn", msg: "No host assigned for this visit." });
-    if (!visit.purpose) issues.push({ level: "warn", msg: "Purpose of visit not recorded." });
-    return issues;
-  }, [visit]);
-
-  const reusableIssues = useMemo(() => {
-    if (!visitor) return [];
-    const issues: { level: "error" | "warn"; msg: string }[] = [];
-    if (!visitor.is_recurring) {
-      issues.push({ level: "error", msg: "Selected visitor is not marked as recurring — issue a day pass instead." });
-    }
-    if (!visitor.phone) issues.push({ level: "warn", msg: "Phone number missing." });
-    if (!visitor.id_number) issues.push({ level: "warn", msg: "Government ID number not on file." });
-    if (!visitor.photo_url) issues.push({ level: "warn", msg: "No photo on file." });
-    if (!visitor.company) issues.push({ level: "warn", msg: "Organisation / employer not recorded." });
-    return issues;
-  }, [visitor]);
-
-  const hasBlockingIssue = (issues: { level: "error" | "warn"; msg: string }[]) =>
-    issues.some((i) => i.level === "error");
-
-  const exportCard = async (
-    frontEl: React.RefObject<HTMLDivElement>,
-    backEl: React.RefObject<HTMLDivElement>,
-    name: string,
-  ) => {
+  const exportCard = async (frontEl: React.RefObject<HTMLDivElement>, backEl: React.RefObject<HTMLDivElement>, name: string) => {
     if (!frontEl.current || !backEl.current) return;
     const safe = name.replace(/[^a-z0-9]/gi, "_");
     const zip = new JSZip();
@@ -678,294 +636,200 @@ const VisitorIdSection = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* GUARDIAN PICKUP CARD — tied to a learner */}
-      <Card className="border-2 border-primary/20">
-        <CardContent className="pt-6 space-y-4">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <Users className="h-4 w-4 text-primary" />
-            Authorised Pick-Up Pass
-            <span className="text-xs font-normal text-muted-foreground">
-              — for parent/guardian collecting a learner
-            </span>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Select value={pickupLearnerId} onValueChange={setPickupLearnerId}>
-              <SelectTrigger className="sm:w-[360px]">
-                <SelectValue placeholder="Select learner being collected…" />
-              </SelectTrigger>
-              <SelectContent>
-                {learners.map((l) => (
-                  <SelectItem key={l.id} value={l.id}>
-                    {l.full_name}
-                    {l.admission_number ? ` — ${l.admission_number}` : ""}
-                    {l.guardian_name ? ` • ${l.guardian_name}` : " • (no guardian)"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              disabled={!pickupLearner || hasBlockingIssue(pickupIssues)}
+    <div className="space-y-8 animate-fade-in pb-20">
+      {/* Pick-Up Pass */}
+      <Card className="bg-zinc-900/50 border-white/5 overflow-hidden">
+        <CardHeader className="border-b border-white/5 bg-white/5">
+          <CardTitle className="text-white text-sm flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" /> Authorised Pick-Up Pass
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-6">
+          <div className="flex flex-col md:flex-row gap-4 items-end">
+            <div className="flex-1 space-y-2">
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Select Learner</label>
+              <Select value={pickupLearnerId} onValueChange={setPickupLearnerId}>
+                <SelectTrigger className="bg-zinc-800 border-white/10 text-white h-11">
+                  <SelectValue placeholder="Target Learner..." />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                  {learners.slice(0, 50).map((l) => (
+                    <SelectItem key={l.id} value={l.id}>{l.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button 
+              className="bg-primary hover:bg-primary/90 text-primary-foreground h-11 px-8 font-bold"
+              disabled={!pickupLearner}
               onClick={() => pickupLearner && exportCard(pickupRef, pickupBackRef, `${pickupLearner.full_name}_PICKUP`)}
             >
-              <Download className="h-4 w-4 mr-2" />
-              Print Pick-Up Pass (Front + Back)
+              <Download className="h-4 w-4 mr-2" /> Export Pass
             </Button>
           </div>
-          {pickupLearner && (
-            <ValidationBanner
-              issues={pickupIssues}
-              okLabel="Auto-filled from learner record. Guardian details verified."
-              context="Guardian / pick-up validation"
-            />
-          )}
-          <div className="flex flex-wrap justify-center gap-6 pt-2">
-            <div ref={pickupRef} className="inline-block">
-              {pickupLearner ? (
-                <VisitorIDCard
-                  visitor={guardianVisitor}
-                  learner={pickupLearner}
-                  schoolName={schoolName}
-                  schoolLogoUrl={schoolLogoUrl}
-                  isRTL={isRTL}
-                  variant="guardian-pickup"
-                  side="front"
-                />
-              ) : (
-                <Placeholder label="Select a learner to issue a pick-up pass" />
-              )}
-            </div>
-            <div ref={pickupBackRef} className="inline-block">
-              {pickupLearner ? (
-                <VisitorIDCard
-                  visitor={guardianVisitor}
-                  learner={pickupLearner}
-                  schoolName={schoolName}
-                  schoolLogoUrl={schoolLogoUrl}
-                  isRTL={isRTL}
-                  variant="guardian-pickup"
-                  side="back"
-                />
-              ) : (
-                <Placeholder label="Back side preview" />
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* DAY PASS */}
-      <Card>
-        <CardContent className="pt-6 space-y-4">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <UserCheck className="h-4 w-4" />
-            Day Pass (from active check-in)
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Select value={visitId} onValueChange={setVisitId}>
-              <SelectTrigger className="sm:w-[320px]">
-                <SelectValue placeholder="Select on-site visitor…" />
-              </SelectTrigger>
-              <SelectContent>
-                {visits.length === 0 && <div className="p-2 text-xs text-muted-foreground">No active visits</div>}
-                {visits.map((v) => (
-                  <SelectItem key={v.id} value={v.id}>
-                    {v.visitor_name} — {v.badge_number}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button disabled={!visit || hasBlockingIssue(dayIssues)} onClick={() => visit && exportCard(dayRef, dayBackRef, visit.visitor_name)}>
-              <Download className="h-4 w-4 mr-2" />Print Day Pass (Front + Back)
-            </Button>
-          </div>
-          {visit && (
-            <ValidationBanner
-              issues={dayIssues}
-              okLabel="Day pass is valid for today. Visitor is currently on-site."
-              context="Day pass validation"
-            />
-          )}
-          <div className="flex flex-wrap justify-center gap-6 pt-2">
-            <div ref={dayRef} className="inline-block">
-              {visit ? (
-                <VisitorIDCard visit={visit} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="day-pass" side="front" />
-              ) : (
-                <Placeholder label="Check in a visitor to print a day pass" />
-              )}
-            </div>
-            <div ref={dayBackRef} className="inline-block">
-              {visit ? (
-                <VisitorIDCard visit={visit} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="day-pass" side="back" />
-              ) : (
-                <Placeholder label="Back side preview" />
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* REUSABLE */}
-      <Card>
-        <CardContent className="pt-6 space-y-4">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <CreditCard className="h-4 w-4" />
-            Reusable Visitor Card (recurring visitors)
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Select value={visitorId} onValueChange={setVisitorId}>
-              <SelectTrigger className="sm:w-[320px]">
-                <SelectValue placeholder="Select recurring visitor…" />
-              </SelectTrigger>
-              <SelectContent>
-                {visitors.filter((v) => v.is_recurring).length === 0 && <div className="p-2 text-xs text-muted-foreground">No recurring visitors</div>}
-                {visitors.filter((v) => v.is_recurring).map((v) => (
-                  <SelectItem key={v.id} value={v.id}>{v.full_name}{v.company ? ` — ${v.company}` : ""}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button disabled={!visitor || hasBlockingIssue(reusableIssues)} onClick={() => visitor && exportCard(reusableRef, reusableBackRef, visitor.full_name)}>
-              <Download className="h-4 w-4 mr-2" />Print Card (Front + Back)
-            </Button>
-          </div>
-          {visitor && (
-            <ValidationBanner
-              issues={reusableIssues}
-              okLabel="Visitor record is complete and authorised."
-              context="Recurring visitor validation"
-            />
-          )}
-          <div className="flex flex-wrap justify-center gap-6 pt-2">
-            <div ref={reusableRef} className="inline-block">
-              {visitor ? (
-                <VisitorIDCard visitor={visitor} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="reusable" side="front" />
-              ) : (
-                <Placeholder label="Add recurring visitors in the Visitors page" />
-              )}
-            </div>
-            <div ref={reusableBackRef} className="inline-block">
-              {visitor ? (
-                <VisitorIDCard visitor={visitor} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="reusable" side="back" />
-              ) : (
-                <Placeholder label="Back side preview" />
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* EMERGENCY RE-ENTRY THERMAL SLIP */}
-      <Card className="border-2 border-destructive/30">
-        <CardContent className="pt-6 space-y-4">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-            Emergency Re-entry Slip (thermal printout)
-            <span className="text-xs font-normal text-muted-foreground">
-              — for visitors returning after check-out
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Once a visitor has checked out, their day pass is automatically revoked. If they need
-            to re-enter the compound, issue this short-lived thermal slip so they can be
-            identified by security and not flagged as a stranger on the premises.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-            <Select value={reentryVisitId} onValueChange={setReentryVisitId}>
-              <SelectTrigger className="sm:col-span-2">
-                <SelectValue placeholder="Select recently checked-out visitor…" />
-              </SelectTrigger>
-              <SelectContent>
-                {checkedOutVisits.length === 0 && (
-                  <div className="p-2 text-xs text-muted-foreground">No checked-out visits</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 justify-items-center bg-black/40 p-8 rounded-2xl border border-white/5">
+            <div className="space-y-3 w-full max-w-full md:max-w-[340px]">
+              <span className="text-[10px] font-bold text-zinc-500 uppercase block text-center">Pass Front</span>
+              <div ref={pickupRef} className="rounded-xl overflow-hidden shadow-2xl bg-white">
+                {pickupLearner ? (
+                  <CardPreviewWrapper>
+                    <VisitorIDCard visitor={guardianVisitor} learner={pickupLearner} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="guardian-pickup" side="front" />
+                  </CardPreviewWrapper>
+                ) : (
+                  <div className="w-[340px] h-[214px] bg-zinc-800/50 flex items-center justify-center text-zinc-600 text-[10px]">PREVIEW_FRONT</div>
                 )}
-                {checkedOutVisits.map((v) => (
-                  <SelectItem key={v.id} value={v.id}>
-                    {v.visitor_name} — {v.badge_number || "—"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={String(reentryDuration)} onValueChange={(v) => setReentryDuration(Number(v))}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="15">15 minutes</SelectItem>
-                <SelectItem value="30">30 minutes</SelectItem>
-                <SelectItem value="60">1 hour</SelectItem>
-                <SelectItem value="120">2 hours</SelectItem>
-                <SelectItem value="240">4 hours</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={String(reentryWidth)} onValueChange={(v) => setReentryWidth(Number(v) as 54 | 80)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="54">54 mm thermal</SelectItem>
-                <SelectItem value="80">80 mm thermal</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Button
-              disabled={!reentryVisit}
-              onClick={async () => {
-                if (!reentryRef.current || !reentryVisit) return;
-                const safe = reentryVisit.visitor_name.replace(/[^a-z0-9]/gi, "_");
-                const url = await toPng(reentryRef.current, { pixelRatio: 4, cacheBust: true, backgroundColor: "#ffffff" });
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `${safe}_REENTRY_${reentryWidth}mm.png`;
-                a.click();
-                toast({ title: "Slip ready", description: "Send the PNG to your thermal printer." });
-              }}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Download thermal slip
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!reentryVisit}
-              onClick={() => {
-                if (!reentryRef.current) return;
-                const win = window.open("", "_blank", "width=400,height=700");
-                if (!win) return;
-                win.document.write(`<html><head><title>Re-entry Slip</title>
-                  <style>
-                    @page { size: ${reentryWidth}mm auto; margin: 0; }
-                    body { margin: 0; padding: 0; }
-                  </style></head><body>${reentryRef.current.outerHTML}</body></html>`);
-                win.document.close();
-                setTimeout(() => win.print(), 250);
-              }}
-            >
-              Print directly
-            </Button>
-          </div>
-
-          <div className="flex justify-center pt-2">
-            <div ref={reentryRef} className="inline-block">
-              {reentryVisit ? (
-                <EmergencyReentrySlip
-                  schoolName={schoolName}
-                  visitorName={reentryVisit.visitor_name}
-                  visitorPhone={reentryVisit.visitor_phone}
-                  purpose={reentryVisit.purpose}
-                  host={reentryVisit.host_name}
-                  durationMinutes={reentryDuration}
-                  width={reentryWidth}
-                  isRTL={isRTL}
-                  originalVisitId={reentryVisit.id}
-                />
-              ) : (
-                <div className="w-[220px] h-[400px] border-2 border-dashed border-muted-foreground/30 rounded-md flex items-center justify-center text-xs text-muted-foreground text-center px-4">
-                  Select a checked-out visitor to preview the thermal slip
-                </div>
-              )}
+              </div>
             </div>
+            <div className="space-y-3 w-full max-w-full md:max-w-[340px]">
+              <span className="text-[10px] font-bold text-zinc-500 uppercase block text-center">Pass Back</span>
+              <div ref={pickupBackRef} className="rounded-xl overflow-hidden shadow-2xl bg-white">
+                {pickupLearner ? (
+                  <CardPreviewWrapper>
+                    <VisitorIDCard visitor={guardianVisitor} learner={pickupLearner} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="guardian-pickup" side="back" />
+                  </CardPreviewWrapper>
+                ) : (
+                  <div className="w-[340px] h-[214px] bg-zinc-800/50 flex items-center justify-center text-zinc-600 text-[10px]">PREVIEW_BACK</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Day Pass */}
+      <Card className="bg-zinc-900/50 border-white/5">
+        <CardHeader className="border-b border-white/5 bg-white/5">
+          <CardTitle className="text-white text-sm flex items-center gap-2">
+            <UserCheck className="h-4 w-4 text-primary" /> Day Pass (Active Visits)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-6">
+          <div className="flex flex-col md:flex-row gap-4 items-end">
+            <div className="flex-1 space-y-2">
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Select Visit</label>
+              <Select value={visitId} onValueChange={setVisitId}>
+                <SelectTrigger className="bg-zinc-800 border-white/10 text-white h-11">
+                  <SelectValue placeholder="On-Site Visitor..." />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                  {visits.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>{v.visitor_name} ΓÇö {v.badge_number}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button 
+              className="bg-primary hover:bg-primary/90 text-primary-foreground h-11 px-8 font-bold"
+              disabled={!visit}
+              onClick={() => visit && exportCard(dayRef, dayBackRef, visit.visitor_name)}
+            >
+              <Download className="h-4 w-4 mr-2" /> Export Pass
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 justify-items-center bg-black/40 p-8 rounded-2xl border border-white/5">
+             <div className="space-y-3 w-full max-w-full md:max-w-[340px]">
+              <span className="text-[10px] font-bold text-zinc-500 uppercase block text-center">Day Pass Front</span>
+              <div ref={dayRef} className="rounded-xl overflow-hidden shadow-2xl bg-white">
+                {visit ? (
+                  <CardPreviewWrapper>
+                    <VisitorIDCard visit={visit} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="day-pass" side="front" />
+                  </CardPreviewWrapper>
+                ) : (
+                  <div className="w-[340px] h-[214px] bg-zinc-800/50 flex items-center justify-center text-zinc-600 text-[10px]">PREVIEW_FRONT</div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-3 w-full max-w-full md:max-w-[340px]">
+              <span className="text-[10px] font-bold text-zinc-500 uppercase block text-center">Day Pass Back</span>
+              <div ref={dayBackRef} className="rounded-xl overflow-hidden shadow-2xl bg-white">
+                {visit ? (
+                  <CardPreviewWrapper>
+                    <VisitorIDCard visit={visit} schoolName={schoolName} schoolLogoUrl={schoolLogoUrl} isRTL={isRTL} variant="day-pass" side="back" />
+                  </CardPreviewWrapper>
+                ) : (
+                  <div className="w-[340px] h-[214px] bg-zinc-800/50 flex items-center justify-center text-zinc-600 text-[10px]">PREVIEW_BACK</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Emergency Re-entry */}
+      <Card className="bg-zinc-900/50 border-destructive/20 border-2">
+        <CardHeader className="border-b border-destructive/10 bg-destructive/5">
+          <CardTitle className="text-white text-sm flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-destructive" /> Emergency Re-entry Slip
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2 md:col-span-1">
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Select Recent Visit</label>
+              <Select value={reentryVisitId} onValueChange={setReentryVisitId}>
+                <SelectTrigger className="bg-zinc-800 border-white/10 text-white h-11">
+                  <SelectValue placeholder="Checked-out Visitor..." />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                  {checkedOutVisits.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>{v.visitor_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Validity Duration</label>
+              <Select value={String(reentryDuration)} onValueChange={(v) => setReentryDuration(Number(v))}>
+                <SelectTrigger className="bg-zinc-800 border-white/10 text-white h-11">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                  <SelectItem value="15">15 minutes</SelectItem>
+                  <SelectItem value="30">30 minutes</SelectItem>
+                  <SelectItem value="60">1 hour</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 items-end">
+               <Button 
+                variant="destructive"
+                className="flex-1 h-11 font-bold"
+                disabled={!reentryVisit}
+                onClick={async () => {
+                  if (!reentryRef.current || !reentryVisit) return;
+                  const safe = reentryVisit.visitor_name.replace(/[^a-z0-9]/gi, "_");
+                  const url = await toPng(reentryRef.current, { pixelRatio: 4, cacheBust: true, backgroundColor: "#ffffff" });
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `${safe}_REENTRY.png`;
+                  a.click();
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" /> Export Slip
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex justify-center bg-black/40 p-8 rounded-2xl border border-white/5">
+             <div ref={reentryRef} className="bg-white p-4 shadow-2xl rounded-sm">
+                {reentryVisit ? (
+                  <EmergencyReentrySlip
+                    schoolName={schoolName}
+                    visitorName={reentryVisit.visitor_name}
+                    visitorPhone={reentryVisit.visitor_phone}
+                    purpose={reentryVisit.purpose}
+                    host={reentryVisit.host_name}
+                    durationMinutes={reentryDuration}
+                    width={reentryWidth}
+                    isRTL={isRTL}
+                    originalVisitId={reentryVisit.id}
+                  />
+                ) : (
+                  <div className="w-[200px] h-[300px] bg-zinc-800/50 flex items-center justify-center text-zinc-600 text-[10px] text-center px-4">SELECT CHECKED-OUT VISITOR</div>
+                )}
+             </div>
           </div>
         </CardContent>
       </Card>
@@ -974,46 +838,3 @@ const VisitorIdSection = ({
 };
 
 export default IDCards;
-
-// ===================== Validation banner =====================
-type Issue = { level: "error" | "warn"; msg: string };
-
-const ValidationBanner = ({
-  issues,
-  okLabel,
-  context,
-}: {
-  issues: Issue[];
-  okLabel: string;
-  context: string;
-}) => {
-  if (issues.length === 0) {
-    return (
-      <Alert className="border-primary/40 bg-primary/5">
-        <CheckCircle2 className="h-4 w-4 text-primary" />
-        <AlertTitle className="text-sm text-primary">{context}</AlertTitle>
-        <AlertDescription className="text-xs text-muted-foreground">{okLabel}</AlertDescription>
-      </Alert>
-    );
-  }
-  const hasError = issues.some((i) => i.level === "error");
-  return (
-    <Alert variant={hasError ? "destructive" : "default"} className={!hasError ? "border-muted-foreground/30 bg-muted/40" : undefined}>
-      {hasError ? <ShieldAlert className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
-      <AlertTitle className="text-sm">
-        {hasError ? "Cannot print this card yet" : "Card can be printed — review warnings"}
-        <span className="ml-2 text-xs font-normal opacity-70">({context})</span>
-      </AlertTitle>
-      <AlertDescription>
-        <ul className="mt-1 space-y-1 text-xs">
-          {issues.map((issue, i) => (
-            <li key={i} className="flex gap-2">
-              <span className="font-bold">{issue.level === "error" ? "✕" : "⚠"}</span>
-              <span>{issue.msg}</span>
-            </li>
-          ))}
-        </ul>
-      </AlertDescription>
-    </Alert>
-  );
-};

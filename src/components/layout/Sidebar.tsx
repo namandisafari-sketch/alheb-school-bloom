@@ -20,13 +20,19 @@ import {
   Box,
   Clock,
   Stethoscope,
+  Star,
+  Bed,
+  BookMarked,
   X,
+  Shield,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, AppRole } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 interface NavItem {
   icon: typeof LayoutDashboard;
@@ -45,13 +51,18 @@ const navItems: NavItem[] = [
   { icon: FileText, labelKey: "reports", path: "/reports", roles: ["admin", "teacher", "head_teacher"] },
   { icon: Calendar, labelKey: "program", path: "/calendar", roles: ["admin", "teacher", "staff", "security", "parent", "head_teacher", "accountant"] },
   { icon: Clock, labelKey: "schedule", path: "/schedule", roles: ["admin", "teacher", "staff", "security", "head_teacher"] },
-  { icon: UserCheck, labelKey: "visitors", path: "/visitors", roles: ["admin", "staff", "security", "head_teacher"] },
+  { icon: Shield, labelKey: "gatePasses", path: "/visitors", roles: ["admin", "staff", "security", "head_teacher"] },
   { icon: Box, labelKey: "inventory", path: "/inventory", roles: ["admin", "staff", "security", "head_teacher"] },
   { icon: Stethoscope, labelKey: "health", path: "/health", roles: ["admin", "teacher", "staff", "head_teacher"] },
+  { icon: Star, labelKey: "madrasa", path: "/madrasa", roles: ["admin", "teacher", "staff", "head_teacher"] },
+  { icon: Bed, labelKey: "hostel", path: "/hostel", roles: ["admin", "staff", "head_teacher"] },
+  { icon: BookMarked, labelKey: "homework", path: "/homework", roles: ["admin", "teacher", "head_teacher"] },
   { icon: ClipboardCheck, labelKey: "attendance", path: "/attendance", roles: ["admin", "teacher", "head_teacher"] },
   { icon: Receipt, labelKey: "feeManagement", path: "/fees", roles: ["admin", "staff", "accountant", "head_teacher"] },
+  { icon: Wallet, labelKey: "budget", path: "/budget", roles: ["admin", "accountant", "head_teacher"] },
   { icon: Wallet, labelKey: "salary", path: "/salary", roles: ["admin", "accountant", "head_teacher"] },
   { icon: CreditCard, labelKey: "idCards", path: "/id-cards", roles: ["admin", "head_teacher"] },
+  { icon: Layers, labelKey: "staffAssignments", path: "/staff-assignments", roles: ["admin"] },
   { icon: UserCog, labelKey: "userManagement", path: "/users", roles: ["admin", "head_teacher"] },
 ];
 
@@ -72,8 +83,13 @@ export const Sidebar = ({ isOpen = false, onClose, collapsed = false }: SidebarP
   const { user, role, signOut } = useAuth();
   const { t, isRTL } = useLanguage();
 
+  const { isGlobalAdmin } = useIsAdmin();
+  
   const filteredNavItems = navItems.filter(
-    (item) => !item.roles || (role && item.roles.includes(role))
+    (item) => {
+      if (item.path === "/staff-assignments" && !isGlobalAdmin) return false;
+      return !item.roles || (role && item.roles.includes(role));
+    }
   );
 
   const filteredBottomItems = bottomNavItems.filter(
@@ -130,9 +146,9 @@ export const Sidebar = ({ isOpen = false, onClose, collapsed = false }: SidebarP
             </div>
             <div className={cn("min-w-0", collapsed && "lg:hidden")}>
               <h1 className="font-display text-lg font-semibold text-sidebar-foreground truncate">
-                Alheb Islamic
+                Alheib Mixed
               </h1>
-              <p className="text-xs text-sidebar-foreground/70 truncate">{t("primarySchool")}</p>
+              <p className="text-[10px] text-sidebar-foreground/70 truncate uppercase tracking-tighter">Day & Boarding School</p>
             </div>
           </div>
           <Button

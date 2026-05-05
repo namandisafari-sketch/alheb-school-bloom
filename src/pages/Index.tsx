@@ -62,7 +62,7 @@ const Index = () => {
     return (
       <DashboardLayout 
         title="Gate Operations" 
-        subtitle="Security & Visitor Management - Alheb Islamic Primary School"
+        subtitle="Security & Visitor Management - Alheib Mixed Day & Boarding School"
       >
         <SecurityDashboard />
       </DashboardLayout>
@@ -83,7 +83,7 @@ const Index = () => {
   return (
     <DashboardLayout 
       title="Dashboard" 
-      subtitle="Welcome back! Term 3, 2024 - Alheb Islamic Primary School"
+      subtitle="Welcome back! Term 3, 2024 - Alheib Mixed Day & Boarding School"
     >
       {/* Term Banner */}
       <div className="mb-4 lg:mb-6 rounded-xl border border-primary/20 bg-primary/5 p-3 lg:p-4">

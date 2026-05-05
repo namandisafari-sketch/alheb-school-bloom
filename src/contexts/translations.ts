@@ -5,10 +5,10 @@
 export const enToAr: Record<string, string> = {
   // Brand & shared
   "Alheb Islamic": "الحبيب الإسلامية",
-  "Alheb Islamic Primary School": "مدرسة الحبيب الإسلامية الابتدائية",
+  "Alheib Mixed Day & Boarding School": "مدرسة الحبيب المختلطة النهارية والداخلية",
   "Parent Portal": "بوابة ولي الأمر",
+  "Welcome back! Term 3, 2024 - Alheib Mixed Day & Boarding School": "مرحبًا بعودتك! الفصل الثالث، 2024 - مدرسة الحبيب المختلطة النهارية والداخلية",
   "Welcome Back!": "مرحبًا بعودتك!",
-  "Welcome back! Term 3, 2024 - Alheb Islamic Primary School": "مرحبًا بعودتك! الفصل الثالث، 2024 - مدرسة الحبيب الإسلامية الابتدائية",
   "Track your children's progress and stay connected with the school": "تابع تقدم أبنائك وابقَ على تواصل مع المدرسة",
   "No Children Linked": "لا يوجد أبناء مرتبطون",
   "Your account hasn't been linked to any learners yet. Please contact the school administration to link your children to your account.":
@@ -87,7 +87,7 @@ export const enToAr: Record<string, string> = {
   "Security/Gatekeeper": "حارس الأمن / البوابة",
   "Gate Operations": "عمليات البوابة",
   "Security & Visitor Management": "الأمن وإدارة الزوار",
-  "Security & Visitor Management - Alheb Islamic Primary School": "الأمن وإدارة الزوار - مدرسة الحبيب الإسلامية الابتدائية",
+  "Security & Visitor Management - Alheib Mixed Day & Boarding School": "الأمن وإدارة الزوار - مدرسة الحبيب المختلطة النهارية والداخلية",
   "accountSettings": "إعدادات الحساب",
 
   // Header

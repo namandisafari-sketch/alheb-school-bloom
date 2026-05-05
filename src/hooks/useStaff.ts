@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./useAuth";
 
 export type StaffRole = "admin" | "teacher" | "support" | "driver" | "security" | "cook" | "cleaner" | "accountant";
 
@@ -10,6 +11,9 @@ export interface Staff {
   phone: string | null;
   qualification: string | null;
   role: StaffRole | string | null;
+  scope: "global" | "district" | "school" | null;
+  district_id: string | null;
+  school_id: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -26,10 +30,20 @@ export const STAFF_ROLES: { value: StaffRole; label: string }[] = [
 ];
 
 export const useStaff = (roleFilter?: StaffRole | "all") => {
+  const { profile } = useAuth();
+
   return useQuery({
-    queryKey: ["staff", roleFilter],
+    queryKey: ["staff", roleFilter, profile?.scope, profile?.district_id],
     queryFn: async () => {
-      let query = supabase.from("profiles").select("*").order("full_name");
+      let query = supabase.from("profiles").select("*, user_roles(role)");
+
+      if (profile?.scope === "district" && profile.district_id) {
+        query = query.eq("district_id", profile.district_id);
+      } else if (profile?.scope === "school" && profile.school_id) {
+        query = query.eq("school_id", profile.school_id);
+      }
+
+      query = query.order("full_name");
 
       if (roleFilter && roleFilter !== "all" && roleFilter !== "teacher") {
         query = query.eq("role", roleFilter);
@@ -40,22 +54,35 @@ export const useStaff = (roleFilter?: StaffRole | "all") => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Staff[];
+      return (data || []).map((p: any) => ({
+        ...p,
+        role: p.user_roles?.[0]?.role || p.role
+      })) as Staff[];
     },
   });
 };
 
 export const useAllStaff = () => {
+  const { profile } = useAuth();
+
   return useQuery({
-    queryKey: ["all-staff"],
+    queryKey: ["all-staff", profile?.scope, profile?.district_id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("full_name");
+      let query = supabase.from("profiles").select("*, user_roles(role)");
+
+      if (profile?.scope === "district" && profile.district_id) {
+        query = query.eq("district_id", profile.district_id);
+      } else if (profile?.scope === "school" && profile.school_id) {
+        query = query.eq("school_id", profile.school_id);
+      }
+
+      const { data, error } = await query.order("full_name");
 
       if (error) throw error;
-      return data as Staff[];
+      return (data || []).map((p: any) => ({
+        ...p,
+        role: p.user_roles?.[0]?.role || p.role
+      })) as Staff[];
     },
   });
 };

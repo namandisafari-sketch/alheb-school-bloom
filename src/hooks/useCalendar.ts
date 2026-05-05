@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
-export interface CalendarEvent {
+export type CalendarEvent = {
   id: string;
   title: string;
   description: string | null;
@@ -10,12 +11,11 @@ export interface CalendarEvent {
   event_type: 'term' | 'holiday' | 'exam' | 'activity' | 'event';
   color: string;
   is_public: boolean;
-  created_at: string;
-}
+};
 
 export const useCalendar = () => {
   return useQuery({
-    queryKey: ["calendar-events"],
+    queryKey: ["school-calendar"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("school_calendar")
@@ -32,18 +32,22 @@ export const useUpsertCalendarEvent = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (event: Partial<CalendarEvent>) => {
-      const { data, error } = await supabase
-        .from("school_calendar")
-        .upsert(event)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      if (event.id) {
+        const { error } = await supabase
+          .from("school_calendar")
+          .update(event)
+          .eq("id", event.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("school_calendar")
+          .insert(event);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
-    },
+      queryClient.invalidateQueries({ queryKey: ["school-calendar"] });
+    }
   });
 };
 
@@ -55,11 +59,10 @@ export const useDeleteCalendarEvent = () => {
         .from("school_calendar")
         .delete()
         .eq("id", id);
-
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
-    },
+      queryClient.invalidateQueries({ queryKey: ["school-calendar"] });
+    }
   });
 };

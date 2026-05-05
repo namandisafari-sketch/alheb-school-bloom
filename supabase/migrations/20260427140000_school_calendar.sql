@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.school_calendar (
 -- Enable RLS
 ALTER TABLE public.school_calendar ENABLE ROW LEVEL SECURITY;
 
+
 -- Policies
 -- Check if policy exists before creating
 DO $$ 
