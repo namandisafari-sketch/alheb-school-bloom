@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Wind, User, Droplets, Zap } from "lucide-react";
+import { Wind, User, Droplets, Zap, Plus } from "lucide-react";
 
 export const WashingMachineTab = () => {
   return (
