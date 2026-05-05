@@ -355,6 +355,86 @@ export type Database = {
           },
         ]
       }
+      dormitories: {
+        Row: {
+          capacity: number
+          created_at: string
+          gender: string
+          id: string
+          location: string | null
+          matron_staff_id: string | null
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number
+          created_at?: string
+          gender: string
+          id?: string
+          location?: string | null
+          matron_staff_id?: string | null
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          gender?: string
+          id?: string
+          location?: string | null
+          matron_staff_id?: string | null
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dormitory_residents: {
+        Row: {
+          assigned_date: string
+          bed_number: string | null
+          created_at: string
+          dormitory_id: string
+          id: string
+          is_active: boolean
+          learner_id: string
+          notes: string | null
+          released_date: string | null
+        }
+        Insert: {
+          assigned_date?: string
+          bed_number?: string | null
+          created_at?: string
+          dormitory_id: string
+          id?: string
+          is_active?: boolean
+          learner_id: string
+          notes?: string | null
+          released_date?: string | null
+        }
+        Update: {
+          assigned_date?: string
+          bed_number?: string | null
+          created_at?: string
+          dormitory_id?: string
+          id?: string
+          is_active?: boolean
+          learner_id?: string
+          notes?: string | null
+          released_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dormitory_residents_dormitory_id_fkey"
+            columns: ["dormitory_id"]
+            isOneToOne: false
+            referencedRelation: "dormitories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       emergency_reentry_slips: {
         Row: {
           badge_number: string
@@ -1025,6 +1105,69 @@ export type Database = {
             columns: ["learner_id"]
             isOneToOne: false
             referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learner_essentials: {
+        Row: {
+          condition: string
+          created_at: string
+          id: string
+          issued_by: string | null
+          issued_date: string
+          item_id: string
+          learner_id: string
+          notes: string | null
+          quantity: number
+          replacement_for: string | null
+          returned_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          condition?: string
+          created_at?: string
+          id?: string
+          issued_by?: string | null
+          issued_date?: string
+          item_id: string
+          learner_id: string
+          notes?: string | null
+          quantity?: number
+          replacement_for?: string | null
+          returned_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          condition?: string
+          created_at?: string
+          id?: string
+          issued_by?: string | null
+          issued_date?: string
+          item_id?: string
+          learner_id?: string
+          notes?: string | null
+          quantity?: number
+          replacement_for?: string | null
+          returned_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learner_essentials_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learner_essentials_replacement_for_fkey"
+            columns: ["replacement_for"]
+            isOneToOne: false
+            referencedRelation: "learner_essentials"
             referencedColumns: ["id"]
           },
         ]
