@@ -78,6 +78,7 @@ export const enToAr: Record<string, string> = {
   "User Management": "إدارة المستخدمين",
   "Notifications": "الإشعارات",
   "System Settings": "إعدادات النظام",
+  "Staff Assignments": "تعيينات الموظفين",
   "Logout": "تسجيل الخروج",
   "Primary School": "مدرسة ابتدائية",
   "Administrator": "مدير النظام",

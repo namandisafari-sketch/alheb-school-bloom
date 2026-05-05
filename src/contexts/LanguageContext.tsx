@@ -103,6 +103,7 @@ const keyedTranslations: Record<string, { en: string; ar: string }> = {
   userManagement: { en: "User Management", ar: "إدارة المستخدمين" },
   systemSettings: { en: "System Settings", ar: "إعدادات النظام" },
   logout: { en: "Logout", ar: "تسجيل الخروج" },
+  staffAssignments: { en: "Staff Assignments", ar: "تعيينات الموظفين" },
   administrator: { en: "Administrator", ar: "مدير النظام" },
   parent: { en: "Parent", ar: "ولي الأمر" },
   teacher: { en: "Teacher", ar: "معلم" },
