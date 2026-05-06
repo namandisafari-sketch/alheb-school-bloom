@@ -1,6 +1,8 @@
 import { useState, useRef, ReactNode, useEffect } from "react";
 import { format, formatDistanceToNow, isToday, isPast } from "date-fns";
 import { BrowserQRCodeReader } from "@zxing/library";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +26,7 @@ import {
   LogIn, LogOut, Plus, Search, Phone, MapPin, Clock, AlertTriangle, Printer, Ban,
   Shield, UserPlus, Users, History, ScanLine, ShieldCheck, ArrowRightLeft,
   CalendarCheck, UserCheck, Timer, TrendingUp, Activity, PieChart as PieChartIcon,
-  BarChart3, Calendar, ListFilter
+  BarChart3, Calendar, ListFilter, PackageCheck, Loader2
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -48,6 +50,8 @@ import { useStudentBalances, formatUGX } from "@/hooks/useFees";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { LocationSelector } from "@/components/common/LocationSelector";
+import { useDisciplineFlags } from "@/hooks/useDisciplineFlags";
+import { DisciplineFlag } from "@/components/discipline/DisciplineFlag";
 
 const GateStatCard = ({ icon, label, value, color, bgColor }: { icon: ReactNode; label: string; value: number | string; color: string; bgColor: string }) => (
   <div className={cn("flex items-center gap-4 p-4 bg-white border rounded-3xl shadow-sm", bgColor)}>
@@ -437,6 +441,7 @@ function LearnerVerificationDialog({ initialId, onClose }: { initialId?: string,
   const videoRef = useRef<HTMLVideoElement>(null);
   const { data: learners = [] } = useLearners();
   const { data: balances = [] } = useStudentBalances();
+  const { data: flags } = useDisciplineFlags();
 
   // Handle hardware scan (initialId)
   useEffect(() => {
@@ -572,6 +577,12 @@ function LearnerVerificationDialog({ initialId, onClose }: { initialId?: string,
                     </div>
                   </div>
                 </div>
+                
+                {flags?.[learner.id] && (
+                  <div className="px-6 pt-6">
+                    <DisciplineFlag disciplineCase={flags[learner.id]} className="py-4 px-6 border-4 shadow-2xl scale-[1.02]" />
+                  </div>
+                )}
                 
                 <div className="p-6 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -738,6 +749,10 @@ const Visitors = () => {
               <TabsTrigger value="reentry" className="h-10 px-6 data-[state=active]:bg-slate-900 data-[state=active]:text-white">
                 <AlertTriangle className="h-4 w-4 mr-2" />
                 Gate Passes
+              </TabsTrigger>
+              <TabsTrigger value="inventory" className="h-10 px-6 data-[state=active]:bg-slate-900 data-[state=active]:text-white">
+                <PackageCheck className="h-4 w-4 mr-2" />
+                Item Clearance
               </TabsTrigger>
               <TabsTrigger value="log" className="h-10 px-6 data-[state=active]:bg-slate-900 data-[state=active]:text-white">
                 <History className="h-4 w-4 mr-2" />
@@ -1062,6 +1077,10 @@ const Visitors = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="inventory" className="mt-0">
+          <InventoryMovementTab />
+        </TabsContent>
+
         {/* VISITORS DIRECTORY */}
         <TabsContent value="visitors" className="space-y-4">
           <RecurringVisitors visitors={visitors} />
@@ -1363,6 +1382,116 @@ function ReentrySlipDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function InventoryMovementTab() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const queryClient = useQueryClient();
+
+  const { data: passes = [], isLoading } = useQuery({
+    queryKey: ["active-gate-passes"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inventory_transactions")
+        .select(`
+          *,
+          item:inventory_items(name, unit),
+          learner:learners(full_name),
+          staff:profiles(full_name)
+        `)
+        .in('status', ['director_approved', 'dispatched'])
+        .order("director_approval_date", { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const verifyMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("inventory_transactions")
+        .update({
+          status: 'verified_at_gate',
+          gate_verified_at: new Date().toISOString()
+        })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Verified", description: "Item clearance confirmed. Movement logged." });
+      queryClient.invalidateQueries({ queryKey: ["active-gate-passes"] });
+      setSearchTerm("");
+    },
+    onError: (e: any) => {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    }
+  });
+
+  const filteredPasses = passes.filter(p => 
+    p.tracking_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.learner?.full_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.staff?.full_name || "").toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-6">
+      <Card className="border-2 border-primary/20 shadow-lg bg-gradient-to-br from-white to-slate-50">
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row gap-4">
+             <div className="relative flex-1">
+               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+               <Input 
+                 placeholder="Search tracking number or recipient..." 
+                 className="h-12 pl-12 font-mono"
+                 value={searchTerm}
+                 onChange={(e) => setSearchTerm(e.target.value)}
+               />
+             </div>
+             <Button className="h-12 gap-2 font-bold px-8">
+               <ScanLine className="h-5 w-5" /> Scan Pass
+             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4">
+        {isLoading ? (
+          <div className="py-12 text-center text-slate-400">Loading clearances...</div>
+        ) : filteredPasses.length === 0 ? (
+          <div className="py-20 text-center border-2 border-dashed rounded-3xl bg-slate-50/50">
+             <PackageCheck className="h-12 w-12 mx-auto text-slate-200 mb-4" />
+             <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">No active clearances found</p>
+          </div>
+        ) : (
+          filteredPasses.map((pass) => (
+            <Card key={pass.id} className="overflow-hidden border-2 hover:border-primary/50 transition-all bg-white">
+               <div className="flex flex-col md:flex-row">
+                  <div className="flex-1 p-5 border-b md:border-b-0 md:border-r">
+                     <div className="flex items-center justify-between mb-3">
+                        <Badge variant="secondary" className="font-mono text-[10px]">{pass.tracking_number}</Badge>
+                        <Badge className="bg-emerald-500 text-white text-[9px] uppercase font-black tracking-widest">Director Cleared</Badge>
+                     </div>
+                     <h4 className="text-lg font-black text-slate-900 uppercase">{pass.item?.name}</h4>
+                     <p className="text-xs text-slate-500 font-bold">Qty: {pass.quantity} {pass.item?.unit} • For: {pass.learner?.full_name || pass.staff?.full_name || 'General'}</p>
+                  </div>
+                  <div className="p-5 flex flex-col justify-center bg-slate-50/50 min-w-[200px]">
+                     <Button 
+                       className="w-full gap-2 bg-slate-900 hover:bg-black text-white shadow-lg"
+                       onClick={() => verifyMutation.mutate(pass.id)}
+                       disabled={verifyMutation.isPending}
+                     >
+                       {verifyMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                       Verify Exit
+                     </Button>
+                  </div>
+               </div>
+            </Card>
+          ))
+        )}
+      </div>
+    </div>
   );
 }
 

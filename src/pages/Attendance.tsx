@@ -12,6 +12,8 @@ import {
 import { Check, X, Clock, Calendar, Loader2, Users } from "lucide-react";
 import { useClasses } from "@/hooks/useClasses";
 import { useAttendance, useMarkAttendance, useBulkMarkAttendance, LearnerWithAttendance } from "@/hooks/useAttendance";
+import { useDisciplineFlags } from "@/hooks/useDisciplineFlags";
+import { DisciplineFlag } from "@/components/discipline/DisciplineFlag";
 import { Database } from "@/integrations/supabase/types";
 
 type AttendanceStatus = Database["public"]["Enums"]["attendance_status"];
@@ -32,6 +34,7 @@ const Attendance = () => {
   const { data: learners = [], isLoading: learnersLoading } = useAttendance(selectedClassId, selectedDate);
   const markAttendance = useMarkAttendance();
   const bulkMarkAttendance = useBulkMarkAttendance();
+  const { data: flags } = useDisciplineFlags();
 
   const selectedClass = classes.find((c) => c.id === selectedClassId);
 
@@ -222,6 +225,11 @@ const Attendance = () => {
                           ? `Checked in: ${learner.attendance.check_in_time.slice(0, 5)}`
                           : "Not recorded"}
                       </p>
+                      {flags?.[learner.id] && (
+                        <div className="mt-2 w-full max-w-xs">
+                          <DisciplineFlag disciplineCase={flags[learner.id]} />
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">

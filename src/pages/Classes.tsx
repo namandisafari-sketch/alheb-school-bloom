@@ -4,8 +4,10 @@ import { Progress } from "@/components/ui/progress";
 import { Users, BookOpen, Plus, MapPin, Loader2 } from "lucide-react";
 import { useClasses } from "@/hooks/useClasses";
 import { AddClassDialog } from "@/components/classes/AddClassDialog";
+import { useNavigate } from "react-router-dom";
 
 const Classes = () => {
+  const navigate = useNavigate();
   const { data: classes = [], isLoading, error } = useClasses();
 
   return (
@@ -98,12 +100,19 @@ const Classes = () => {
 
                   {/* Actions */}
                   <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => navigate(`/students?class=${encodeURIComponent(cls.name)}`)}
+                    >
                       View Details
                     </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
-                      Manage
-                    </Button>
+                    <AddClassDialog initialData={cls}>
+                      <Button variant="outline" size="sm" className="flex-1">
+                        Manage
+                      </Button>
+                    </AddClassDialog>
                   </div>
                 </div>
               );

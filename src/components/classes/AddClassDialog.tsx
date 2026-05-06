@@ -45,9 +45,10 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface AddClassDialogProps {
   children: React.ReactNode;
+  initialData?: any; // Using any for now to avoid complex type issues with Class vs FormValues
 }
 
-export function AddClassDialog({ children }: AddClassDialogProps) {
+export function AddClassDialog({ children, initialData }: AddClassDialogProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
   const { data: teachers = [] } = useTeachers();
@@ -55,36 +56,52 @@ export function AddClassDialog({ children }: AddClassDialogProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      level: 1,
-      capacity: 40,
-      room: "",
-      teacher_id: "",
+      name: initialData?.name || "",
+      level: initialData?.level || 1,
+      capacity: initialData?.capacity || 40,
+      room: initialData?.room || "",
+      teacher_id: initialData?.teacher_id || "",
     },
   });
 
   const mutation = useMutation({
     mutationFn: async (values: FormValues) => {
-      const { error } = await supabase.from("classes").insert({
-        name: values.name,
-        level: values.level,
-        capacity: values.capacity || 40,
-        room: values.room || null,
-        teacher_id: values.teacher_id || null,
-      });
-
-      if (error) throw error;
+      if (initialData?.id) {
+        const { error } = await supabase
+          .from("classes")
+          .update({
+            name: values.name,
+            level: values.level,
+            capacity: values.capacity || 40,
+            room: values.room || null,
+            teacher_id: values.teacher_id || null,
+          })
+          .eq("id", initialData.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("classes").insert({
+          name: values.name,
+          level: values.level,
+          capacity: values.capacity || 40,
+          room: values.room || null,
+          teacher_id: values.teacher_id || null,
+        });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      toast({ title: "Success", description: "Class created successfully" });
+      toast({ 
+        title: "Success", 
+        description: initialData ? "Class updated successfully" : "Class created successfully" 
+      });
       queryClient.invalidateQueries({ queryKey: ["classes"] });
-      form.reset();
+      if (!initialData) form.reset();
       setOpen(false);
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to create class",
+        description: error.message || "Failed to save class",
         variant: "destructive",
       });
     },
@@ -99,9 +116,9 @@ export function AddClassDialog({ children }: AddClassDialogProps) {
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New Class</DialogTitle>
+          <DialogTitle>{initialData ? "Manage Class" : "Add New Class"}</DialogTitle>
           <DialogDescription>
-            Create a new class and assign a teacher
+            {initialData ? "Update class details and settings" : "Create a new class and assign a teacher"}
           </DialogDescription>
         </DialogHeader>
 
@@ -216,7 +233,7 @@ export function AddClassDialog({ children }: AddClassDialogProps) {
               </Button>
               <Button type="submit" disabled={mutation.isPending}>
                 {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Class
+                {initialData ? "Save Changes" : "Create Class"}
               </Button>
             </div>
           </form>

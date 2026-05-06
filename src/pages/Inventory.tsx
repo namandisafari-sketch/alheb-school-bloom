@@ -33,12 +33,13 @@ import {
   X as CloseIcon,
   FileText,
   ShieldCheck,
+  Edit,
 } from "lucide-react";
 import { useInventory, useAssets } from "@/hooks/useInventory";
-import { AddInventoryItemDialog } from "@/components/inventory/AddInventoryItemDialog";
+import { InventoryItemDialog } from "@/components/inventory/InventoryItemDialog";
 import { IssueItemDialog } from "@/components/inventory/IssueItemDialog";
 import { RestockItemDialog } from "@/components/inventory/RestockItemDialog";
-import { AddAssetDialog } from "@/components/inventory/AddAssetDialog";
+import { AssetDialog } from "@/components/inventory/AssetDialog";
 import { BulkIssueDialog } from "@/components/inventory/BulkIssueDialog";
 import { GatePassDialog } from "@/components/inventory/GatePassDialog";
 import { format } from "date-fns";
@@ -73,7 +74,7 @@ const Inventory = () => {
     },
   });
 
-  const pendingRequests = history?.filter(h => h.status === 'pending');
+  const pendingRequests = history?.filter(h => ['pending', 'manager_approved'].includes(h.status));
 
   const filteredItems = items.data?.filter((item: any) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -93,20 +94,30 @@ const Inventory = () => {
     setIsRestockOpen(true);
   };
 
-  const handleApprove = async (id: string) => {
+  const handleApprove = async (id: string, currentStatus: string) => {
+    let nextStatus = 'manager_approved';
+    const updateData: any = { 
+      status: nextStatus,
+      manager_id: user?.id,
+      manager_approval_date: new Date().toISOString()
+    };
+
+    if (currentStatus === 'manager_approved') {
+      nextStatus = 'director_approved';
+      updateData.status = nextStatus;
+      updateData.director_id = user?.id;
+      updateData.director_approval_date = new Date().toISOString();
+    }
+
     const { error } = await supabase
       .from("inventory_transactions")
-      .update({ 
-        status: 'approved', 
-        approved_by: user?.id,
-        approval_date: new Date().toISOString() 
-      })
+      .update(updateData)
       .eq('id', id);
     
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Approved", description: "Issuance request approved. Stock updated." });
+      toast({ title: "Approved", description: `Request moved to ${nextStatus.replace('_', ' ')}.` });
       queryClient.invalidateQueries({ queryKey: ["inventory-history"] });
       queryClient.invalidateQueries({ queryKey: ["inventory-items"] });
     }
@@ -226,16 +237,23 @@ const Inventory = () => {
               >
                 <History className="mr-2 h-4 w-4" /> Audit Trail
               </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1 sm:flex-none border-blue-200 bg-blue-50/30 hover:bg-blue-50 text-blue-700"
+                onClick={() => window.location.href = '/visitors'}
+              >
+                <ShieldCheck className="mr-2 h-4 w-4" /> Gate Monitor
+              </Button>
               <BulkIssueDialog>
                 <Button variant="outline" className="flex-1 sm:flex-none border-primary/20 hover:bg-primary/5">
                   <Users className="mr-2 h-4 w-4" /> Bulk Issue
                 </Button>
               </BulkIssueDialog>
-              <AddInventoryItemDialog>
+              <InventoryItemDialog>
                 <Button className="flex-1 sm:flex-none">
                   <Plus className="mr-2 h-4 w-4" /> New Item
                 </Button>
-              </AddInventoryItemDialog>
+              </InventoryItemDialog>
             </div>
           </div>
 
@@ -267,6 +285,11 @@ const Inventory = () => {
                           </p>
                         </div>
                       </div>
+                      <InventoryItemDialog item={item} mode="edit">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-primary">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </InventoryItemDialog>
                     </div>
 
                     <div className="flex-1 space-y-4">
@@ -345,13 +368,21 @@ const Inventory = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  <Button size="sm" className="flex-1 bg-success hover:bg-success/90 text-white" onClick={() => handleApprove(req.id)}>
-                    <Check className="h-4 w-4 mr-1" /> Approve
-                  </Button>
-                  <Button size="sm" variant="ghost" className="flex-1 text-destructive hover:bg-destructive/5" onClick={() => handleReject(req.id)}>
-                    <CloseIcon className="h-4 w-4 mr-1" /> Reject
-                  </Button>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-[10px] uppercase font-black tracking-widest text-slate-400 mb-2">
+                     <span>Clearance Status</span>
+                     <Badge variant="secondary" className="h-4 px-1.5 text-[8px]">
+                        {req.status === 'pending' ? 'Step 1: Manager' : 'Step 2: Director'}
+                     </Badge>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" className="flex-1 bg-success hover:bg-success/90 text-white font-bold" onClick={() => handleApprove(req.id, req.status)}>
+                      <Check className="h-4 w-4 mr-1" /> {req.status === 'pending' ? 'Verify Request' : 'Director Approval'}
+                    </Button>
+                    <Button size="sm" variant="ghost" className="flex-1 text-destructive hover:bg-destructive/5 font-bold" onClick={() => handleReject(req.id)}>
+                      <CloseIcon className="h-4 w-4 mr-1" /> Reject
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -365,11 +396,11 @@ const Inventory = () => {
 
         <TabsContent value="assets" className="space-y-4">
           <div className="flex justify-end">
-            <AddAssetDialog>
+            <AssetDialog>
               <Button>
                 <Plus className="mr-2 h-4 w-4" /> Record Asset
               </Button>
-            </AddAssetDialog>
+            </AssetDialog>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -378,9 +409,16 @@ const Inventory = () => {
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h4 className="font-bold">{asset.name}</h4>
-                    <p className="text-[10px] font-mono text-muted-foreground">{asset.serial_number || "NO SERIAL"}</p>
+                    <p className="text-[10px] font-mono text-muted-foreground">{asset.serial_number || asset.asset_tag_id || "NO SERIAL"}</p>
                   </div>
-                  <Badge variant="outline" className="capitalize text-[10px]">{asset.condition}</Badge>
+                  <div className="flex items-center gap-1">
+                    <AssetDialog asset={asset} mode="edit">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-primary">
+                        <Edit className="h-3.5 w-3.5" />
+                      </Button>
+                    </AssetDialog>
+                    <Badge variant="outline" className="capitalize text-[10px]">{asset.condition}</Badge>
+                  </div>
                 </div>
 
                 <div className="space-y-2 text-xs">

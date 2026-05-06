@@ -34,7 +34,9 @@ import Hostel from "./pages/Hostel";
 import Budget from "./pages/Budget";
 import Homework from "./pages/Homework";
 import StaffManagement from "./pages/StaffManagement";
+import Discipline from "./pages/Discipline";
 import NotFound from "./pages/NotFound";
+import { AIAssistant } from "./components/ai/AIAssistant";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +47,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <AIAssistant />
           <BrowserRouter>
             <Routes>
             {/* Public Routes */}
@@ -258,6 +261,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["admin", "teacher", "head_teacher"]}>
                   <Homework />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/discipline"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "head_teacher"]}>
+                  <Discipline />
                 </ProtectedRoute>
               }
             />

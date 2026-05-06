@@ -46,9 +46,9 @@ const InventoryTracking = () => {
 
   const filteredTransactions = transactions.filter(t => {
     const matchesSearch = 
-      t.item?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.tracking_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.learner?.full_name.toLowerCase().includes(searchTerm.toLowerCase());
+      (t.item?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.tracking_number || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.learner?.full_name || "").toLowerCase().includes(searchTerm.toLowerCase());
     
     if (filterType === "all") return matchesSearch;
     return matchesSearch && t.type === filterType;

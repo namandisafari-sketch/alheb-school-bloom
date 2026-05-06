@@ -15,6 +15,13 @@ import { format, subDays } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { SecurityDashboard } from "@/components/dashboard/SecurityDashboard";
 import { TeacherDashboard } from "@/components/dashboard/TeacherDashboard";
+import { InventorySummaryWidget } from "@/components/dashboard/InventoryWidgets";
+import { SystemHealthWidget } from "@/components/dashboard/SystemHealthWidget";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowUpRight, TrendingUp, Shield, Activity, Package, Monitor } from "lucide-react";
 
 const useAttendanceStats = () => {
   return useQuery({
@@ -143,25 +150,57 @@ const Index = () => {
         />
       </div>
 
-      {/* Fee Collection Summary */}
-      <div className="mt-4 lg:mt-6">
-        <FeeCollectionSummary />
-      </div>
-
       {/* Main Content Grid */}
-      <div className="mt-4 lg:mt-6 grid gap-4 lg:gap-6 lg:grid-cols-3">
-        {/* Left Column */}
-        <div className="lg:col-span-2 space-y-4 lg:space-y-6">
-          <ClassOverview />
-          <RecentFeePayments />
+      <div className="mt-6 grid gap-6 lg:grid-cols-4">
+        {/* Left Stats Column (Small Widgets) */}
+        <div className="space-y-6">
+          <SystemHealthWidget />
+          <InventorySummaryWidget />
+          <div className="p-6 bg-white border-2 border-slate-100 rounded-3xl space-y-4">
+             <div className="flex items-center justify-between">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Academic Progress</h4>
+                <TrendingUp className="h-4 w-4 text-emerald-500" />
+             </div>
+             <div>
+                <p className="text-2xl font-black text-slate-900">78%</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase">Syllabus Completion</p>
+             </div>
+             <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden">
+                <div className="h-full bg-slate-900 w-[78%]" />
+             </div>
+          </div>
+        </div>
+
+        {/* Center Main Column */}
+        <div className="lg:col-span-2 space-y-6">
+          <FeeCollectionSummary />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ClassOverview />
+            <RecentFeePayments />
+          </div>
           <RecentActivity />
         </div>
 
-        {/* Right Column */}
-        <div className="space-y-4 lg:space-y-6">
+        {/* Right Sidebar Column */}
+        <div className="space-y-6">
           <QuickActions />
           <OutstandingBalancesWidget />
           <UpcomingEvents />
+          
+          <Card className="border-2 border-slate-100 shadow-sm p-5 bg-blue-50/30">
+             <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                   <Monitor className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                   <h4 className="text-xs font-black uppercase text-blue-900">Remote Access</h4>
+                   <p className="text-[10px] font-bold text-blue-500">VPN Tunnel Active</p>
+                </div>
+             </div>
+             <Button variant="outline" size="sm" className="w-full border-blue-200 text-blue-700 hover:bg-blue-100 text-[10px] font-black uppercase tracking-widest">
+                Configure Gateway
+             </Button>
+          </Card>
         </div>
       </div>
     </DashboardLayout>

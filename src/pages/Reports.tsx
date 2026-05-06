@@ -194,16 +194,33 @@ const Reports = () => {
         .from("learners")
         .select(`
           admission_number,
-          full_name,
+          first_name,
+          last_name,
           gender,
           date_of_birth,
           nin,
           lin,
           parent_nin,
           religion,
-          class:classes(name)
-        `)
-        .eq(selectedClass === "all" ? "" : "class_id", selectedClass === "all" ? undefined : selectedClass);
+          home_region,
+          home_district,
+          home_sub_county,
+          home_parish,
+          schools(
+            name, 
+            center_number, 
+            license_number, 
+            registration_status, 
+            ownership_type, 
+            academic_level, 
+            year_founded, 
+            urban_rural, 
+            distance_to_district_hq, 
+            distance_to_health_facility, 
+            distance_to_bank
+          ),
+          classes(name)
+        `);
       
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -211,29 +228,54 @@ const Reports = () => {
       }
 
       // Generate CSV
-      const headers = ["ADM", "Name", "Gender", "DOB", "NIN", "LIN", "Parent NIN", "Religion", "Class"];
-      const rows = (data as any[]).map((l: any) => [
-        l.admission_number,
-        l.full_name,
-        l.gender,
-        l.date_of_birth,
-        l.nin || "N/A",
-        l.lin || "N/A",
-        l.parent_nin || "N/A",
-        l.religion || "Islam",
-        l.class?.name || "Unassigned"
-      ]);
+      const headers = [
+        "ADM NO", "First Name", "Last Name", "Gender", "DOB", "NIN", "LIN", "Parent NIN", 
+        "Religion", "Region", "District", "Sub-County", "Parish", "Class", 
+        "School Name", "Center No", "License No", "Status", "Ownership", "Level", 
+        "Year Founded", "Urban/Rural", "Dist to HQ", "Dist to Health", "Dist to Bank"
+      ];
       
-      const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+      const rows = data.map(l => {
+        const s = (l as any).schools || {};
+        return [
+          l.admission_number,
+          l.first_name,
+          l.last_name,
+          l.gender,
+          l.date_of_birth,
+          l.nin || "",
+          l.lin || "",
+          l.parent_nin || "",
+          l.religion || "Islam",
+          l.home_region || "",
+          l.home_district || "",
+          l.home_sub_county || "",
+          l.home_parish || "",
+          (l as any).classes?.name || "Unassigned",
+          s.name || "",
+          s.center_number || "",
+          s.license_number || "",
+          s.registration_status || "",
+          s.ownership_type || "",
+          s.academic_level || "",
+          s.year_founded || "",
+          s.urban_rural || "",
+          s.distance_to_district_hq || "",
+          s.distance_to_health_facility || "",
+          s.distance_to_bank || ""
+        ];
+      });
+      
+      const csvContent = [headers, ...rows].map(e => e.map(cell => `"${cell}"`).join(",")).join("\n");
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", `EMIS_Export_${format(new Date(), "yyyy_MM_dd")}.csv`);
+      link.setAttribute("download", `EMIS_Official_Export_${format(new Date(), "yyyy_MM_dd")}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       
-      toast({ title: "EMIS Data Exported", description: "CSV file generated for Ministry submission." });
+      toast({ title: "EMIS Data Exported", description: "Official CSV file generated for Ministry submission." });
       return;
     }
     await setStatus.mutateAsync({ ids, status: "locked" });

@@ -26,6 +26,7 @@ import {
   X,
   Shield,
   Layers,
+  Scale,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, AppRole } from "@/hooks/useAuth";
@@ -58,6 +59,7 @@ const navItems: NavItem[] = [
   { icon: Bed, labelKey: "hostel", path: "/hostel", roles: ["admin", "staff", "head_teacher"] },
   { icon: BookMarked, labelKey: "homework", path: "/homework", roles: ["admin", "teacher", "head_teacher"] },
   { icon: ClipboardCheck, labelKey: "attendance", path: "/attendance", roles: ["admin", "teacher", "head_teacher"] },
+  { icon: Scale, labelKey: "discipline", path: "/discipline", roles: ["admin", "head_teacher"] },
   { icon: Receipt, labelKey: "feeManagement", path: "/fees", roles: ["admin", "staff", "accountant", "head_teacher"] },
   { icon: Wallet, labelKey: "budget", path: "/budget", roles: ["admin", "accountant", "head_teacher"] },
   { icon: Wallet, labelKey: "salary", path: "/salary", roles: ["admin", "accountant", "head_teacher"] },

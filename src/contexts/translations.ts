@@ -487,7 +487,6 @@ export const enToAr: Record<string, string> = {
   "Initial Stock": "المخزون الابتدائي",
   "Description": "الوصف",
   "Create Item": "إنشاء الصنف",
-  "Confirm Issuance": "تأكيد الصرف",
   "Record an item being given to a student or staff member": "تسجيل صنف تم إعطاؤه لطالب أو موظف",
   "Recipient Type": "نوع المستلم",
   "Student / Learner": "طالب / متعلم",
