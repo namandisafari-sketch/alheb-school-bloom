@@ -54,14 +54,14 @@ const PDF417Barcode = ({ value, height = 12 }: { value: string; height?: number 
         bwipjs.toCanvas(canvasRef.current, {
           bcid: 'pdf417',
           text: value,
-          scale: 3,           // Increased scale for sharper dots
-          height: height,      // Use dynamic height from settings
+          scale: 3,
+          height: height,
           eclevel: 4,
           columns: 12,
           includetext: false,
           paddingwidth: 0,
           paddingheight: 0
-        });
+        } as any);
       } catch (e) {
         console.error('PDF417 Error:', e);
       }
@@ -143,8 +143,8 @@ export const StaffIDCard = ({
 
         <div className="flex px-7 gap-8 relative z-10 items-start">
           <div className="w-[125px] h-[155px] bg-slate-50 rounded-xl border-[1.5px] border-red-100 overflow-hidden shadow-md flex-shrink-0">
-            {staff.avatar_url ? (
-              <img src={staff.avatar_url} className="w-full h-full object-cover" crossOrigin="anonymous" />
+            {(staff as any).avatar_url ? (
+              <img src={(staff as any).avatar_url} className="w-full h-full object-cover" crossOrigin="anonymous" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-slate-100">
                 <User size={55} className="text-slate-300" />
@@ -188,8 +188,8 @@ export const StaffIDCard = ({
             filter: 'grayscale(100%) contrast(120%) opacity(0.25)'
           }}
         >
-          {staff.avatar_url ? (
-            <img src={staff.avatar_url} className="w-full h-full object-cover" crossOrigin="anonymous" />
+          {(staff as any).avatar_url ? (
+            <img src={(staff as any).avatar_url} className="w-full h-full object-cover" crossOrigin="anonymous" />
           ) : (
             <div className="w-full h-full bg-slate-300" />
           )}

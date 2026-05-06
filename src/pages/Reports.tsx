@@ -60,6 +60,10 @@ import { useAuth } from "@/hooks/useAuth";
 import jsPDF from "jspdf";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
+import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+
+const termLabel: Record<string, string> = { term1: "Term 1", term2: "Term 2", term3: "Term 3" };
 
 type TermType = Database["public"]["Enums"]["term_type"];
 
@@ -85,7 +89,7 @@ const Reports = () => {
   const [academicYear, setAcademicYear] = useState<number>(
     parseInt(searchParams.get("year") || String(currentYear)),
   );
-  const [reportType, setReportType] = useState<"report-cards" | "circulars">("report-cards");
+  const [reportType, setReportType] = useState<"report-cards" | "circulars" | "emis">("report-cards");
   const [selectedLearners, setSelectedLearners] = useState<string[]>([]);
   const [previewLearnerId, setPreviewLearnerId] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<null | "publish" | "unlock">(null);
@@ -186,7 +190,7 @@ const Reports = () => {
       return;
     }
     if (reportType === "emis") {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("learners")
         .select(`
           admission_number,
@@ -208,7 +212,7 @@ const Reports = () => {
 
       // Generate CSV
       const headers = ["ADM", "Name", "Gender", "DOB", "NIN", "LIN", "Parent NIN", "Religion", "Class"];
-      const rows = data.map(l => [
+      const rows = (data as any[]).map((l: any) => [
         l.admission_number,
         l.full_name,
         l.gender,

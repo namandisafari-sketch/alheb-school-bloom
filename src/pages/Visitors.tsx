@@ -1186,7 +1186,17 @@ function ReentrySlipDialog({
   const [issued, setIssued] = useState<ReentrySlip | null>(null);
   const schoolName = settings?.landing_hero?.school_name || "Al-Heb School";
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    visitor_name: string;
+    visitor_phone: string;
+    id_number: string;
+    purpose: string;
+    host_name: string;
+    duration_minutes: number;
+    print_width: 54 | 80;
+    notes: string;
+    district?: string;
+  }>({
     visitor_name: visit?.visitor_name || "",
     visitor_phone: visit?.visitor_phone || "",
     id_number: "",
@@ -1437,11 +1447,11 @@ function NewVisitorDialog() {
         photo_url: null,
         notes: form.notes.trim() || null,
         is_recurring: form.is_recurring,
-        district: form.district || null,
-      });
+        ...(form.district ? { district: form.district } : {}),
+      } as any);
       toast({ title: "Visitor saved" });
       setOpen(false);
-      setForm({ full_name: "", phone: "", email: "", company: "", id_number: "", notes: "", is_recurring: true });
+      setForm({ full_name: "", phone: "", email: "", company: "", id_number: "", notes: "", is_recurring: true, district: "" });
     } catch (e: any) {
       toast({ title: "Error", description: e.message, variant: "destructive" });
     }

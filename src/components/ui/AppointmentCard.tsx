@@ -1,12 +1,11 @@
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Check, X, LogIn, Plus } from 'lucide-react';
+import { CalendarIcon, LogIn, User, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
-import { DialogTrigger } from '@/components/ui/dialog';
-import { CheckInDialog } from '@/components/visitors/CheckInDialog'; // adjust import path if needed
 
 interface AppointmentCardProps {
-  appointment: any; // shape from useVisitors hook
+  appointment: any;
   onCheckIn: (appointment: any) => void;
 }
 
@@ -38,10 +37,9 @@ export const AppointmentCard = ({ appointment, onCheckIn }: AppointmentCardProps
         </div>
       </CardHeader>
       <CardContent className="pt-2 flex justify-end">
-        <CheckInDialog
-          appointment={appointment}
-          trigger={<Button size="sm" variant="outline"><LogIn className="h-4 w-4 mr-1" />Check In</Button>}
-        />
+        <Button size="sm" variant="outline" onClick={() => onCheckIn(appointment)}>
+          <LogIn className="h-4 w-4 mr-1" />Check In
+        </Button>
       </CardContent>
     </Card>
   );

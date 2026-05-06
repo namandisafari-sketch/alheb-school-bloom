@@ -41,7 +41,7 @@ export const useUpsertCalendarEvent = () => {
       } else {
         const { error } = await supabase
           .from("school_calendar")
-          .insert(event);
+          .insert(event as any);
         if (error) throw error;
       }
     },

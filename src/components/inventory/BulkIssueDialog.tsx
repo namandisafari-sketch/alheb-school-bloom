@@ -83,10 +83,10 @@ export function BulkIssueDialog({ children }: { children: React.ReactNode }) {
     mutationFn: async (values: FormValues) => {
       const transactions = values.learner_ids.map((id) => ({
         item_id: values.item_id,
-        type: "issuance",
+        type: "issuance" as const,
         quantity: values.quantity_per_person,
         learner_id: id,
-        status: "pending", // All issuances start as pending for approval
+        status: "pending",
         notes: values.notes || "Bulk issuance",
       }));
 

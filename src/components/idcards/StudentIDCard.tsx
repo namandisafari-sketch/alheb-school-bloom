@@ -59,14 +59,14 @@ const PDF417Barcode = ({ value, height = 12 }: { value: string; height?: number 
         bwipjs.toCanvas(canvasRef.current, {
           bcid: 'pdf417',
           text: value,
-          scale: 3,           // Increased scale for sharper dots
-          height: height,      // Use dynamic height from settings
+          scale: 3,
+          height: height,
           eclevel: 4,
           columns: 12,
           includetext: false,
           paddingwidth: 0,
           paddingheight: 0
-        });
+        } as any);
       } catch (e) {
         console.error('PDF417 Rendering Error:', e);
       }
@@ -249,10 +249,10 @@ export const StudentIDCard = ({
         </div>
 
         <div className="px-10 space-y-1.5 mt-2">
-           <AddressField label="VILLAGE" value={student.village} />
-           <AddressField label="PARISH" value={student.parish} />
-           <AddressField label="S.COUNTY" value={student.sub_county} />
-           <AddressField label="DISTRICT" value={student.district || "WAKISO"} />
+           <AddressField label="VILLAGE" value={(student as any).village} />
+           <AddressField label="PARISH" value={(student as any).parish} />
+           <AddressField label="S.COUNTY" value={(student as any).sub_county} />
+           <AddressField label="DISTRICT" value={(student as any).district || "WAKISO"} />
         </div>
 
         <div className="px-10 flex justify-between gap-12 mt-auto mb-2">

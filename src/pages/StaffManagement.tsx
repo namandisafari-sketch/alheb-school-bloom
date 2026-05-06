@@ -61,10 +61,10 @@ export default function StaffManagement() {
       // Update role
       const { error: roleError } = await supabase
         .from("user_roles")
-        .upsert({
+        .upsert([{
           user_id: editingStaff.id,
           role: form.role
-        }, { onConflict: "user_id" });
+        }] as any, { onConflict: "user_id" });
 
       if (roleError) throw roleError;
 

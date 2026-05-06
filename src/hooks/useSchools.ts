@@ -27,7 +27,7 @@ export const useCreateSchool = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (school: Partial<School>) => {
-      const { data, error } = await supabase.from("schools").insert(school).select().single();
+      const { data, error } = await supabase.from("schools").insert(school as any).select().single();
       if (error) throw error;
       return data;
     },
