@@ -44,7 +44,7 @@ export const SecurityDashboard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inventory_transactions")
-        .select("*, item:inventory_items(name), staff:profiles(full_name), learner:learners(full_name)")
+        .select("*, item:inventory_items(name), learner:learners(full_name)")
         .eq("status", "approved")
         .eq("type", "issuance")
         .order("transaction_date", { ascending: false })
@@ -166,7 +166,7 @@ export const SecurityDashboard = () => {
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         Qty: <span className="font-bold">{pass.quantity}</span> | 
-                        For: {pass.learner?.full_name || pass.staff?.full_name || "General"}
+                        For: {pass.learner?.full_name || "General"}
                       </p>
                       <p className="text-[10px] font-mono mt-1 text-purple-600/70">{pass.tracking_number}</p>
                     </div>

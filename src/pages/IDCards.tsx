@@ -126,6 +126,7 @@ const IDCards = () => {
     signature_height_report: 32,
     signature_height_id: 22,
     stamp_size_report: 80,
+    barcode_height: 12,
   };
 
   const schoolLogoUrl = previewSettings.school_logo_url;

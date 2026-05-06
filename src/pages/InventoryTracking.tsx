@@ -16,7 +16,8 @@ import {
   User, 
   ShieldCheck,
   Calendar as CalendarIcon,
-  FileSpreadsheet
+  FileSpreadsheet,
+  History as HistoryIcon
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -34,7 +35,6 @@ const InventoryTracking = () => {
           *,
           item:inventory_items(name, unit, category:inventory_categories(name)),
           learner:learners(full_name, admission_number),
-          staff:profiles(full_name),
           approver:profiles!inventory_transactions_approved_by_fkey(full_name)
         `)
         .order("transaction_date", { ascending: false });
@@ -157,7 +157,7 @@ const InventoryTracking = () => {
                             <User className="h-4 w-4 text-slate-400" />
                           </div>
                           <div>
-                            <p className="text-xs font-bold text-slate-700">{t.learner?.full_name || t.staff?.full_name || "General Store"}</p>
+                            <p className="text-xs font-bold text-slate-700">{t.learner?.full_name || "General Store"}</p>
                             {t.learner && <p className="text-[10px] text-slate-400">{t.learner.admission_number}</p>}
                           </div>
                         </div>
@@ -199,7 +199,7 @@ const InventoryTracking = () => {
             </div>
             {filteredTransactions.length === 0 && (
               <div className="py-20 text-center">
-                <History className="h-12 w-12 mx-auto text-slate-200 mb-4" />
+                <HistoryIcon className="h-12 w-12 mx-auto text-slate-200 mb-4" />
                 <p className="text-slate-400 font-medium">No movements found matching your search</p>
               </div>
             )}

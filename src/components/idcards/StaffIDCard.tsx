@@ -143,8 +143,8 @@ export const StaffIDCard = ({
 
         <div className="flex px-7 gap-8 relative z-10 items-start">
           <div className="w-[125px] h-[155px] bg-slate-50 rounded-xl border-[1.5px] border-red-100 overflow-hidden shadow-md flex-shrink-0">
-            {staff.avatar_url ? (
-              <img src={staff.avatar_url} className="w-full h-full object-cover" crossOrigin="anonymous" />
+            {(staff as any).avatar_url ? (
+              <img src={(staff as any).avatar_url} className="w-full h-full object-cover" crossOrigin="anonymous" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-slate-100">
                 <User size={55} className="text-slate-300" />
@@ -188,8 +188,8 @@ export const StaffIDCard = ({
             filter: 'grayscale(100%) contrast(120%) opacity(0.25)'
           }}
         >
-          {staff.avatar_url ? (
-            <img src={staff.avatar_url} className="w-full h-full object-cover" crossOrigin="anonymous" />
+          {(staff as any).avatar_url ? (
+            <img src={(staff as any).avatar_url} className="w-full h-full object-cover" crossOrigin="anonymous" />
           ) : (
             <div className="w-full h-full bg-slate-300" />
           )}

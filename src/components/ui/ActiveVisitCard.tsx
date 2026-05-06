@@ -21,7 +21,7 @@ export const ActiveVisitCard = ({ visit }: { visit: ActiveVisit }) => {
   const checkOut = useCheckOutVisitor();
   const handleCheckOut = async () => {
     try {
-      await checkOut.mutateAsync(visit);
+      await checkOut.mutateAsync(visit as any);
       toast({ title: 'Visitor checked out' });
     } catch (e: any) {
       toast({ title: 'Error', description: e.message, variant: 'destructive' });
