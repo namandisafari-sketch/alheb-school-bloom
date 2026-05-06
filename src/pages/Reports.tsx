@@ -190,7 +190,7 @@ const Reports = () => {
       return;
     }
     if (reportType === "emis") {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("learners")
         .select(`
           admission_number,
@@ -212,7 +212,7 @@ const Reports = () => {
 
       // Generate CSV
       const headers = ["ADM", "Name", "Gender", "DOB", "NIN", "LIN", "Parent NIN", "Religion", "Class"];
-      const rows = data.map(l => [
+      const rows = (data as any[]).map((l: any) => [
         l.admission_number,
         l.full_name,
         l.gender,
