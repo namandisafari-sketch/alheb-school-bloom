@@ -379,8 +379,10 @@ export type Database = {
       discipline_cases: {
         Row: {
           action_taken: string | null
+          case_number: string | null
           created_at: string | null
           description: string | null
+          evidence_photos: string[] | null
           id: string
           incident_date: string | null
           incident_type: string
@@ -390,12 +392,15 @@ export type Database = {
           severity: Database["public"]["Enums"]["discipline_severity"] | null
           status: string | null
           updated_at: string | null
+          victims: string | null
           witnesses: string | null
         }
         Insert: {
           action_taken?: string | null
+          case_number?: string | null
           created_at?: string | null
           description?: string | null
+          evidence_photos?: string[] | null
           id?: string
           incident_date?: string | null
           incident_type: string
@@ -405,12 +410,15 @@ export type Database = {
           severity?: Database["public"]["Enums"]["discipline_severity"] | null
           status?: string | null
           updated_at?: string | null
+          victims?: string | null
           witnesses?: string | null
         }
         Update: {
           action_taken?: string | null
+          case_number?: string | null
           created_at?: string | null
           description?: string | null
+          evidence_photos?: string[] | null
           id?: string
           incident_date?: string | null
           incident_type?: string
@@ -420,6 +428,7 @@ export type Database = {
           severity?: Database["public"]["Enums"]["discipline_severity"] | null
           status?: string | null
           updated_at?: string | null
+          victims?: string | null
           witnesses?: string | null
         }
         Relationships: [
