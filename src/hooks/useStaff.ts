@@ -29,35 +29,49 @@ export const STAFF_ROLES: { value: StaffRole; label: string }[] = [
   { value: "accountant", label: "Accountant" },
 ];
 
+const applyScope = (query: any, profile: any) => {
+  if (profile?.scope === "district" && profile.district_id) {
+    return query.eq("district_id", profile.district_id);
+  }
+  if (profile?.scope === "school" && profile.school_id) {
+    return query.eq("school_id", profile.school_id);
+  }
+  return query;
+};
+
+const mergeRoles = async (rows: any[]) => {
+  if (!rows?.length) return rows as Staff[];
+  const ids = rows.map((r) => r.id);
+  const { data: roleRows } = await supabase
+    .from("user_roles")
+    .select("user_id, role")
+    .in("user_id", ids);
+  const roleMap = new Map<string, string>();
+  (roleRows || []).forEach((r: any) => {
+    if (!roleMap.has(r.user_id)) roleMap.set(r.user_id, r.role);
+  });
+  return rows.map((p) => ({ ...p, role: roleMap.get(p.id) || p.role })) as Staff[];
+};
+
 export const useStaff = (roleFilter?: StaffRole | "all") => {
   const { profile } = useAuth();
 
   return useQuery({
     queryKey: ["staff", roleFilter, profile?.scope, profile?.district_id],
     queryFn: async () => {
-      let query = supabase.from("profiles").select("*, user_roles(role)");
-
-      if (profile?.scope === "district" && profile.district_id) {
-        query = query.eq("district_id", profile.district_id);
-      } else if (profile?.scope === "school" && profile.school_id) {
-        query = query.eq("school_id", profile.school_id);
-      }
-
+      let query = supabase.from("profiles").select("*");
+      query = applyScope(query, profile);
       query = query.order("full_name");
 
       if (roleFilter && roleFilter !== "all" && roleFilter !== "teacher") {
         query = query.eq("role", roleFilter);
       } else if (roleFilter === "all") {
-        // Get all non-teacher staff
         query = query.neq("role", "teacher");
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data || []).map((p: any) => ({
-        ...p,
-        role: p.user_roles?.[0]?.role || p.role
-      })) as Staff[];
+      return mergeRoles(data || []);
     },
   });
 };
@@ -68,21 +82,11 @@ export const useAllStaff = () => {
   return useQuery({
     queryKey: ["all-staff", profile?.scope, profile?.district_id],
     queryFn: async () => {
-      let query = supabase.from("profiles").select("*, user_roles(role)");
-
-      if (profile?.scope === "district" && profile.district_id) {
-        query = query.eq("district_id", profile.district_id);
-      } else if (profile?.scope === "school" && profile.school_id) {
-        query = query.eq("school_id", profile.school_id);
-      }
-
+      let query = supabase.from("profiles").select("*");
+      query = applyScope(query, profile);
       const { data, error } = await query.order("full_name");
-
       if (error) throw error;
-      return (data || []).map((p: any) => ({
-        ...p,
-        role: p.user_roles?.[0]?.role || p.role
-      })) as Staff[];
+      return mergeRoles(data || []);
     },
   });
 };
