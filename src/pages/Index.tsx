@@ -15,6 +15,7 @@ import { format, subDays } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { SecurityDashboard } from "@/components/dashboard/SecurityDashboard";
 import { TeacherDashboard } from "@/components/dashboard/TeacherDashboard";
+import { AccountantDashboard } from "@/components/dashboard/AccountantDashboard";
 import { InventorySummaryWidget } from "@/components/dashboard/InventoryWidgets";
 import { SystemHealthWidget } from "@/components/dashboard/SystemHealthWidget";
 import { Separator } from "@/components/ui/separator";
@@ -83,6 +84,17 @@ const Index = () => {
         subtitle="Manage your classes and learner progress"
       >
         <TeacherDashboard />
+      </DashboardLayout>
+    );
+  }
+
+  if (role === "accountant") {
+    return (
+      <DashboardLayout 
+        title="Finance Hub" 
+        subtitle="Alheib Financial Ecosystem & Procurement Control"
+      >
+        <AccountantDashboard />
       </DashboardLayout>
     );
   }

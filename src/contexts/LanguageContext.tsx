@@ -25,6 +25,12 @@ const keyedTranslations: Record<string, { en: string; ar: string }> = {
   hostel: { en: "Hostel & Welfare", ar: "السكن والرفاهية" },
   budget: { en: "Budget & Finance", ar: "الميزانية والمالية" },
   homework: { en: "Digital Homework", ar: "الواجبات الرقمية" },
+  finance: { en: "Financial Accounts", ar: "الحسابات المالية" },
+  procurement: { en: "Procurement & Store", ar: "المشتريات والمخزن" },
+  pettyCash: { en: "Petty Cash", ar: "النثرية" },
+  payroll: { en: "Payroll & HR", ar: "الرواتب والموارد البشرية" },
+  auditLog: { en: "Audit Log", ar: "سجل التدقيق" },
+  accountantDashboard: { en: "Accountant Dashboard", ar: "لوحة تحكم المحاسب" },
 
   add: { en: "Add", ar: "إضافة" },
   edit: { en: "Edit", ar: "تعديل" },

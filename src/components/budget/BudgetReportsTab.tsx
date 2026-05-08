@@ -2,8 +2,22 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, PieChart, TrendingDown, TrendingUp } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const BudgetReportsTab = () => {
+  const { data: totalSpent } = useQuery({
+    queryKey: ["total-spent"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("purchase_orders")
+        .select("total_amount")
+        .eq("status", "archived");
+      if (error) throw error;
+      return data.reduce((acc, curr) => acc + (curr.total_amount || 0), 0);
+    }
+  });
+
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <Card className="border-none shadow-md">
@@ -16,7 +30,7 @@ export const BudgetReportsTab = () => {
           {/* Mock Visualization */}
           <div className="relative h-48 w-48 rounded-full border-[20px] border-primary border-r-success border-b-amber-400 border-l-blue-500 flex items-center justify-center">
              <div className="text-center">
-               <p className="text-2xl font-black">UGX 8.4M</p>
+               <p className="text-2xl font-black">UGX {(totalSpent || 0).toLocaleString()}</p>
                <p className="text-[10px] uppercase font-bold text-muted-foreground">Total Spent</p>
              </div>
           </div>

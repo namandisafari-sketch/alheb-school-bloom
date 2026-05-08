@@ -34,6 +34,7 @@ import {
   FileText,
   ShieldCheck,
   Edit,
+  ShoppingCart,
 } from "lucide-react";
 import { useInventory, useAssets } from "@/hooks/useInventory";
 import { InventoryItemDialog } from "@/components/inventory/InventoryItemDialog";
@@ -69,6 +70,20 @@ const Inventory = () => {
         .select("*, item:inventory_items(name, unit), learner:learners(full_name), staff:profiles(full_name)")
         .order("transaction_date", { ascending: false })
         .limit(100);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch active purchase orders
+  const { data: pendingPurchases } = useQuery({
+    queryKey: ["active-purchase-orders"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("purchase_orders")
+        .select("*, projects(name)")
+        .neq("status", "archived")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -212,6 +227,9 @@ const Inventory = () => {
           )}
           <TabsTrigger value="assets" className="gap-2">
             <Truck className="h-4 w-4" /> Fixed Assets
+          </TabsTrigger>
+          <TabsTrigger value="purchases" className="gap-2 text-indigo-600">
+            <ShoppingCart className="h-4 w-4" /> Pending Purchases
           </TabsTrigger>
           <TabsTrigger value="history" className="gap-2">
             <History className="h-4 w-4" /> History & Log
@@ -439,6 +457,44 @@ const Inventory = () => {
               </div>
             )}
           </div>
+        </TabsContent>
+
+        <TabsContent value="purchases" className="space-y-4">
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {pendingPurchases?.map((po: any) => (
+                <div key={po.id} className="rounded-xl border border-indigo-200 bg-indigo-50/20 p-4 shadow-sm border-l-4 border-l-indigo-500">
+                   <div className="flex justify-between items-start mb-3">
+                      <div>
+                         <Badge variant="outline" className="text-[10px] uppercase font-mono">PO-{po.id.slice(0, 8)}</Badge>
+                         <h4 className="font-bold text-lg mt-1">{po.title}</h4>
+                      </div>
+                      <Badge className={cn(
+                        "uppercase text-[10px] font-black",
+                        po.status === 'approved' ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'
+                      )}>
+                         {po.status}
+                      </Badge>
+                   </div>
+                   <div className="flex items-center justify-between text-xs font-bold text-slate-500">
+                      <span>{po.projects?.name}</span>
+                      <span className="font-mono text-slate-900">{po.total_amount?.toLocaleString()} UGX</span>
+                   </div>
+                   <div className="mt-4 pt-4 border-t border-dashed border-indigo-100 flex justify-between items-center">
+                      <span className="text-[10px] font-black uppercase text-slate-400">Pipeline Status</span>
+                      <div className="flex -space-x-1">
+                         <div className={cn("h-4 w-4 rounded-full border border-white", po.status === 'committee' || po.status === 'head_office' || po.status === 'kuwait' || po.status === 'approved' ? 'bg-indigo-500' : 'bg-slate-200')} />
+                         <div className={cn("h-4 w-4 rounded-full border border-white", po.status === 'head_office' || po.status === 'kuwait' || po.status === 'approved' ? 'bg-indigo-500' : 'bg-slate-200')} />
+                         <div className={cn("h-4 w-4 rounded-full border border-white", po.status === 'kuwait' || po.status === 'approved' ? 'bg-indigo-500' : 'bg-slate-200')} />
+                      </div>
+                   </div>
+                </div>
+              ))}
+              {(!pendingPurchases || pendingPurchases.length === 0) && (
+                <div className="col-span-full py-12 text-center text-muted-foreground border border-dashed rounded-xl">
+                  No active purchase orders found. Items requested in Procurement will appear here.
+                </div>
+              )}
+           </div>
         </TabsContent>
 
         <TabsContent value="history">

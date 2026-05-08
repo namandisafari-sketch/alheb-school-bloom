@@ -4,7 +4,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, FileText, Truck } from "lucide-react";
 
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
+
 export const ProcurementTab = () => {
+  const { data: pos, isLoading } = useQuery({
+    queryKey: ["procurement-log"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("purchase_orders").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const activeCount = pos?.filter(p => p.status !== 'archived' && p.status !== 'rejected').length || 0;
+  const fulfilledCount = pos?.filter(p => p.status === 'archived').length || 0;
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
@@ -13,16 +28,16 @@ export const ProcurementTab = () => {
             <CardTitle className="text-sm font-bold text-primary uppercase tracking-widest">Active Orders</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-black">5</p>
+            <p className="text-4xl font-black">{activeCount}</p>
             <p className="text-xs text-muted-foreground mt-1">Orders in transit or pending delivery</p>
           </CardContent>
         </Card>
         <Card className="border-none shadow-sm bg-success/5">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold text-success uppercase tracking-widest">Fulfilled This Month</CardTitle>
+            <CardTitle className="text-sm font-bold text-success uppercase tracking-widest">Fulfilled (Total)</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-black">18</p>
+            <p className="text-4xl font-black">{fulfilledCount}</p>
             <p className="text-xs text-muted-foreground mt-1">Successfully delivered and verified</p>
           </CardContent>
         </Card>
@@ -46,13 +61,17 @@ export const ProcurementTab = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow>
-                <TableCell className="font-mono text-xs">PO-2026-042</TableCell>
-                <TableCell className="font-medium">40x Learner's Books, 10x Pencils</TableCell>
-                <TableCell>Uganda Bookshop Ltd</TableCell>
-                <TableCell><Badge variant="secondary">In Transit</Badge></TableCell>
-                <TableCell className="font-bold">UGX 850,000</TableCell>
-              </TableRow>
+              {isLoading ? (
+                <TableRow><TableCell colSpan={5} className="text-center py-10"><Loader2 className="animate-spin h-5 w-5 mx-auto text-slate-200" /></TableCell></TableRow>
+              ) : pos?.map(po => (
+                <TableRow key={po.id}>
+                  <TableCell className="font-mono text-xs uppercase">PO-{po.id.slice(0, 8)}</TableCell>
+                  <TableCell className="font-medium">{po.title}</TableCell>
+                  <TableCell>General Vendor</TableCell>
+                  <TableCell><Badge variant={po.status === 'archived' ? 'success' : 'secondary'}>{po.status}</Badge></TableCell>
+                  <TableCell className="font-bold">UGX {po.total_amount?.toLocaleString()}</TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </CardContent>

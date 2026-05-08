@@ -27,6 +27,7 @@ import {
   Shield,
   Layers,
   Scale,
+  ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, AppRole } from "@/hooks/useAuth";
@@ -60,9 +61,11 @@ const navItems: NavItem[] = [
   { icon: BookMarked, labelKey: "homework", path: "/homework", roles: ["admin", "teacher", "head_teacher"] },
   { icon: ClipboardCheck, labelKey: "attendance", path: "/attendance", roles: ["admin", "teacher", "head_teacher"] },
   { icon: Scale, labelKey: "discipline", path: "/discipline", roles: ["admin", "head_teacher"] },
-  { icon: Receipt, labelKey: "feeManagement", path: "/fees", roles: ["admin", "staff", "accountant", "head_teacher"] },
-  { icon: Wallet, labelKey: "budget", path: "/budget", roles: ["admin", "accountant", "head_teacher"] },
-  { icon: Wallet, labelKey: "salary", path: "/salary", roles: ["admin", "accountant", "head_teacher"] },
+  { icon: Wallet, labelKey: "finance", path: "/accountant/accounts", roles: ["admin", "accountant"] },
+  { icon: ShoppingCart, labelKey: "procurement", path: "/accountant/procurement", roles: ["admin", "accountant", "storekeeper"] },
+  { icon: Receipt, labelKey: "pettyCash", path: "/accountant/petty-cash", roles: ["admin", "accountant"] },
+  { icon: CreditCard, labelKey: "payroll", path: "/accountant/payroll", roles: ["admin", "accountant"] },
+  { icon: ClipboardCheck, labelKey: "auditLog", path: "/accountant/audit-log", roles: ["admin", "accountant"] },
   { icon: CreditCard, labelKey: "idCards", path: "/id-cards", roles: ["admin", "head_teacher"] },
   { icon: Layers, labelKey: "staffAssignments", path: "/staff-assignments", roles: ["admin"] },
   { icon: UserCog, labelKey: "userManagement", path: "/users", roles: ["admin", "head_teacher"] },

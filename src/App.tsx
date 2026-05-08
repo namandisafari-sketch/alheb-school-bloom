@@ -35,6 +35,11 @@ import Budget from "./pages/Budget";
 import Homework from "./pages/Homework";
 import StaffManagement from "./pages/StaffManagement";
 import Discipline from "./pages/Discipline";
+import AccountantAccounts from "./pages/accountant/Accounts";
+import AccountantProcurement from "./pages/accountant/Procurement";
+import AccountantPettyCash from "./pages/accountant/PettyCash";
+import AccountantPayroll from "./pages/accountant/Payroll";
+import AccountantAuditLog from "./pages/accountant/AuditLog";
 import NotFound from "./pages/NotFound";
 import { AIAssistant } from "./components/ai/AIAssistant";
 
@@ -277,6 +282,48 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={["admin"]}>
                   <StaffManagement />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Accountant Module Routes */}
+            <Route
+              path="/accountant/accounts"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "accountant"]}>
+                  <AccountantAccounts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/accountant/procurement"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "accountant", "storekeeper"]}>
+                  <AccountantProcurement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/accountant/petty-cash"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "accountant"]}>
+                  <AccountantPettyCash />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/accountant/payroll"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "accountant"]}>
+                  <AccountantPayroll />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/accountant/audit-log"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "accountant"]}>
+                  <AccountantAuditLog />
                 </ProtectedRoute>
               }
             />
