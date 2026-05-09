@@ -1,5 +1,7 @@
 import { NavLink } from "react-router-dom";
+import { useState, useMemo } from "react";
 import {
+  Search,
   LayoutDashboard,
   Users,
   GraduationCap,
