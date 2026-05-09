@@ -240,32 +240,65 @@ export const Sidebar = ({ isOpen = false, onClose, collapsed = false }: SidebarP
           </div>
         </div>
 
+        {/* Search */}
+        {!collapsed && (
+          <div className="px-3 pt-3">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-sidebar-foreground/50" />
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("Search pages...")}
+                className="w-full rounded-md bg-sidebar-accent/40 pl-8 pr-2 py-2 text-sm text-sidebar-foreground placeholder:text-sidebar-foreground/50 outline-none focus:ring-2 focus:ring-sidebar-primary/40"
+              />
+            </div>
+          </div>
+        )}
+
         {/* Navigation */}
         <nav
           className={cn(
-            "flex-1 space-y-1 overflow-y-auto no-scrollbar",
-            collapsed ? "lg:p-2 p-4" : "p-4"
+            "flex-1 overflow-y-auto no-scrollbar",
+            collapsed ? "lg:p-2 p-4" : "p-3"
           )}
         >
-          {filteredNavItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              onClick={handleNavClick}
-              title={t(item.labelKey)}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200 px-4 py-3",
-                  collapsed && "lg:justify-center lg:px-2",
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-primary"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                )
-              }
-            >
-              <item.icon className="h-5 w-5 shrink-0" />
-              <span className={cn("truncate", collapsed && "lg:hidden")}>{t(item.labelKey)}</span>
-            </NavLink>
+          {filteredSections.length === 0 && (
+            <p className="px-3 py-6 text-center text-xs text-sidebar-foreground/50">
+              {t("No pages found")}
+            </p>
+          )}
+          {filteredSections.map((section) => (
+            <div key={section.titleKey} className="mb-3">
+              {!collapsed && (
+                <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wider text-sidebar-foreground/50">
+                  {t(section.titleKey)}
+                </p>
+              )}
+              <div className="space-y-0.5">
+                {section.items.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    end={item.path === "/"}
+                    onClick={handleNavClick}
+                    title={t(item.labelKey)}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200 px-3 py-2.5",
+                        collapsed && "lg:justify-center lg:px-2",
+                        isActive
+                          ? "bg-sidebar-accent text-sidebar-primary"
+                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                      )
+                    }
+                  >
+                    <item.icon className="h-5 w-5 shrink-0" />
+                    <span className={cn("truncate", collapsed && "lg:hidden")}>{t(item.labelKey)}</span>
+                  </NavLink>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
 
