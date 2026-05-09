@@ -2373,6 +2373,60 @@ export type Database = {
         }
         Relationships: []
       }
+      personnel_attendance: {
+        Row: {
+          check_in_time: string | null
+          check_out_time: string | null
+          created_at: string | null
+          date: string
+          employee_id: string | null
+          id: string
+          is_finalized: boolean | null
+          notes: string | null
+          recorded_by: string | null
+          status: Database["public"]["Enums"]["attendance_status"] | null
+        }
+        Insert: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string | null
+          date?: string
+          employee_id?: string | null
+          id?: string
+          is_finalized?: boolean | null
+          notes?: string | null
+          recorded_by?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"] | null
+        }
+        Update: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string | null
+          date?: string
+          employee_id?: string | null
+          id?: string
+          is_finalized?: boolean | null
+          notes?: string | null
+          recorded_by?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "personnel_attendance_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "personnel_attendance_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       petty_cash_invoices: {
         Row: {
           amount: number
@@ -3453,7 +3507,15 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       visitor_visits: {
         Row: {
