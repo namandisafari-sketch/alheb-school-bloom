@@ -119,19 +119,37 @@ interface SidebarProps {
 export const Sidebar = ({ isOpen = false, onClose, collapsed = false }: SidebarProps) => {
   const { user, role, signOut } = useAuth();
   const { t, isRTL } = useLanguage();
-
   const { isGlobalAdmin } = useIsAdmin();
-  
-  const filteredNavItems = navItems.filter(
-    (item) => {
-      if (item.path === "/staff-assignments" && !isGlobalAdmin) return false;
-      return !item.roles || (role && item.roles.includes(role));
-    }
-  );
+  const [search, setSearch] = useState("");
+
+  const allowed = (item: NavItem) => {
+    if (item.path === "/staff-assignments" && !isGlobalAdmin) return false;
+    return !item.roles || (role && item.roles.includes(role));
+  };
+
+  const filteredSections = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return navSections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => {
+          if (!allowed(item)) return false;
+          if (!q) return true;
+          return (
+            t(item.labelKey).toLowerCase().includes(q) ||
+            item.labelKey.toLowerCase().includes(q) ||
+            item.path.toLowerCase().includes(q)
+          );
+        }),
+      }))
+      .filter((section) => section.items.length > 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, role, isGlobalAdmin]);
 
   const filteredBottomItems = bottomNavItems.filter(
     (item) => !item.roles || (role && item.roles.includes(role))
   );
+
 
   const handleNavClick = () => {
     if (onClose) onClose();
