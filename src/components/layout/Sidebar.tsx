@@ -45,32 +45,62 @@ interface NavItem {
   roles?: AppRole[];
 }
 
-const navItems: NavItem[] = [
-  { icon: LayoutDashboard, labelKey: "dashboard", path: "/", roles: ["admin", "teacher", "staff", "security", "head_teacher", "accountant"] },
-  { icon: Users, labelKey: "learners", path: "/students", roles: ["admin", "teacher", "head_teacher"] },
-  { icon: GraduationCap, labelKey: "teachers", path: "/teachers", roles: ["admin", "head_teacher"] },
-  { icon: HardHat, labelKey: "staffWorkers", path: "/staff", roles: ["admin", "head_teacher"] },
-  { icon: BookOpen, labelKey: "classes", path: "/classes", roles: ["admin", "teacher", "head_teacher"] },
-  { icon: PenLine, labelKey: "marksEntry", path: "/marks", roles: ["admin", "teacher", "head_teacher"] },
-  { icon: FileText, labelKey: "reports", path: "/reports", roles: ["admin", "teacher", "head_teacher"] },
-  { icon: Calendar, labelKey: "program", path: "/calendar", roles: ["admin", "teacher", "staff", "security", "parent", "head_teacher", "accountant"] },
-  { icon: Clock, labelKey: "schedule", path: "/schedule", roles: ["admin", "teacher", "staff", "security", "head_teacher"] },
-  { icon: Shield, labelKey: "gatePasses", path: "/visitors", roles: ["admin", "staff", "security", "head_teacher"] },
-  { icon: Box, labelKey: "inventory", path: "/inventory", roles: ["admin", "staff", "security", "head_teacher"] },
-  { icon: Stethoscope, labelKey: "health", path: "/health", roles: ["admin", "teacher", "staff", "head_teacher"] },
-  { icon: Star, labelKey: "madrasa", path: "/madrasa", roles: ["admin", "teacher", "staff", "head_teacher"] },
-  { icon: Bed, labelKey: "hostel", path: "/hostel", roles: ["admin", "staff", "head_teacher"] },
-  { icon: BookMarked, labelKey: "homework", path: "/homework", roles: ["admin", "teacher", "head_teacher"] },
-  { icon: ClipboardCheck, labelKey: "attendance", path: "/attendance", roles: ["admin", "teacher", "head_teacher"] },
-  { icon: Scale, labelKey: "discipline", path: "/discipline", roles: ["admin", "head_teacher"] },
-  { icon: Wallet, labelKey: "finance", path: "/accountant/accounts", roles: ["admin", "accountant"] },
-  { icon: ShoppingCart, labelKey: "procurement", path: "/accountant/procurement", roles: ["admin", "accountant", "storekeeper"] },
-  { icon: Receipt, labelKey: "pettyCash", path: "/accountant/petty-cash", roles: ["admin", "accountant"] },
-  { icon: CreditCard, labelKey: "payroll", path: "/accountant/payroll", roles: ["admin", "accountant"] },
-  { icon: ClipboardCheck, labelKey: "auditLog", path: "/accountant/audit-log", roles: ["admin", "accountant"] },
-  { icon: CreditCard, labelKey: "idCards", path: "/id-cards", roles: ["admin", "head_teacher"] },
-  { icon: Layers, labelKey: "staffAssignments", path: "/staff-assignments", roles: ["admin"] },
-  { icon: UserCog, labelKey: "userManagement", path: "/users", roles: ["admin", "head_teacher"] },
+interface NavSection {
+  titleKey: string;
+  items: NavItem[];
+}
+
+const navSections: NavSection[] = [
+  {
+    titleKey: "Overview",
+    items: [
+      { icon: LayoutDashboard, labelKey: "dashboard", path: "/", roles: ["admin", "teacher", "staff", "security", "head_teacher", "accountant"] },
+      { icon: Calendar, labelKey: "program", path: "/calendar", roles: ["admin", "teacher", "staff", "security", "parent", "head_teacher", "accountant"] },
+      { icon: Clock, labelKey: "schedule", path: "/schedule", roles: ["admin", "teacher", "staff", "security", "head_teacher"] },
+    ],
+  },
+  {
+    titleKey: "Academics",
+    items: [
+      { icon: Users, labelKey: "learners", path: "/students", roles: ["admin", "teacher", "head_teacher"] },
+      { icon: BookOpen, labelKey: "classes", path: "/classes", roles: ["admin", "teacher", "head_teacher"] },
+      { icon: PenLine, labelKey: "marksEntry", path: "/marks", roles: ["admin", "teacher", "head_teacher"] },
+      { icon: BookMarked, labelKey: "homework", path: "/homework", roles: ["admin", "teacher", "head_teacher"] },
+      { icon: ClipboardCheck, labelKey: "attendance", path: "/attendance", roles: ["admin", "teacher", "head_teacher"] },
+      { icon: FileText, labelKey: "reports", path: "/reports", roles: ["admin", "teacher", "head_teacher"] },
+      { icon: Star, labelKey: "madrasa", path: "/madrasa", roles: ["admin", "teacher", "staff", "head_teacher"] },
+    ],
+  },
+  {
+    titleKey: "People",
+    items: [
+      { icon: GraduationCap, labelKey: "teachers", path: "/teachers", roles: ["admin", "head_teacher"] },
+      { icon: HardHat, labelKey: "staffWorkers", path: "/staff", roles: ["admin", "head_teacher"] },
+      { icon: Layers, labelKey: "staffAssignments", path: "/staff-assignments", roles: ["admin"] },
+      { icon: UserCog, labelKey: "userManagement", path: "/users", roles: ["admin", "head_teacher"] },
+      { icon: CreditCard, labelKey: "idCards", path: "/id-cards", roles: ["admin", "head_teacher"] },
+    ],
+  },
+  {
+    titleKey: "Operations",
+    items: [
+      { icon: Shield, labelKey: "gatePasses", path: "/visitors", roles: ["admin", "staff", "security", "head_teacher"] },
+      { icon: Box, labelKey: "inventory", path: "/inventory", roles: ["admin", "staff", "security", "head_teacher"] },
+      { icon: Stethoscope, labelKey: "health", path: "/health", roles: ["admin", "teacher", "staff", "head_teacher"] },
+      { icon: Bed, labelKey: "hostel", path: "/hostel", roles: ["admin", "staff", "head_teacher"] },
+      { icon: Scale, labelKey: "discipline", path: "/discipline", roles: ["admin", "head_teacher"] },
+    ],
+  },
+  {
+    titleKey: "Finance",
+    items: [
+      { icon: Wallet, labelKey: "finance", path: "/accountant/accounts", roles: ["admin", "accountant"] },
+      { icon: ShoppingCart, labelKey: "procurement", path: "/accountant/procurement", roles: ["admin", "accountant"] },
+      { icon: Receipt, labelKey: "pettyCash", path: "/accountant/petty-cash", roles: ["admin", "accountant"] },
+      { icon: CreditCard, labelKey: "payroll", path: "/accountant/payroll", roles: ["admin", "accountant"] },
+      { icon: ClipboardCheck, labelKey: "auditLog", path: "/accountant/audit-log", roles: ["admin", "accountant"] },
+    ],
+  },
 ];
 
 const bottomNavItems: NavItem[] = [
