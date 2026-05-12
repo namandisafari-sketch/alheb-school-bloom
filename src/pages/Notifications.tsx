@@ -131,6 +131,7 @@ const Notifications = () => {
             <Inbox className="h-4 w-4 mr-2" />Inbox{unread > 0 && <Badge variant="secondary" className="ml-2">{unread}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="compose"><Send className="h-4 w-4 mr-2" />Broadcast</TabsTrigger>
+          <TabsTrigger value="direct"><MessageSquare className="h-4 w-4 mr-2" />Direct Message</TabsTrigger>
           <TabsTrigger value="templates"><FileText className="h-4 w-4 mr-2" />Templates</TabsTrigger>
           <TabsTrigger value="history"><History className="h-4 w-4 mr-2" />SMS/WA Log</TabsTrigger>
         </TabsList>
