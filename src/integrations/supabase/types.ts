@@ -808,36 +808,54 @@ export type Database = {
       employee_advances: {
         Row: {
           amount: number
+          compliance_checked: boolean | null
+          created_at: string | null
           currency: string | null
           disbursed_date: string
+          duration_text: string | null
           employee_id: string | null
           id: string
           notes: string | null
+          office_approval_by: string | null
           outstanding_balance: number
+          project_id: string | null
+          purpose_details: string | null
           repayment_schedule:
             | Database["public"]["Enums"]["repayment_plan"]
             | null
         }
         Insert: {
           amount: number
+          compliance_checked?: boolean | null
+          created_at?: string | null
           currency?: string | null
           disbursed_date?: string
+          duration_text?: string | null
           employee_id?: string | null
           id?: string
           notes?: string | null
+          office_approval_by?: string | null
           outstanding_balance: number
+          project_id?: string | null
+          purpose_details?: string | null
           repayment_schedule?:
             | Database["public"]["Enums"]["repayment_plan"]
             | null
         }
         Update: {
           amount?: number
+          compliance_checked?: boolean | null
+          created_at?: string | null
           currency?: string | null
           disbursed_date?: string
+          duration_text?: string | null
           employee_id?: string | null
           id?: string
           notes?: string | null
+          office_approval_by?: string | null
           outstanding_balance?: number
+          project_id?: string | null
+          purpose_details?: string | null
           repayment_schedule?:
             | Database["public"]["Enums"]["repayment_plan"]
             | null
@@ -848,6 +866,13 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_advances_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -1486,6 +1511,8 @@ export type Database = {
         Row: {
           approval_date: string | null
           approved_by: string | null
+          approved_quantity: number | null
+          available_quantity: number | null
           director_approval_date: string | null
           director_id: string | null
           gate_notes: string | null
@@ -1499,6 +1526,7 @@ export type Database = {
           manager_approval_date: string | null
           manager_id: string | null
           notes: string | null
+          num_days: number | null
           qr_verification_code: string | null
           quantity: number
           staff_id: string | null
@@ -1510,6 +1538,8 @@ export type Database = {
         Insert: {
           approval_date?: string | null
           approved_by?: string | null
+          approved_quantity?: number | null
+          available_quantity?: number | null
           director_approval_date?: string | null
           director_id?: string | null
           gate_notes?: string | null
@@ -1523,6 +1553,7 @@ export type Database = {
           manager_approval_date?: string | null
           manager_id?: string | null
           notes?: string | null
+          num_days?: number | null
           qr_verification_code?: string | null
           quantity: number
           staff_id?: string | null
@@ -1534,6 +1565,8 @@ export type Database = {
         Update: {
           approval_date?: string | null
           approved_by?: string | null
+          approved_quantity?: number | null
+          available_quantity?: number | null
           director_approval_date?: string | null
           director_id?: string | null
           gate_notes?: string | null
@@ -1547,6 +1580,7 @@ export type Database = {
           manager_approval_date?: string | null
           manager_id?: string | null
           notes?: string | null
+          num_days?: number | null
           qr_verification_code?: string | null
           quantity?: number
           staff_id?: string | null
@@ -2074,6 +2108,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      liquidity_requests: {
+        Row: {
+          awards_balance: number | null
+          bills_value: number | null
+          created_at: string | null
+          custody_balance: number | null
+          id: string
+          other_balance: number | null
+          payables_due: number | null
+          purpose: string | null
+          receivables_balance: number | null
+          requested_amount: number
+          requested_by: string | null
+          status: string | null
+          total_liquidity: number | null
+        }
+        Insert: {
+          awards_balance?: number | null
+          bills_value?: number | null
+          created_at?: string | null
+          custody_balance?: number | null
+          id?: string
+          other_balance?: number | null
+          payables_due?: number | null
+          purpose?: string | null
+          receivables_balance?: number | null
+          requested_amount: number
+          requested_by?: string | null
+          status?: string | null
+          total_liquidity?: number | null
+        }
+        Update: {
+          awards_balance?: number | null
+          bills_value?: number | null
+          created_at?: string | null
+          custody_balance?: number | null
+          id?: string
+          other_balance?: number | null
+          payables_due?: number | null
+          purpose?: string | null
+          receivables_balance?: number | null
+          requested_amount?: number
+          requested_by?: string | null
+          status?: string | null
+          total_liquidity?: number | null
+        }
+        Relationships: []
       }
       medication_logs: {
         Row: {
