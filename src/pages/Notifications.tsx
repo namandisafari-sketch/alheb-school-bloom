@@ -17,11 +17,13 @@ import {
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
-  Bell, Send, Clock, CheckCircle, XCircle, FileText, History, Inbox, Info, AlertTriangle,
+  Bell, Send, Clock, CheckCircle, XCircle, FileText, History, Inbox, Info, AlertTriangle, Users, Search, MessageSquare, ExternalLink,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { useBroadcastNotification, useInAppNotifications, useMarkNotificationRead } from "@/hooks/useInAppNotifications";
 import { toast } from "@/hooks/use-toast";
+import { UserActions } from "@/components/users/UserActions";
 
 const Notifications = () => {
   const broadcast = useBroadcastNotification();
@@ -31,6 +33,55 @@ const Notifications = () => {
   const [form, setForm] = useState({
     title: "", message: "", type: "info" as "info" | "success" | "warning" | "error",
     audience: "all" as "all" | "admins" | "teachers" | "staff", link: "",
+  });
+
+  // Direct messaging state
+  const [dmSearch, setDmSearch] = useState("");
+  const [dmRoleFilter, setDmRoleFilter] = useState<string>("all");
+  const [dmRecipient, setDmRecipient] = useState<any | null>(null);
+  const [dmTitle, setDmTitle] = useState("");
+  const [dmMessage, setDmMessage] = useState("");
+  const [dmType, setDmType] = useState<"info" | "success" | "warning" | "error">("info");
+
+  const { data: directoryUsers = [] } = useQuery({
+    queryKey: ["notif-directory-users"],
+    queryFn: async () => {
+      const { data: profiles } = await supabase.from("profiles").select("id, full_name, email, phone").order("full_name");
+      const { data: roles } = await supabase.from("user_roles").select("user_id, role");
+      const map = new Map((roles || []).map((r: any) => [r.user_id, r.role]));
+      return (profiles || []).map((p: any) => ({ ...p, role: map.get(p.id) }));
+    },
+  });
+
+  const sendDirect = async () => {
+    if (!dmRecipient) {
+      toast({ title: "Pick a recipient", variant: "destructive" });
+      return;
+    }
+    if (!dmTitle.trim() || !dmMessage.trim()) {
+      toast({ title: "Title and message required", variant: "destructive" });
+      return;
+    }
+    try {
+      await broadcast.mutateAsync({
+        title: dmTitle.trim(),
+        message: dmMessage.trim(),
+        type: dmType,
+        audience: "user_ids" as any,
+        user_ids: [dmRecipient.id],
+      });
+      toast({ title: "Message sent", description: `Delivered to ${dmRecipient.full_name}` });
+      setDmTitle(""); setDmMessage("");
+    } catch (e: any) {
+      toast({ title: "Send failed", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const filteredDirectory = directoryUsers.filter((u: any) => {
+    if (dmRoleFilter !== "all" && u.role !== dmRoleFilter) return false;
+    const q = dmSearch.toLowerCase().trim();
+    if (!q) return true;
+    return (u.full_name || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q);
   });
 
   const { data: templates = [] } = useQuery({
@@ -80,6 +131,7 @@ const Notifications = () => {
             <Inbox className="h-4 w-4 mr-2" />Inbox{unread > 0 && <Badge variant="secondary" className="ml-2">{unread}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="compose"><Send className="h-4 w-4 mr-2" />Broadcast</TabsTrigger>
+          <TabsTrigger value="direct"><MessageSquare className="h-4 w-4 mr-2" />Direct Message</TabsTrigger>
           <TabsTrigger value="templates"><FileText className="h-4 w-4 mr-2" />Templates</TabsTrigger>
           <TabsTrigger value="history"><History className="h-4 w-4 mr-2" />SMS/WA Log</TabsTrigger>
         </TabsList>
@@ -181,7 +233,130 @@ const Notifications = () => {
           </Card>
         </TabsContent>
 
-        {/* TEMPLATES */}
+        {/* DIRECT MESSAGE */}
+        <TabsContent value="direct">
+          <div className="grid lg:grid-cols-5 gap-4">
+            {/* User directory */}
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <CardTitle className="text-base flex items-center gap-2"><Users className="h-4 w-4" />User Directory</CardTitle>
+                    <CardDescription>{filteredDirectory.length} of {directoryUsers.length}</CardDescription>
+                  </div>
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/users"><ExternalLink className="h-3 w-3 mr-1" />Manage</Link>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input className="pl-8 h-9" placeholder="Search users..." value={dmSearch} onChange={(e) => setDmSearch(e.target.value)} />
+                  </div>
+                  <Select value={dmRoleFilter} onValueChange={setDmRoleFilter}>
+                    <SelectTrigger className="w-32 h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All roles</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="head_teacher">Head Teacher</SelectItem>
+                      <SelectItem value="teacher">Teacher</SelectItem>
+                      <SelectItem value="accountant">Accountant</SelectItem>
+                      <SelectItem value="staff">Staff</SelectItem>
+                      <SelectItem value="security">Security</SelectItem>
+                      <SelectItem value="parent">Parent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="max-h-[460px] overflow-y-auto space-y-1.5 pr-1">
+                  {filteredDirectory.map((u: any) => (
+                    <div
+                      key={u.id}
+                      className={`flex items-center gap-2 p-2 rounded-lg border transition-colors ${
+                        dmRecipient?.id === u.id ? "border-primary bg-primary/5" : "border-border hover:bg-muted/30"
+                      }`}
+                    >
+                      <button onClick={() => setDmRecipient(u)} className="flex-1 flex items-center gap-2 text-left min-w-0">
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold shrink-0">
+                          {(u.full_name || "?").split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{u.full_name || "Unnamed"}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{u.email}</p>
+                        </div>
+                        {u.role && <Badge variant="outline" className="text-[9px] capitalize">{u.role.replace("_", " ")}</Badge>}
+                      </button>
+                      <UserActions user={u} />
+                    </div>
+                  ))}
+                  {filteredDirectory.length === 0 && (
+                    <p className="text-center text-sm text-muted-foreground py-8">No users found</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Compose direct */}
+            <Card className="lg:col-span-3">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  {dmRecipient ? `Message ${dmRecipient.full_name}` : "Send a Direct Message"}
+                </CardTitle>
+                <CardDescription>
+                  {dmRecipient ? `Delivers to ${dmRecipient.email || "user inbox"}` : "Pick a user from the directory"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {dmRecipient && (
+                  <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold">
+                        {(dmRecipient.full_name || "?").split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{dmRecipient.full_name}</p>
+                        <p className="text-xs text-muted-foreground">{dmRecipient.email} · {dmRecipient.phone || "No phone"}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="capitalize">{dmRecipient.role || "no role"}</Badge>
+                      <UserActions user={dmRecipient} />
+                    </div>
+                  </div>
+                )}
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Type</Label>
+                    <Select value={dmType} onValueChange={(v: any) => setDmType(v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="info">Info</SelectItem>
+                        <SelectItem value="success">Success</SelectItem>
+                        <SelectItem value="warning">Warning</SelectItem>
+                        <SelectItem value="error">Alert</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Title *</Label>
+                    <Input value={dmTitle} onChange={(e) => setDmTitle(e.target.value)} maxLength={120} placeholder="Subject" />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Message *</Label>
+                  <Textarea rows={6} value={dmMessage} onChange={(e) => setDmMessage(e.target.value)} maxLength={500} placeholder="Write your message..." />
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={sendDirect} disabled={broadcast.isPending || !dmRecipient}>
+                    <Send className="h-4 w-4 mr-2" />Send Message
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
         <TabsContent value="templates">
           <Card>
             <CardHeader>
