@@ -17,11 +17,13 @@ import {
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
-  Bell, Send, Clock, CheckCircle, XCircle, FileText, History, Inbox, Info, AlertTriangle,
+  Bell, Send, Clock, CheckCircle, XCircle, FileText, History, Inbox, Info, AlertTriangle, Users, Search, MessageSquare, ExternalLink,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { useBroadcastNotification, useInAppNotifications, useMarkNotificationRead } from "@/hooks/useInAppNotifications";
 import { toast } from "@/hooks/use-toast";
+import { UserActions } from "@/components/users/UserActions";
 
 const Notifications = () => {
   const broadcast = useBroadcastNotification();
