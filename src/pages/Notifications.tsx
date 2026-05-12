@@ -35,6 +35,55 @@ const Notifications = () => {
     audience: "all" as "all" | "admins" | "teachers" | "staff", link: "",
   });
 
+  // Direct messaging state
+  const [dmSearch, setDmSearch] = useState("");
+  const [dmRoleFilter, setDmRoleFilter] = useState<string>("all");
+  const [dmRecipient, setDmRecipient] = useState<any | null>(null);
+  const [dmTitle, setDmTitle] = useState("");
+  const [dmMessage, setDmMessage] = useState("");
+  const [dmType, setDmType] = useState<"info" | "success" | "warning" | "error">("info");
+
+  const { data: directoryUsers = [] } = useQuery({
+    queryKey: ["notif-directory-users"],
+    queryFn: async () => {
+      const { data: profiles } = await supabase.from("profiles").select("id, full_name, email, phone").order("full_name");
+      const { data: roles } = await supabase.from("user_roles").select("user_id, role");
+      const map = new Map((roles || []).map((r: any) => [r.user_id, r.role]));
+      return (profiles || []).map((p: any) => ({ ...p, role: map.get(p.id) }));
+    },
+  });
+
+  const sendDirect = async () => {
+    if (!dmRecipient) {
+      toast({ title: "Pick a recipient", variant: "destructive" });
+      return;
+    }
+    if (!dmTitle.trim() || !dmMessage.trim()) {
+      toast({ title: "Title and message required", variant: "destructive" });
+      return;
+    }
+    try {
+      await broadcast.mutateAsync({
+        title: dmTitle.trim(),
+        message: dmMessage.trim(),
+        type: dmType,
+        audience: "user_ids" as any,
+        user_ids: [dmRecipient.id],
+      });
+      toast({ title: "Message sent", description: `Delivered to ${dmRecipient.full_name}` });
+      setDmTitle(""); setDmMessage("");
+    } catch (e: any) {
+      toast({ title: "Send failed", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const filteredDirectory = directoryUsers.filter((u: any) => {
+    if (dmRoleFilter !== "all" && u.role !== dmRoleFilter) return false;
+    const q = dmSearch.toLowerCase().trim();
+    if (!q) return true;
+    return (u.full_name || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q);
+  });
+
   const { data: templates = [] } = useQuery({
     queryKey: ["notification-templates"],
     queryFn: async () => {
