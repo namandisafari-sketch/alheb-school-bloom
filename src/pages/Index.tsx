@@ -16,6 +16,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { SecurityDashboard } from "@/components/dashboard/SecurityDashboard";
 import { TeacherDashboard } from "@/components/dashboard/TeacherDashboard";
 import { AccountantDashboard } from "@/components/dashboard/AccountantDashboard";
+import { HeadTeacherDashboard } from "@/components/dashboard/HeadTeacherDashboard";
+import { StaffDashboard } from "@/components/dashboard/StaffDashboard";
+import { Navigate } from "react-router-dom";
 import { InventorySummaryWidget } from "@/components/dashboard/InventoryWidgets";
 import { SystemHealthWidget } from "@/components/dashboard/SystemHealthWidget";
 import { Separator } from "@/components/ui/separator";
@@ -90,13 +93,30 @@ const Index = () => {
 
   if (role === "accountant") {
     return (
-      <DashboardLayout 
-        title="Finance Hub" 
-        subtitle="Alheib Financial Ecosystem & Procurement Control"
-      >
+      <DashboardLayout title="Finance Hub" subtitle="Alheib Financial Ecosystem & Procurement Control">
         <AccountantDashboard />
       </DashboardLayout>
     );
+  }
+
+  if (role === "head_teacher") {
+    return (
+      <DashboardLayout title="Head Teacher Dashboard" subtitle="Academic oversight & school operations">
+        <HeadTeacherDashboard />
+      </DashboardLayout>
+    );
+  }
+
+  if (role === "staff") {
+    return (
+      <DashboardLayout title="Staff Workspace" subtitle="Daily operations & support tasks">
+        <StaffDashboard />
+      </DashboardLayout>
+    );
+  }
+
+  if (role === "parent") {
+    return <Navigate to="/parent" replace />;
   }
 
   return (
